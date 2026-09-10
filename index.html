@@ -58,7 +58,8 @@
             body.style.setProperty("padding", "0", "important");
             body.style.setProperty("width", "100%", "important");
             body.style.setProperty("min-height", "100%", "important");
-            body.style.setProperty("overflow", "hidden", "important");
+            body.style.setProperty("overflow-y", "scroll", "important");
+            body.style.setProperty("overflow-x", "hidden", "important");
         } catch (e) {
             console.warn("No se pudo ajustar el iframe de Streamlit:", e);
         }
@@ -355,34 +356,61 @@ tbody tr:hover{background:#FAFBFC;}
 .creator-footer strong{color:var(--ink);}
 </style>
 
-<style id="scroll-fix">
-html, body {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    height: 100% !important;
-}
+<style id="definitive-visible-scrollbar">
+    html {
+        width: 100% !important;
+        min-height: 100% !important;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+        scrollbar-width: auto !important;
+    }
 
-#__fullViewportApp {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    height: 100dvh !important;
-    min-height: 100vh !important;
-}
+    body {
+        width: 100% !important;
+        min-height: 100vh !important;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+        scrollbar-width: auto !important;
+    }
 
-#__fullViewportApp .app-shell {
-    min-height: 100dvh !important;
-    height: auto !important;
-}
+    /* Chromium/Edge/Chrome: make the scrollbar clearly visible and usable. */
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        width: 14px !important;
+    }
 
-#__fullViewportApp .main {
-    min-height: 100dvh !important;
-    padding-bottom: 90px !important;
-}
+    html::-webkit-scrollbar-track,
+    body::-webkit-scrollbar-track {
+        background: #E7EBF0 !important;
+    }
 
-#__fullViewportApp .sidebar {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
+    html::-webkit-scrollbar-thumb,
+    body::-webkit-scrollbar-thumb {
+        background: #8993A3 !important;
+        border-radius: 8px !important;
+        border: 3px solid #E7EBF0 !important;
+    }
+
+    html::-webkit-scrollbar-thumb:hover,
+    body::-webkit-scrollbar-thumb:hover {
+        background: #5F6B7E !important;
+    }
+
+    /* Keep the app itself full screen; its document remains vertically scrollable. */
+    .app-shell {
+        min-height: 100vh !important;
+        height: auto !important;
+    }
+
+    .main {
+        min-height: 100vh !important;
+        padding-bottom: 90px !important;
+    }
+
+    .sidebar {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
 </style>
 </head>
 <body>
