@@ -7,7 +7,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Remove Streamlit's own chrome and outer spacing.
+# ============================================================
+# STREAMLIT LIMPIO
+# ============================================================
 st.markdown(
     """
     <style>
@@ -24,19 +26,33 @@ st.markdown(
         [data-testid="stApp"],
         [data-testid="stAppViewContainer"],
         [data-testid="stMain"],
-        [data-testid="stMainBlockContainer"] {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-        }
-
+        [data-testid="stMainBlockContainer"],
+        .main,
         .main .block-container,
         [data-testid="stElementContainer"] {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
             max-width: none !important;
+        }
+
+        /*
+         * SEGUNDO SCROLLBAR:
+         * El iframe de la aplicación tiene su propio scroll.
+         * Este espacio mantiene además el documento exterior de
+         * Streamlit con una altura mayor que el viewport, creando
+         * una segunda barra de desplazamiento del navegador.
+         */
+        [data-testid="stAppViewContainer"] {
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+
+        #outer-scroll-spacer {
+            width: 1px;
+            height: 200vh;
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
     """,
@@ -51,11 +67,15 @@ if not index_path.exists():
 
 html_content = index_path.read_text(encoding="utf-8")
 
-# The index itself controls the fullscreen iframe and now explicitly
-# restores a visible vertical scrollbar for long pages.
+# Aplicación interna: PRIMER scrollbar.
 st.components.v1.html(
     html_content,
     height=1000,
     scrolling=False,
 )
 
+# Documento exterior: SEGUNDO scrollbar.
+st.markdown(
+    '<div id="outer-scroll-spacer" aria-hidden="true"></div>',
+    unsafe_allow_html=True,
+)
