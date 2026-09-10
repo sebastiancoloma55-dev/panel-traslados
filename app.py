@@ -7,9 +7,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ============================================================
-# STREAMLIT LIMPIO
-# ============================================================
+# Quitamos únicamente el marco de Streamlit.
+# La aplicación HTML es la que controla el layout y el scroll.
 st.markdown(
     """
     <style>
@@ -18,11 +17,13 @@ st.markdown(
         header,
         [data-testid="stHeader"],
         [data-testid="stToolbar"],
-        [data-testid="stDecoration"] {
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"] {
             display: none !important;
         }
 
-        html, body,
+        html,
+        body,
         [data-testid="stApp"],
         [data-testid="stAppViewContainer"],
         [data-testid="stMain"],
@@ -36,23 +37,8 @@ st.markdown(
             max-width: none !important;
         }
 
-        /*
-         * SEGUNDO SCROLLBAR:
-         * El iframe de la aplicación tiene su propio scroll.
-         * Este espacio mantiene además el documento exterior de
-         * Streamlit con una altura mayor que el viewport, creando
-         * una segunda barra de desplazamiento del navegador.
-         */
         [data-testid="stAppViewContainer"] {
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-
-        #outer-scroll-spacer {
-            width: 1px;
-            height: 200vh;
-            opacity: 0;
-            pointer-events: none;
+            overflow: visible !important;
         }
     </style>
     """,
@@ -60,22 +46,20 @@ st.markdown(
 )
 
 index_path = Path(__file__).with_name("index.html")
-
 if not index_path.exists():
     st.error("No se encontró index.html junto a app.py.")
     st.stop()
 
 html_content = index_path.read_text(encoding="utf-8")
 
-# Aplicación interna: PRIMER scrollbar.
+# IMPORTANTE:
+# El iframe ahora sí tiene scrolling=True. Como el documento interno
+# crece con su contenido, el navegador muestra la barra vertical del
+# propio iframe y la rueda del mouse funciona sobre la aplicación.
 st.components.v1.html(
     html_content,
     height=1000,
-    scrolling=False,
+    scrolling=True,
 )
 
-# Documento exterior: SEGUNDO scrollbar.
-st.markdown(
-    '<div id="outer-scroll-spacer" aria-hidden="true"></div>',
-    unsafe_allow_html=True,
 )
