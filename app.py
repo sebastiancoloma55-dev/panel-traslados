@@ -61,5 +61,3 @@ st.components.v1.html(
     height=1000,
     scrolling=True,
 )
-
-)
