@@ -1,105 +1,71 @@
 import streamlit as st
 
+# Configuración de Streamlit
 st.set_page_config(
     page_title="Panel de Traslados",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
-st.markdown("""
-<style>
+# Streamlit solo sirve como contenedor del HTML.
+# No fijamos el iframe al viewport: eso hacía que la página se desplazara/
+# superpusiera de forma incorrecta al publicarla.
+st.markdown(
+    """
+    <style>
+        #MainMenu,
+        footer,
+        header {
+            visibility: hidden;
+        }
 
-/* ================================
-   STREAMLIT -> PANTALLA COMPLETA
-   ================================ */
+        html, body, [data-testid="stAppViewContainer"],
+        [data-testid="stApp"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
-/* Ocultar elementos propios de Streamlit */
-#MainMenu,
-footer,
-header,
-[data-testid="stHeader"],
-[data-testid="stToolbar"] {
-    display: none !important;
-}
+        [data-testid="stAppViewContainer"] {
+            width: 100% !important;
+        }
 
-/* Fondo y documento */
-html,
-body,
-[data-testid="stApp"],
-[data-testid="stAppViewContainer"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-}
+        [data-testid="stMain"] {
+            padding: 0 !important;
+        }
 
-/* Contenedor principal */
-[data-testid="stMain"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-}
+        .main .block-container {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
-/* Block container de versiones nuevas de Streamlit */
-[data-testid="stMainBlockContainer"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-}
+        [data-testid="stVerticalBlock"] {
+            gap: 0 !important;
+        }
 
-/* Compatibilidad con versiones anteriores */
-.main,
-.main .block-container,
-section.main,
-.stMainBlockContainer {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-}
+        iframe {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-/* Contenedor del componente */
-[data-testid="stElementContainer"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-}
-
-/* El iframe que contiene tu index.html */
-iframe {
-    display: block !important;
-    border: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 100% !important;
-}
-
-/* Quitar cualquier espacio generado por Streamlit */
-[data-testid="stVerticalBlock"],
-[data-testid="stHorizontalBlock"] {
-    gap: 0 !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
-# ==========================================
-# CARGAR LA APLICACIÓN HTML
-# ==========================================
-
+# Cargar el HTML completo de la aplicación
 with open("index.html", "r", encoding="utf-8") as f:
     html_content = f.read()
 
-
+# Altura amplia para que se vea la aplicación completa sin el iframe
+# superpuesto al navegador/Streamlit.
 st.components.v1.html(
     html_content,
-    height=2000,
-    scrolling=False
+    height=1400,
+    scrolling=False,
 )
