@@ -58,8 +58,7 @@
             body.style.setProperty("padding", "0", "important");
             body.style.setProperty("width", "100%", "important");
             body.style.setProperty("min-height", "100%", "important");
-            body.style.setProperty("overflow-y", "scroll", "important");
-            body.style.setProperty("overflow-x", "hidden", "important");
+            body.style.setProperty("overflow", "hidden", "important");
         } catch (e) {
             console.warn("No se pudo ajustar el iframe de Streamlit:", e);
         }
@@ -356,62 +355,152 @@ tbody tr:hover{background:#FAFBFC;}
 .creator-footer strong{color:var(--ink);}
 </style>
 
-<style id="definitive-visible-scrollbar">
-    html {
+<style id="REAL_VERTICAL_SCROLL">
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
         width: 100% !important;
-        min-height: 100% !important;
-        overflow-y: scroll !important;
-        overflow-x: hidden !important;
-        scrollbar-width: auto !important;
+        height: 100% !important;
+        overflow: hidden !important;
     }
 
-    body {
-        width: 100% !important;
+    #__fullViewportApp {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
         min-height: 100vh !important;
         overflow-y: scroll !important;
         overflow-x: hidden !important;
+        overscroll-behavior: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-gutter: stable !important;
         scrollbar-width: auto !important;
     }
 
-    /* Chromium/Edge/Chrome: make the scrollbar clearly visible and usable. */
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-        width: 14px !important;
+    /* Chromium / Edge / Chrome */
+    #__fullViewportApp::-webkit-scrollbar {
+        width: 16px !important;
+        display: block !important;
     }
 
-    html::-webkit-scrollbar-track,
-    body::-webkit-scrollbar-track {
-        background: #E7EBF0 !important;
+    #__fullViewportApp::-webkit-scrollbar-track {
+        background: #E6EAF0 !important;
     }
 
-    html::-webkit-scrollbar-thumb,
-    body::-webkit-scrollbar-thumb {
-        background: #8993A3 !important;
+    #__fullViewportApp::-webkit-scrollbar-thumb {
+        background: #7B8799 !important;
         border-radius: 8px !important;
-        border: 3px solid #E7EBF0 !important;
+        border: 3px solid #E6EAF0 !important;
+        min-height: 40px !important;
     }
 
-    html::-webkit-scrollbar-thumb:hover,
-    body::-webkit-scrollbar-thumb:hover {
-        background: #5F6B7E !important;
+    #__fullViewportApp::-webkit-scrollbar-thumb:hover {
+        background: #566274 !important;
     }
 
-    /* Keep the app itself full screen; its document remains vertically scrollable. */
-    .app-shell {
-        min-height: 100vh !important;
+    #__fullViewportApp .app-shell {
+        position: relative !important;
+        display: flex !important;
+        width: 100% !important;
+        min-height: max(100vh, 1100px) !important;
         height: auto !important;
     }
 
-    .main {
-        min-height: 100vh !important;
-        padding-bottom: 90px !important;
+    #__fullViewportApp .main {
+        min-height: max(100vh, 1100px) !important;
+        height: auto !important;
+        padding-bottom: 100px !important;
     }
 
-    .sidebar {
+    #__fullViewportApp .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
     }
+
+    #__fullViewportApp .login-screen {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+    }
 </style>
+
+<script id="REAL_VERTICAL_SCROLL_JS">
+(function () {
+    function getScrollHost() {
+        return document.getElementById("__fullViewportApp");
+    }
+
+    function enableRealScroll() {
+        var host = getScrollHost();
+        if (!host) return;
+
+        host.style.overflowY = "scroll";
+        host.style.overflowX = "hidden";
+
+        // Guarantee wheel movement on the app itself.
+        host.addEventListener("wheel", function (e) {
+            if (!host) return;
+
+            var max = host.scrollHeight - host.clientHeight;
+            if (max <= 0) return;
+
+            var before = host.scrollTop;
+            host.scrollTop += e.deltaY;
+
+            if (host.scrollTop !== before) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { passive: false });
+
+        // Keyboard fallback: PageUp/PageDown/Home/End and arrows.
+        host.tabIndex = 0;
+        host.addEventListener("keydown", function (e) {
+            var step = Math.max(120, Math.round(host.clientHeight * 0.75));
+
+            if (e.key === "PageDown") {
+                host.scrollTop += step;
+                e.preventDefault();
+            } else if (e.key === "PageUp") {
+                host.scrollTop -= step;
+                e.preventDefault();
+            } else if (e.key === "ArrowDown") {
+                host.scrollTop += 60;
+                e.preventDefault();
+            } else if (e.key === "ArrowUp") {
+                host.scrollTop -= 60;
+                e.preventDefault();
+            } else if (e.key === "Home") {
+                host.scrollTop = 0;
+                e.preventDefault();
+            } else if (e.key === "End") {
+                host.scrollTop = host.scrollHeight;
+                e.preventDefault();
+            }
+        });
+
+        // Clicking inside the app gives keyboard scroll control.
+        document.addEventListener("click", function () {
+            try { host.focus({preventScroll:true}); } catch (_) {}
+        }, true);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", enableRealScroll);
+    } else {
+        enableRealScroll();
+    }
+    window.addEventListener("load", enableRealScroll);
+})();
+</script>
 </head>
 <body>
 
