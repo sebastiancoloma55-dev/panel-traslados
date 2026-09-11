@@ -1,7 +1,83 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script id="streamlit-frame-fix">
+(function () {
+    "use strict";
 
+    function forceFullViewport() {
+        try {
+            var frame = window.frameElement;
+            if (!frame) return;
+
+            var css = {
+                position: "fixed",
+                top: "0px",
+                left: "0px",
+                right: "auto",
+                bottom: "auto",
+                width: "100vw",
+                height: "100vh",
+                minWidth: "100vw",
+                maxWidth: "100vw",
+                minHeight: "100vh",
+                maxHeight: "100vh",
+                margin: "0",
+                padding: "0",
+                border: "0",
+                display: "block",
+                zIndex: "2147483647",
+                background: "transparent"
+            };
+
+            Object.keys(css).forEach(function (key) {
+                frame.style.setProperty(
+                    key.replace(/[A-Z]/g, function (m) {
+                        return "-" + m.toLowerCase();
+                    }),
+                    css[key],
+                    "important"
+                );
+            });
+
+            var parent = frame.parentElement;
+            if (parent) {
+                parent.style.setProperty("margin", "0", "important");
+                parent.style.setProperty("padding", "0", "important");
+                parent.style.setProperty("width", "100vw", "important");
+                parent.style.setProperty("max-width", "100vw", "important");
+            }
+
+            var root = document.documentElement;
+            var body = document.body;
+            root.style.setProperty("margin", "0", "important");
+            root.style.setProperty("padding", "0", "important");
+            root.style.setProperty("width", "100%", "important");
+            root.style.setProperty("height", "100%", "important");
+            body.style.setProperty("margin", "0", "important");
+            body.style.setProperty("padding", "0", "important");
+            body.style.setProperty("width", "100%", "important");
+            body.style.setProperty("min-height", "100%", "important");
+            body.style.setProperty("overflow", "hidden", "important");
+        } catch (e) {
+            console.warn("No se pudo ajustar el iframe de Streamlit:", e);
+        }
+    }
+
+    forceFullViewport();
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", forceFullViewport);
+    }
+
+    window.addEventListener("load", forceFullViewport);
+    window.addEventListener("resize", forceFullViewport);
+
+    setTimeout(forceFullViewport, 50);
+    setTimeout(forceFullViewport, 250);
+    setTimeout(forceFullViewport, 1000);
+})();
+</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -279,61 +355,10 @@ tbody tr:hover{background:#FAFBFC;}
 .creator-footer strong{color:var(--ink);}
 </style>
 
-<style id="definitive-scroll-layout">
-    html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        min-height: 100% !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-    }
-
-    body {
-        background: var(--paper) !important;
-    }
-
-    .app-shell {
-        display: flex !important;
-        width: 100% !important;
-        min-height: 100vh !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-
-    .sidebar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        bottom: 0 !important;
-        height: 100vh !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-    }
-
-    .main {
-        margin-left: 252px !important;
-        flex: 1 !important;
-        min-width: 0 !important;
-        min-height: 100vh !important;
-        height: auto !important;
-        padding-bottom: 100px !important;
-        overflow: visible !important;
-    }
-
-    .tab-panel {
-        width: 100% !important;
-        overflow: visible !important;
-    }
-
-    /* Asegurar que tablas/zonas largas hagan crecer la página. */
-    .table-wrap,
-    .tickets-grid,
-    .calendar-grid,
-    .adv-section,
-    .card {
-        max-height: none !important;
-    }
+<style id="traslado-search-improvement">
+#trasFormColabSearch{
+  width:100%;
+}
 </style>
 </head>
 <body>
@@ -1565,14 +1590,65 @@ function trasladoPill(estado){
   return el('span',{class:'pill '+cls,text:estadoLabel(estado||'pendiente')});
 }
 function selectColaborador(selected){
-  var sel=document.createElement('select');sel.className='input';sel.id='trasFormRut';
-  sel.appendChild(el('option',{text:'Seleccione un colaborador',attrs:{value:''}}));
-  state.colaboradores.slice().sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');}).forEach(function(c){
-    var o=el('option',{text:formatRut(c.rut)+' · '+c.nombre,attrs:{value:c.rut}});
-    if(selected&&c.rut===selected)o.selected=true;
-    sel.appendChild(o);
+  var wrap=el('div',{});
+  var search=el('input',{class:'input',attrs:{
+    id:'trasFormColabSearch',
+    type:'text',
+    placeholder:'Buscar colaborador por nombre o RUT...'
+  }});
+  var sel=document.createElement('select');
+  sel.className='input';
+  sel.id='trasFormRut';
+  sel.style.marginTop='7px';
+
+  var all=state.colaboradores.slice().sort(function(a,b){
+    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
   });
-  return sel;
+
+  function fillOptions(filter){
+    var current=sel.value;
+    sel.innerHTML='';
+    sel.appendChild(el('option',{
+      text:'Seleccione un colaborador',
+      attrs:{value:''}
+    }));
+
+    var q=normalizeSearch(filter||'');
+    all.forEach(function(c){
+      var label=formatRut(c.rut)+' · '+c.nombre;
+      var hay=normalizeSearch([c.rut,c.nombre,c.cargo,c.sucursalActual].join(' '));
+      if(q && hay.indexOf(q)===-1)return;
+
+      var o=el('option',{text:label,attrs:{value:c.rut}});
+      if(selected && cleanRut(c.rut)===cleanRut(selected))o.selected=true;
+      if(current && cleanRut(c.rut)===cleanRut(current))o.selected=true;
+      sel.appendChild(o);
+    });
+  }
+
+  search.addEventListener('input',function(){
+    var term=search.value;
+    fillOptions(term);
+    if(term){
+      var first=sel.querySelector('option[value]');
+      if(first && sel.options.length===2) {
+        sel.selectedIndex=1;
+      }
+    }
+  });
+
+  sel.addEventListener('change',function(){
+    var c=buscarColaboradorPorRut(sel.value);
+    if(c) search.value=formatRut(c.rut)+' · '+c.nombre;
+  });
+
+  fillOptions('');
+  var initial=selected?buscarColaboradorPorRut(selected):null;
+  if(initial) search.value=formatRut(initial.rut)+' · '+initial.nombre;
+
+  wrap.appendChild(search);
+  wrap.appendChild(sel);
+  return wrap;
 }
 function selectSucursal(id,selected){
   var sel=document.createElement('select');sel.className='input';sel.id=id;
@@ -1588,7 +1664,8 @@ function openTrasladoModal(existing){
   if(!currentUser){showLogin('Debe iniciar sesión.');return;}
   existing=existing||null;
   var body=el('div');
-  var rutSel=selectColaborador(existing?existing.rut:'');
+  var rutSelWrap=selectColaborador(existing?existing.rut:'');
+  var rutSel=function(){return document.getElementById('trasFormRut');}();
   var origenSel=selectSucursal('trasFormOrigen',existing?existing.origen:'');
   var destinoSel=selectSucursal('trasFormDestino',existing?existing.destino:'');
   var fSol=el('input',{class:'input',attrs:{id:'trasFormFechaSolicitud',type:'date',value:existing?(existing.fechaSolicitud||hoyISO()):hoyISO()}});
@@ -1600,7 +1677,7 @@ function openTrasladoModal(existing){
   var motivo=el('textarea',{class:'textarea',attrs:{id:'trasFormMotivo',rows:'3',placeholder:'Motivo del traslado'}});
   motivo.value=existing?(existing.motivo||''):'';
 
-  body.appendChild(el('label',{class:'field-label',text:'Colaborador *'}));body.appendChild(rutSel);
+  body.appendChild(el('label',{class:'field-label',text:'Colaborador *'}));body.appendChild(rutSelWrap);
   body.appendChild(el('div',{class:'form-row',children:[
     el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Sucursal origen *'}),origenSel]}),
     el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Sucursal destino *'}),destinoSel]})
@@ -1803,6 +1880,61 @@ function openColaboradorProfile(c){
   openModal({title:'Ficha del colaborador',bodyNode:body,wide:true,footerButtons:[{label:'Cerrar',class:'btn btn-ghost',onClick:closeModal},{label:'Editar colaborador',class:'btn btn-primary',onClick:function(){closeModal();openColaboradorModal(c);}}]});
 }
 
+
+function openSucursalPersonalModal(sucursal){
+  var key=normalizeSucursalKey(sucursal&&sucursal.nombre);
+  var personal=state.colaboradores.filter(function(c){
+    return normalizeSucursalKey(c.sucursalActual)===key;
+  }).sort(function(a,b){
+    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
+  });
+
+  var body=el('div');
+  body.appendChild(el('p',{class:'muted',text:
+    personal.length
+      ? ('Colaboradores asignados actualmente a '+sucursal.nombre+': '+personal.length)
+      : ('No hay colaboradores asignados actualmente a '+sucursal.nombre+'.')
+  }));
+
+  if(personal.length){
+    var wrap=el('div',{class:'table-wrap',attrs:{style:'max-height:55vh;overflow:auto'}});
+    var table=document.createElement('table');
+    var thead=document.createElement('thead');
+    thead.innerHTML='<tr><th>RUT</th><th>Nombre</th><th>Cargo</th><th>Estado</th></tr>';
+    table.appendChild(thead);
+    var tb=document.createElement('tbody');
+
+    personal.forEach(function(c){
+      var tr=document.createElement('tr');
+      tr.appendChild(el('td',{class:'mono',text:formatRut(c.rut)}));
+      tr.appendChild(el('td',{text:c.nombre||'—'}));
+      tr.appendChild(el('td',{text:c.cargo||'—'}));
+      tr.appendChild(el('td',{children:[
+        el('span',{
+          class:'pill '+(normalizeSearch(c.estado)==='activo'?'pill-teal':'pill-slate'),
+          text:c.estado||'Activo'
+        })
+      ]}));
+      tb.appendChild(tr);
+    });
+
+    table.appendChild(tb);
+    wrap.appendChild(table);
+    body.appendChild(wrap);
+  }
+
+  openModal({
+    title:'Personal asignado · '+(sucursal.nombre||'Sucursal'),
+    bodyNode:body,
+    wide:true,
+    footerButtons:[{
+      label:'Cerrar',
+      class:'btn btn-ghost',
+      onClick:closeModal
+    }]
+  });
+}
+
 function renderSucursalesTable(){
   var tbody=document.getElementById('sucTableBody');if(!tbody)return;
   tbody.innerHTML='';
@@ -1830,7 +1962,7 @@ function renderSucursalesTable(){
       tr.appendChild(vacCell);
 
       var actions=el('td',{class:'row-actions'});
-      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal'},text:'👥',on:{click:function(){switchTab('colaboradores');}}}));
+      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal asignado'},text:'👥',on:{click:function(){openSucursalPersonalModal(s2);}}}));
       actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Editar'},text:'✎',on:{click:function(){openSucursalModal(s2);}}}));
       actions.appendChild(el('button',{class:'icon-btn icon-btn-danger',attrs:{title:'Eliminar'},text:'🗑',on:{click:function(){deleteSucursal(s2.codigo);}}}));
       tr.appendChild(actions);tbody.appendChild(tr);
