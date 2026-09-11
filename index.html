@@ -286,6 +286,10 @@ tbody tr:hover{background:#FAFBFC;}
   font-family:var(--font-body);
 }
 </style>
+
+<style id="sucursal-personal-filter-fix">
+  #filterColabSucursal { min-width: 190px; }
+</style>
 </head>
 <body>
 
@@ -2142,7 +2146,23 @@ function renderSucursalesTable(){
       tr.appendChild(vacCell);
 
       var actions=el('td',{class:'row-actions'});
-      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal'},text:'👥',on:{click:function(){switchTab('colaboradores');}}}));
+      actions.appendChild(el('button',{
+        class:'icon-btn',
+        attrs:{title:'Ver colaboradores de esta sucursal'},
+        text:'👥',
+        on:{
+          click:function(){
+            switchTab('colaboradores');
+            var filtro=document.getElementById('filterColabSucursal');
+            if(filtro){
+              filtro.value=s2.nombre||'';
+              renderColaboradoresTable();
+            }
+            var buscador=document.getElementById('searchColab');
+            if(buscador) buscador.value='';
+          }
+        }
+      }));
       actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Editar'},text:'✎',on:{click:function(){openSucursalModal(s2);}}}));
       actions.appendChild(el('button',{class:'icon-btn icon-btn-danger',attrs:{title:'Eliminar'},text:'🗑',on:{click:function(){deleteSucursal(s2.codigo);}}}));
       tr.appendChild(actions);tbody.appendChild(tr);
