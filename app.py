@@ -54,7 +54,7 @@ html_content = index_path.read_text(encoding="utf-8")
 central_sync = r"""
 
 /* ====== SINCRONIZACION CENTRAL PANEL-TRASLADOS ====== */
-var CENTRAL_API = 'https://yloqvgptbbjzogkxfic.supabase.co/functions/v1/panel-api';
+var CENTRAL_API = 'https://yloqvgpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';
 var CENTRAL_TOKEN = null;
 var CENTRAL_USER_KEY = 'panelCentralUser';
 var CENTRAL_TOKEN_KEY = 'panelCentralToken';
