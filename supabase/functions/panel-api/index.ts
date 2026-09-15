@@ -17,36 +17,57 @@ const ALLOWED_TABLES = [
   "auditoria",
 ];
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+function corsHeaders(req?: Request) {
+  const origin = req?.headers.get("Origin") || "*";
 
-function response(data: unknown, status = 200) {
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, accept, origin",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+    "Content-Type": "application/json",
+  };
+}
+
+function response(
+  req: Request,
+  data: unknown,
+  status = 200,
+) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: corsHeaders,
+    headers: corsHeaders(req),
   });
 }
 
 function camelToSnake(key: string): string {
-  return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  return key.replace(
+    /[A-Z]/g,
+    letter => `_${letter.toLowerCase()}`
+  );
 }
 
 function snakeToCamel(key: string): string {
-  return key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  return key.replace(
+    /_([a-z])/g,
+    (_, letter) => letter.toUpperCase()
+  );
 }
 
 function convertToDb(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(convertToDb);
+  if (Array.isArray(obj)) {
+    return obj.map(convertToDb);
+  }
 
   if (obj && typeof obj === "object") {
     const result: any = {};
+
     for (const [key, value] of Object.entries(obj)) {
       result[camelToSnake(key)] = convertToDb(value);
     }
+
     return result;
   }
 
@@ -54,13 +75,17 @@ function convertToDb(obj: any): any {
 }
 
 function convertFromDb(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(convertFromDb);
+  if (Array.isArray(obj)) {
+    return obj.map(convertFromDb);
+  }
 
   if (obj && typeof obj === "object") {
     const result: any = {};
+
     for (const [key, value] of Object.entries(obj)) {
       result[snakeToCamel(key)] = convertFromDb(value);
     }
+
     return result;
   }
 
@@ -69,7 +94,10 @@ function convertFromDb(obj: any): any {
 
 function base64url(data: Uint8Array): string {
   let binary = "";
-  for (const byte of data) binary += String.fromCharCode(byte);
+
+  for (const byte of data) {
+    binary += String.fromCharCode(byte);
+  }
 
   return btoa(binary)
     .replace(/\+/g, "-")
@@ -108,13 +136,20 @@ async function signToken(payload: any): Promise<string> {
     new TextEncoder().encode(`${header}.${body}`),
   );
 
-  return `${header}.${body}.${base64url(new Uint8Array(signature))}`;
+  return `${header}.${body}.${base64url(
+    new Uint8Array(signature)
+  )}`;
 }
 
-async function verifyToken(token: string): Promise<any | null> {
+async function verifyToken(
+  token: string
+): Promise<any | null> {
   try {
     const parts = token.split(".");
-    if (parts.length !== 3) return null;
+
+    if (parts.length !== 3) {
+      return null;
+    }
 
     const [header, body, signature] = parts;
 
@@ -134,7 +169,10 @@ async function verifyToken(token: string): Promise<any | null> {
         signature
           .replace(/-/g, "+")
           .replace(/_/g, "/")
-          .padEnd(Math.ceil(signature.length / 4) * 4, "=")
+          .padEnd(
+            Math.ceil(signature.length / 4) * 4,
+            "="
+          )
       ),
       c => c.charCodeAt(0)
     );
@@ -146,7 +184,9 @@ async function verifyToken(token: string): Promise<any | null> {
       new TextEncoder().encode(`${header}.${body}`),
     );
 
-    if (!valid) return null;
+    if (!valid) {
+      return null;
+    }
 
     const payload = JSON.parse(
       new TextDecoder().decode(
@@ -155,14 +195,23 @@ async function verifyToken(token: string): Promise<any | null> {
             body
               .replace(/-/g, "+")
               .replace(/_/g, "/")
-              .padEnd(Math.ceil(body.length / 4) * 4, "=")
+              .padEnd(
+                Math.ceil(body.length / 4) * 4,
+                "="
+              )
           ),
           c => c.charCodeAt(0)
         )
       )
     );
 
-    if (!payload.exp || payload.exp < Date.now()) return null;
+    if (!payload.exp) {
+      return null;
+    }
+
+    if (payload.exp < Date.now()) {
+      return null;
+    }
 
     return payload;
   } catch {
@@ -173,42 +222,62 @@ async function verifyToken(token: string): Promise<any | null> {
 function getToken(req: Request): string | null {
   const auth = req.headers.get("Authorization");
 
-  if (!auth) return null;
+  if (!auth) {
+    return null;
+  }
 
-  if (!auth.startsWith("Bearer ")) return null;
+  if (!auth.startsWith("Bearer ")) {
+    return null;
+  }
 
   return auth.substring(7);
 }
 
-async function requireAuth(req: Request) {
+async function requireAuth(
+  req: Request
+) {
   const token = getToken(req);
 
-  if (!token) return null;
+  if (!token) {
+    return null;
+  }
 
   return await verifyToken(token);
 }
 
-async function hashPassword(password: string): Promise<string> {
+async function hashPassword(
+  password: string
+): Promise<string> {
   const data = new TextEncoder().encode(password);
 
-  const hash = await crypto.subtle.digest("SHA-256", data);
+  const hash = await crypto.subtle.digest(
+    "SHA-256",
+    data
+  );
 
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
-async function login(username: string, password: string) {
+async function login(
+  username: string,
+  password: string
+) {
   const { data: users, error } = await supabase
     .from("usuarios")
     .select("*")
     .eq("username", username.toLowerCase())
     .limit(1);
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   if (!users || users.length === 0) {
-    throw new Error("Usuario o contraseña incorrectos");
+    throw new Error(
+      "Usuario o contraseña incorrectos"
+    );
   }
 
   const user = users[0];
@@ -225,7 +294,9 @@ async function login(username: string, password: string) {
   const hash = await hashPassword(password);
 
   if (hash !== passwordHash) {
-    throw new Error("Usuario o contraseña incorrectos");
+    throw new Error(
+      "Usuario o contraseña incorrectos"
+    );
   }
 
   const payload = {
@@ -257,24 +328,37 @@ async function getState() {
       .select("*");
 
     if (error) {
-      console.error(`Error leyendo ${table}:`, error);
+      console.error(
+        `Error leyendo ${table}:`,
+        error
+      );
+
       throw error;
     }
 
-    state[table] = convertFromDb(data || []);
+    state[table] = convertFromDb(
+      data || []
+    );
   }
 
-  state.usuarios = state.usuarios.map((u: any) => {
-    const safe = { ...u };
-    delete safe.passwordHash;
-    delete safe.password_hash;
-    return safe;
-  });
+  state.usuarios = state.usuarios.map(
+    (u: any) => {
+      const safe = { ...u };
+
+      delete safe.passwordHash;
+      delete safe.password_hash;
+
+      return safe;
+    }
+  );
 
   return state;
 }
 
-async function upsertRecord(table: string, record: any) {
+async function upsertRecord(
+  table: string,
+  record: any
+) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
@@ -286,17 +370,24 @@ async function upsertRecord(table: string, record: any) {
     .upsert(dbRecord)
     .select();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return convertFromDb(data || []);
 }
 
-async function bulkUpsert(table: string, records: any[]) {
+async function bulkUpsert(
+  table: string,
+  records: any[]
+) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
 
-  const dbRecords = records.map(convertToDb);
+  const dbRecords = records.map(
+    convertToDb
+  );
 
   if (dbRecords.length === 0) {
     return [];
@@ -307,147 +398,348 @@ async function bulkUpsert(table: string, records: any[]) {
     .upsert(dbRecords)
     .select();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return convertFromDb(data || []);
 }
 
-async function clearTable(table: string) {
+async function deleteRecord(
+  table: string,
+  id: any
+) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
 
   if (table === "usuarios") {
-    throw new Error("No se permite limpiar la tabla usuarios");
+    throw new Error(
+      "No se permite eliminar usuarios desde esta función"
+    );
+  }
+
+  if (id === undefined || id === null) {
+    throw new Error(
+      "ID requerido para eliminar"
+    );
   }
 
   const { error } = await supabase
     .from(table)
     .delete()
-    .not("id", "is", null);
+    .eq("id", id);
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
+
+  return true;
+}
+
+async function clearTable(
+  table: string
+) {
+  if (!ALLOWED_TABLES.includes(table)) {
+    throw new Error("Tabla no permitida");
+  }
+
+  if (table === "usuarios") {
+    throw new Error(
+      "No se permite limpiar la tabla usuarios"
+    );
+  }
+
+  const { data, error } = await supabase
+    .from(table)
+    .select("id");
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    return true;
+  }
+
+  const ids = data
+    .map((row: any) => row.id)
+    .filter(
+      (id: any) =>
+        id !== null &&
+        id !== undefined
+    );
+
+  if (ids.length === 0) {
+    return true;
+  }
+
+  const { error: deleteError } =
+    await supabase
+      .from(table)
+      .delete()
+      .in("id", ids);
+
+  if (deleteError) {
+    throw deleteError;
+  }
 
   return true;
 }
 
 Deno.serve(async (req: Request) => {
+
+  // =========================
+  // CORS / PREFLIGHT
+  // =========================
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: corsHeaders,
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(req),
     });
   }
 
   try {
     const url = new URL(req.url);
-    const path = url.pathname.replace(/\/+$/, "");
 
-    if (req.method === "POST" && path.endsWith("/login")) {
-      const body = await req.json();
+    const path = url.pathname.replace(
+      /\/+$/,
+      ""
+    );
 
-      if (!body.username || !body.password) {
+    // =========================
+    // LOGIN
+    // =========================
+
+    if (
+      req.method === "POST" &&
+      path.endsWith("/login")
+    ) {
+      let body: any;
+
+      try {
+        body = await req.json();
+      } catch {
         return response(
-          { error: "Usuario y contraseña son obligatorios" },
-          400,
+          req,
+          {
+            error:
+              "Solicitud JSON inválida",
+          },
+          400
+        );
+      }
+
+      if (
+        !body.username ||
+        !body.password
+      ) {
+        return response(
+          req,
+          {
+            error:
+              "Usuario y contraseña son obligatorios",
+          },
+          400
         );
       }
 
       try {
         const result = await login(
-          body.username,
-          body.password,
+          String(body.username),
+          String(body.password)
         );
 
-        return response(result);
-      } catch (error) {
         return response(
+          req,
+          result,
+          200
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Error login:",
+          error
+        );
+
+        return response(
+          req,
           {
             error:
               error instanceof Error
                 ? error.message
                 : "Error de autenticación",
           },
-          401,
+          401
         );
       }
     }
 
-    const auth = await requireAuth(req);
+    // =========================
+    // AUTENTICACIÓN
+    // =========================
+
+    const auth =
+      await requireAuth(req);
 
     if (!auth) {
       return response(
-        { error: "Sesión no válida o expirada" },
-        401,
+        req,
+        {
+          error:
+            "Sesión no válida o expirada",
+        },
+        401
       );
     }
 
-    if (req.method === "GET" && path.endsWith("/state")) {
-      const state = await getState();
+    // =========================
+    // STATE
+    // =========================
 
-      return response({
-        state,
-        user: auth,
-      });
+    if (
+      req.method === "GET" &&
+      path.endsWith("/state")
+    ) {
+      const state =
+        await getState();
+
+      return response(
+        req,
+        {
+          state,
+          user: auth,
+        },
+        200
+      );
     }
 
+    // =========================
+    // POST
+    // =========================
+
     if (req.method === "POST") {
-      const body = await req.json();
 
-      if (body.action === "upsert") {
-        const result = await upsertRecord(
-          body.table,
-          body.record,
+      const body =
+        await req.json();
+
+      // ---------- UPSERT ----------
+
+      if (
+        body.action === "upsert"
+      ) {
+        const result =
+          await upsertRecord(
+            body.table,
+            body.record
+          );
+
+        return response(
+          req,
+          {
+            success: true,
+            data: result,
+          }
         );
-
-        return response({
-          success: true,
-          data: result,
-        });
       }
 
-      if (body.action === "bulkUpsert") {
-        const result = await bulkUpsert(
-          body.table,
-          body.records || [],
-        );
+      // ---------- BULK UPSERT ----------
 
-        return response({
-          success: true,
-          data: result,
-        });
+      if (
+        body.action === "bulkUpsert"
+      ) {
+        const result =
+          await bulkUpsert(
+            body.table,
+            body.records || []
+          );
+
+        return response(
+          req,
+          {
+            success: true,
+            data: result,
+          }
+        );
       }
 
-      if (body.action === "clear") {
-        if (auth.role !== "superadmin") {
+      // ---------- DELETE ----------
+
+      if (
+        body.action === "delete"
+      ) {
+        const result =
+          await deleteRecord(
+            body.table,
+            body.id
+          );
+
+        return response(
+          req,
+          {
+            success: result,
+          }
+        );
+      }
+
+      // ---------- CLEAR ----------
+
+      if (
+        body.action === "clear"
+      ) {
+        if (
+          auth.role !== "superadmin"
+        ) {
           return response(
-            { error: "Se requiere Super Admin" },
-            403,
+            req,
+            {
+              error:
+                "Se requiere Super Admin",
+            },
+            403
           );
         }
 
-        await clearTable(body.table);
+        await clearTable(
+          body.table
+        );
 
-        return response({
-          success: true,
-        });
+        return response(
+          req,
+          {
+            success: true,
+          }
+        );
       }
     }
 
     return response(
-      { error: "Ruta o acción no válida" },
-      404,
+      req,
+      {
+        error:
+          "Ruta o acción no válida",
+      },
+      404
     );
+
   } catch (error) {
-    console.error(error);
+
+    console.error(
+      "Error interno:",
+      error
+    );
 
     return response(
+      req,
       {
         error:
           error instanceof Error
             ? error.message
             : "Error interno del servidor",
       },
-      500,
+      500
     );
   }
 });
