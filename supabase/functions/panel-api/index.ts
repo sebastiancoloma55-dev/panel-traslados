@@ -17,16 +17,14 @@ const ALLOWED_TABLES = [
   "auditoria",
 ];
 
-function corsHeaders(req?: Request) {
-  const origin = req?.headers.get("Origin") || "*";
-
+function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, accept, origin",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods":
+      "GET, POST, DELETE, OPTIONS",
     "Access-Control-Max-Age": "86400",
-    "Vary": "Origin",
     "Content-Type": "application/json",
   };
 }
@@ -38,7 +36,7 @@ function response(
 ) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: corsHeaders(req),
+    headers: corsHeaders(),
   });
 }
 
