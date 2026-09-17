@@ -403,8 +403,8 @@ importBackup = function(file){
     .login-screen{
       position:fixed !important; inset:0 !important;
       background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
-      display:flex !important; align-items:center !important; justify-content:center !important;
-      padding:20px !important; z-index:1000 !important;
+      display:flex !important; align-items:flex-start !important; justify-content:center !important;
+      padding:28px 20px 40px !important; z-index:1000 !important;
     }
     .login-card{
       width:100% !important; max-width:430px !important;
@@ -647,7 +647,6 @@ html_content = html_content.replace(
 # Un solo desplazamiento: el documento de Streamlit se encarga del scroll; el iframe no crea otro.
 html_content = html_content.replace("</head>", "<style>html,body{overflow:visible!important;overflow-x:hidden!important;} .app-shell{min-height:auto!important;} </style></head>", 1)
 
-html_content = html_content.replace("</head>", "<style>.login-screen{align-items:flex-start!important;padding:55px 20px 30px!important;}</style></head>", 1)
 st.components.v1.html(
     html_content,
     height=5200,
