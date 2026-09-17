@@ -277,6 +277,167 @@ importBackup = function(file){
   };
   reader.readAsText(file);
 };
+
+
+/* ====== TEMA VERDE PASTEL + EXPERIENCIA INTERACTIVA ====== */
+(function(){
+  var style=document.createElement('style');
+  style.id='panelPastelGreenTheme';
+  style.textContent=`
+    :root{
+      --ink:#164437 !important;
+      --ink-2:#205B48 !important;
+      --ink-3:#2D705A !important;
+      --paper:#F2F8F4 !important;
+      --surface:#FFFFFF !important;
+      --amber:#D6A23A !important;
+      --amber-dark:#9A6B12 !important;
+      --amber-soft:#FFF1CC !important;
+      --teal:#58A982 !important;
+      --teal-dark:#277454 !important;
+      --teal-soft:#DDF3E7 !important;
+      --terracotta:#D7655B !important;
+      --terracotta-dark:#A83D35 !important;
+      --terracotta-soft:#FBE2DF !important;
+      --gold:#D6A23A !important;
+      --gold-soft:#FFF1CC !important;
+      --purple:#7893B5 !important;
+      --purple-dark:#526E91 !important;
+      --purple-soft:#E8EEF7 !important;
+      --slate:#596D66 !important;
+      --slate-light:#8A9C95 !important;
+      --border:#DDEBE3 !important;
+      --border-strong:#C7DDD1 !important;
+      --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
+      --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
+    }
+    body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
+    .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
+    .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
+    .nav-badge{background:rgba(255,255,255,.15) !important;}
+    .btn-primary{background:#277454 !important;border-color:#277454 !important;}
+    .btn-primary:hover{background:#1F6247 !important;transform:translateY(-1px);}
+    .card,.table-wrap,.ticket{border-color:#DDEBE3 !important;box-shadow:0 4px 16px rgba(31,84,63,.07) !important;}
+    .kpi-board{background:linear-gradient(135deg,#174A3B,#2D705A) !important;}
+    .kpi-value.teal{color:#B9F0D0 !important;}
+    .toolbar .input,.toolbar select,.input,select,textarea{border-color:#C7DDD1 !important;}
+    .toolbar .input:focus,.input:focus,select:focus,textarea:focus{border-color:#58A982 !important;box-shadow:0 0 0 3px rgba(88,169,130,.14) !important;}
+    .tickets-grid{grid-template-columns:repeat(auto-fill,minmax(360px,1fr)) !important;gap:16px !important;}
+    .ticket{border-top-width:5px !important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important;}
+    .ticket:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(31,84,63,.12) !important;}
+    .ticket-aprobado{border-top-color:#58A982 !important;background:linear-gradient(180deg,#FFFFFF,#F7FCF9) !important;}
+    .ticket-espera{border-top-color:#D6A23A !important;background:linear-gradient(180deg,#FFFFFF,#FFFDF7) !important;}
+    .ticket-rechazado{border-top-color:#D7655B !important;background:linear-gradient(180deg,#FFFFFF,#FFF9F8) !important;}
+    .ticket-pendiente{border-top-color:#7893B5 !important;background:linear-gradient(180deg,#FFFFFF,#F9FBFD) !important;}
+    .ticket-aprobado .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
+    .ticket-espera .pill-amber{background:#FFF1CC !important;color:#9A6B12 !important;}
+    .ticket-rechazado .pill-terracotta{background:#FBE2DF !important;color:#A83D35 !important;}
+    .ticket-pendiente .pill-slate{background:#E8EEF7 !important;color:#526E91 !important;}
+    .route-arrow{color:#58A982 !important;}
+    .icon-btn{border-color:#DDEBE3 !important;background:#F4F9F6 !important;}
+    .icon-btn:hover{background:#DDF3E7 !important;color:#277454 !important;}
+    .row-vacacion{background:#F0FAF4 !important;}
+    .row-ausente{background:#F0F5FB !important;}
+    .status-stack .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
+    .tras-interactive-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px;}
+    .tras-summary-card{background:#fff;border:1px solid #DDEBE3;border-radius:14px;padding:14px 16px;box-shadow:0 4px 14px rgba(31,84,63,.06);cursor:pointer;transition:.18s ease;position:relative;overflow:hidden;}
+    .tras-summary-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(31,84,63,.10);}
+    .tras-summary-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#71857D;font-weight:700;}
+    .tras-summary-card .num{font-size:28px;font-weight:800;line-height:1.1;margin-top:5px;color:#164437;}
+    .tras-summary-card.aprobado{border-left:5px solid #58A982;}
+    .tras-summary-card.espera{border-left:5px solid #D6A23A;}
+    .tras-summary-card.rechazado{border-left:5px solid #D7655B;}
+    .tras-summary-card.pendiente{border-left:5px solid #7893B5;}
+    .tras-interactive-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 16px;background:rgba(255,255,255,.78);padding:10px;border:1px solid #DDEBE3;border-radius:13px;backdrop-filter:blur(8px);}
+    .tras-interactive-toolbar input,.tras-interactive-toolbar select{height:40px;border:1px solid #C7DDD1;border-radius:9px;background:#fff;padding:0 12px;color:#164437;}
+    .tras-interactive-toolbar input{flex:1;min-width:240px;}
+    .tras-interactive-toolbar select{min-width:190px;}
+    .tras-filter-count{font-size:12px;color:#71857D;font-weight:600;margin-left:auto;}
+    @media(max-width:850px){.tras-interactive-summary{grid-template-columns:repeat(2,1fr)}.tras-filter-count{width:100%;margin-left:0}.tickets-grid{grid-template-columns:1fr !important;}}
+  `;
+  document.head.appendChild(style);
+})();
+
+(function(){
+  /* Usuarios nuevos recuperan inmediatamente TODA la base central al entrar. */
+  var _centralRestoreSession = restoreSession;
+  restoreSession = function(){
+    var ok=_centralRestoreSession();
+    if(ok && CENTRAL_TOKEN && centralTokenValid(CENTRAL_TOKEN)){
+      centralLoadState().then(function(){
+        updateSessionUI();
+        rerenderAll();
+        if(typeof bootAdv==='function')bootAdv();
+      }).catch(function(err){console.error('Carga central inicial:',err);});
+    }
+    return ok;
+  };
+
+  /* Vista interactiva de traslados: filtros + resumen por estado. */
+  var _renderTrasladosBase=renderTraslados;
+  renderTraslados=function(){
+    _renderTrasladosBase();
+    var tab=document.getElementById('tab-traslados');
+    var grid=document.getElementById('trasladosGrid');
+    if(!tab || !grid) return;
+
+    var list=state.traslados||[];
+    var counts={total:list.length,pendiente:0,espera:0,aprobado:0,rechazado:0};
+    list.forEach(function(t){if(counts[t.estado]!==undefined)counts[t.estado]++;});
+
+    var summary=tab.querySelector('.tras-interactive-summary');
+    if(!summary){
+      summary=document.createElement('div');
+      summary.className='tras-interactive-summary';
+      grid.parentNode.insertBefore(summary,grid);
+    }
+    summary.innerHTML='';
+    [
+      ['total','Total','tras-summary-card'],
+      ['aprobado','Aprobados','tras-summary-card aprobado'],
+      ['espera','En observación','tras-summary-card espera'],
+      ['rechazado','Rechazados','tras-summary-card rechazado']
+    ].forEach(function(item){
+      var c=document.createElement('div');c.className=item[2];c.setAttribute('data-status-filter',item[0]);
+      c.innerHTML='<div class="label">'+item[1]+'</div><div class="num">'+counts[item[0]]+'</div>';
+      c.addEventListener('click',function(){
+        var sel=document.getElementById('trasStatusFilter');
+        if(sel){sel.value=item[0]==='total'?'':item[0];sel.dispatchEvent(new Event('change'));}
+      });
+      summary.appendChild(c);
+    });
+
+    var bar=tab.querySelector('.tras-interactive-toolbar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.className='tras-interactive-toolbar';
+      var input=document.createElement('input');
+      input.id='trasSearch';input.placeholder='Buscar colaborador, RUT, origen o destino...';
+      var select=document.createElement('select');select.id='trasStatusFilter';
+      select.innerHTML='<option value="">Todos los estados</option><option value="pendiente">Pendientes</option><option value="espera">En observación</option><option value="aprobado">Aprobados</option><option value="rechazado">Rechazados</option>';
+      var count=document.createElement('span');count.className='tras-filter-count';count.id='trasFilterCount';
+      bar.appendChild(input);bar.appendChild(select);bar.appendChild(count);
+      grid.parentNode.insertBefore(bar,grid);
+      function apply(){
+        var q=(input.value||'').toLowerCase().trim(), st=select.value||'';
+        var cards=grid.children, visible=0;
+        for(var i=0;i<cards.length;i++){
+          var card=cards[i], okText=!q || (card.textContent||'').toLowerCase().indexOf(q)!==-1;
+          var okStatus=!st || card.classList.contains('ticket-'+st);
+          card.style.display=(okText&&okStatus)?'':'none';
+          if(okText&&okStatus)visible++;
+        }
+        count.textContent='Mostrando '+visible+' de '+list.length+' traslados';
+      }
+      input.addEventListener('input',apply);select.addEventListener('change',apply);
+      bar.__apply=apply;
+    }
+    var badge=document.getElementById('navBadgeTras');
+    if(badge)badge.textContent=String(list.length);
+    if(bar.__apply)bar.__apply();
+  };
+})();
+
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
 
 """
