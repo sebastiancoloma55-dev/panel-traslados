@@ -411,6 +411,14 @@ body{font-size:14px!important;}
 .creator-footer{margin:22px 0 0!important;text-align:center!important;padding:16px 0 2px!important;border-top:1px solid #d9ebe3!important;color:#7a8b95!important;font-size:11px!important;}.creator-footer strong{color:#164c3b!important;}
 @media(max-width:1100px){#tab-resumen .dashboard-grid{grid-template-columns:repeat(2,1fr)!important}.quick-card-grid{grid-template-columns:repeat(2,1fr)!important}#tab-resumen .premium-summary-grid{grid-template-columns:1fr!important}.premium-search{min-width:260px}}
 
+
+/* PIE CENTRALIZADO: exclusivo del módulo Resumen */
+.summary-central-footer{margin-top:24px;padding:14px 18px 12px;border-top:1px solid #d7ebe1;color:#6d8179;text-align:center;background:linear-gradient(180deg,#f7fcf9 0%,#eef8f3 100%);border-radius:12px;}
+.summary-central-footer .storage-pill{display:inline-flex;align-items:center;justify-content:center;color:#5e756c;font-size:11.5px;}
+.summary-central-footer .storage-dot{background:#58a982;box-shadow:0 0 0 3px rgba(88,169,130,.14);}
+.summary-central-company{margin-top:7px;color:#71857d;font-size:10px;line-height:1.45;}
+.summary-central-company strong{color:#3f6658;}
+.sidebar-footer{display:none!important;}
 </style>
 
 <style id="ui-premium-enhancement">
@@ -592,9 +600,7 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
         Respaldo
       </button>
     </nav>
-    <div class="sidebar-footer summary-visible">
-      <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div><div style="margin-top:28px;color:#d9efe5;font-size:10px;line-height:1.5">Farmacias de Similares Chile<br><strong>Sistema creado por Sebastián Coloma</strong></div>
-    </div>
+    <!-- El pie de datos centralizados se muestra únicamente dentro de Resumen -->
   </aside>
 
   <main class="main">
@@ -650,6 +656,10 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
         <div class="quick-card red" data-go-tab="licencias"><div class="quick-icon">🩺</div><div><div class="quick-title">Gestionar Licencias médicas</div><div class="quick-sub">Abrir módulo</div></div></div>
         <div class="quick-card purple" data-go-tab="reportes"><div class="quick-icon">📊</div><div><div class="quick-title">Generar Reportes</div><div class="quick-sub">Abrir módulo</div></div></div>
       </div></div>
+      <div class="summary-central-footer">
+        <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div>
+        <div class="summary-central-company">Farmacias de Similares Chile<br><strong>Sistema creado por Sebastián Coloma</strong></div>
+      </div>
     </section>
 
     <!-- ===================== COLABORADORES ===================== -->
@@ -2154,8 +2164,6 @@ function renderResumen(){
 
 
 function switchTab(tabName){
-  var _sidebarFooter=document.querySelector('.sidebar-footer');
-  if(_sidebarFooter){ _sidebarFooter.classList.toggle('summary-visible', tabName === 'resumen'); }
   if(tabName === 'usuarios' && !requireSuperAdmin()) return;
 
   var navItems=document.querySelectorAll('.nav-item');
