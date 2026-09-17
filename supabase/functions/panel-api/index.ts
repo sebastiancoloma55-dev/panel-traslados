@@ -383,24 +383,182 @@ async function bulkUpsert(
     throw new Error("Tabla no permitida");
   }
 
-  const dbRecords = records.map(
-    convertToDb
-  );
+  if (!Array.isArray(records)) {
+    throw new Error("Los registros deben ser un arreglo");
+  }
 
-  if (dbRecords.length === 0) {
+  if (records.length === 0) {
     return [];
   }
 
-  const { data, error } = await supabase
-    .from(table)
-    .upsert(dbRecords)
-    .select();
+  /*
+   * Campos permitidos por tabla.
+   * Esto evita que un Excel de una tabla termine enviando
+   * columnas pertenecientes a otra tabla.
+   */
+  const TABLE_FIELDS: Record<string, string[]> = {
+    colaboradores: [
+      "id",
+      "rut",
+      "nombre",
+      "cargo",
+      "sucursalActual",
+      "area",
+      "fechaIngreso",
+      "email",
+      "telefono",
+      "estado",
+    ],
 
-  if (error) {
-    throw error;
+    sucursales: [
+      "id",
+      "codigo",
+      "nombre",
+      "region",
+      "comuna",
+      "direccion",
+      "encargado",
+    ],
+
+    traslados: [
+      "id",
+      "rut",
+      "nombre",
+      "colaboradorNombre",
+      "origen",
+      "destino",
+      "fechaInicio",
+      "fechaTermino",
+      "indefinido",
+      "estado",
+      "motivo",
+      "observaciones",
+      "createdAt",
+      "updatedAt",
+    ],
+
+    vacaciones: [
+      "id",
+      "rut",
+      "nombreColaborador",
+      "cargo",
+      "sucursal",
+      "tipoAusencia",
+      "numeroDias",
+      "fechaInicio",
+      "fechaTermino",
+      "estado",
+    ],
+
+    licencias: [
+      "id",
+      "rut",
+      "nombreColaborador",
+      "cargo",
+      "sucursal",
+      "tipoAusencia",
+      "numeroDias",
+      "fechaInicio",
+      "fechaTermino",
+      "estado",
+    ],
+
+    usuarios: [
+      "id",
+      "username",
+      "nombre",
+      "passwordHash",
+      "role",
+      "sucursal",
+      "activo",
+      "createdAt",
+      "lastLogin",
+    ],
+
+    auditoria: [
+      "id",
+      "fecha",
+      "usuario",
+      "tipo",
+      "accion",
+      "elemento",
+      "detalle",
+    ],
+  };
+
+  const allowedFields = TABLE_FIELDS[table];
+
+  if (!allowedFields) {
+    throw new Error(
+      `No existe configuración de campos para la tabla ${table}`
+    );
   }
 
-  return convertFromDb(data || []);
+  const cleanRecords = records.map((record: any) => {
+    if (!record || typeof record !== "object") {
+      throw new Error("Registro inválido");
+    }
+
+    const clean: any = {};
+
+    for (const field of allowedFields) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          record,
+          field
+        )
+      ) {
+        const value = record[field];
+
+        if (value !== undefined) {
+          clean[field] = value;
+        }
+      }
+    }
+
+    return convertToDb(clean);
+  });
+
+  /*
+   * Archivos grandes se guardan en bloques.
+   */
+  const CHUNK_SIZE = 100;
+  const saved: any[] = [];
+
+  for (
+    let i = 0;
+    i < cleanRecords.length;
+    i += CHUNK_SIZE
+  ) {
+    const chunk = cleanRecords.slice(
+      i,
+      i + CHUNK_SIZE
+    );
+
+    const { data, error } = await supabase
+      .from(table)
+      .upsert(chunk)
+      .select();
+
+    if (error) {
+      console.error(
+        `Error guardando masivamente ${table}:`,
+        error
+      );
+
+      throw new Error(
+        `Error guardando ${table}: ${
+          error.message || "Error desconocido"
+        }`
+      );
+    }
+
+    if (data) {
+      saved.push(...data);
+    }
+  }
+
+  return convertFromDb(saved);
 }
 
 async function deleteRecord(
@@ -494,7 +652,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders(req),
+      headers: corsHeaders(),
     });
   }
 
