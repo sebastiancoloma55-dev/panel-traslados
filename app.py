@@ -92,22 +92,33 @@ function centralHeaders(extra){
 function centralRequest(path, options){
   options = options || {};
   var target = CENTRAL_API + (path || '');
-  return fetch(target, {
+  var requestOptions = {
     method: options.method || 'GET',
     headers: centralHeaders(options.headers),
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  }).then(function(r){
-    return r.text().then(function(text){
+  };
+
+  function parseResponse(r){
+    return r.text().then(function(raw){
       var data = {};
-      try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { error:text || 'Respuesta inválida' }; }
+      try { data = raw ? JSON.parse(raw) : {}; }
+      catch(e) { data = { error: raw || ('HTTP ' + r.status) }; }
+
       if(!r.ok){
-        var err = new Error(data.error || ('HTTP ' + r.status));
+        var err = new Error(
+          data.error ||
+          data.message ||
+          ('HTTP ' + r.status + ' al conectar con el servidor')
+        );
         err.status = r.status;
+        err.data = data;
         throw err;
       }
       return data;
     });
-  });
+  }
+
+  return fetch(target, requestOptions).then(parseResponse);
 }
 function centralStoreName(storeName){ return storeName; }
 
@@ -182,32 +193,98 @@ reloadStateFromDB = function(){
 
 /* Login centralizado contra PostgreSQL/Supabase. */
 loginUser = function(){
-  var username = document.getElementById('loginUsername').value.trim();
-  var password = document.getElementById('loginPassword').value;
-  var remember = document.getElementById('loginRemember').checked;
-  if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
+  var usernameEl = document.getElementById('loginUsername');
+  var passwordEl = document.getElementById('loginPassword');
+  var rememberEl = document.getElementById('loginRemember');
   var btn = document.getElementById('btnLogin');
+
+  var username = usernameEl ? usernameEl.value.trim() : '';
+  var password = passwordEl ? passwordEl.value : '';
+  var remember = !!(rememberEl && rememberEl.checked);
+
+  if(!username || !password){
+    showLogin('Ingrese usuario y contraseña.');
+    return false;
+  }
+
   if(btn) btn.disabled = true;
-  centralRequest('/login', { method:'POST', body:{ username:username, password:password } }).then(function(result){
+
+  var body = { username: username, password: password };
+
+  function doLogin(){
+    return centralRequest('/login', {
+      method:'POST',
+      body:body
+    }).catch(function(err){
+      /*
+       * Compatibilidad definitiva: si una versión antigua de la Edge Function
+       * no reconoce /login, prueba la raíz una sola vez.
+       */
+      if(err && (err.status === 404 || err.status === 405)){
+        return centralRequest('', {
+          method:'POST',
+          body:body
+        });
+      }
+      throw err;
+    });
+  }
+
+  doLogin().then(function(result){
+    if(!result || !result.token || !result.user){
+      throw new Error('El servidor respondió sin una sesión válida.');
+    }
+
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
-    centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
-    centralStorageSet(CENTRAL_USER_KEY, JSON.stringify(currentUser), remember);
+
+    centralStorageSet(
+      CENTRAL_TOKEN_KEY,
+      CENTRAL_TOKEN,
+      remember
+    );
+    centralStorageSet(
+      CENTRAL_USER_KEY,
+      JSON.stringify(currentUser),
+      remember
+    );
+
     return centralLoadState();
   }).then(function(){
     hideLogin();
     updateSessionUI();
     rerenderAll();
-    if(typeof bootAdv === 'function') bootAdv();
+
+    if(typeof bootAdv === 'function'){
+      try { bootAdv(); } catch(e) { console.warn('bootAdv:', e); }
+    }
+
     switchTab('resumen');
-    showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success');
+
+    showToast(
+      'Bienvenido, ' +
+      (currentUser.nombre || currentUser.username) +
+      '.',
+      'success'
+    );
   }).catch(function(err){
-    console.error('Login central:', err);
+    console.error('LOGIN CENTRAL DEFINITIVO:', err);
+
     CENTRAL_TOKEN = null;
-    centralStorageClear();
     currentUser = null;
-    showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
-  }).finally(function(){ if(btn) btn.disabled = false; });
+    centralStorageClear();
+
+    var msg = 'No fue posible iniciar sesión.';
+    if(err && err.message){
+      msg = err.message;
+    }
+
+    showLogin(msg);
+  }).finally(function(){
+    if(btn) btn.disabled = false;
+  });
+
+  return false;
 };
 
 restoreSession = function(){
@@ -506,6 +583,43 @@ importBackup = function(file){
     if(badge)badge.textContent=String(list.length);
     if(bar.__apply)bar.__apply();
   };
+})();
+
+
+/* ====== LOGIN ROBUSTO / SIN RECARGA ====== */
+(function(){
+  function bindLogin(){
+    var btn = document.getElementById('btnLogin');
+    var form = btn ? btn.closest('form') : null;
+
+    if(btn && !btn.__centralBound){
+      btn.type = 'button';
+      btn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        return loginUser();
+      }, true);
+      btn.__centralBound = true;
+    }
+
+    if(form && !form.__centralBound){
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        return loginUser();
+      }, true);
+      form.__centralBound = true;
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bindLogin, {once:true});
+  } else {
+    bindLogin();
+  }
+
+  setTimeout(bindLogin, 250);
+  setTimeout(bindLogin, 1000);
 })();
 
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
