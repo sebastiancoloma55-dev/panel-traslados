@@ -528,6 +528,21 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 }
 </style>
 
+
+<style id="dashboard-summary-only-final">
+/* Todo el dashboard pertenece exclusivamente al módulo Resumen */
+#tab-resumen:not(.active) {
+  display: none !important;
+}
+#tab-resumen:not(.active) .dashboard-grid,
+#tab-resumen:not(.active) .kpi-board,
+#tab-resumen:not(.active) .premium-summary-grid,
+#tab-resumen:not(.active) .quick-card-grid,
+#tab-resumen:not(.active) .summary-central-footer {
+  display: none !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -2189,7 +2204,7 @@ function switchTab(tabName){
   for(var j=0;j<panels.length;j++){
     var p=panels[j], active=p.id==='tab-'+tabName;
     p.classList.toggle('active',active);
-    p.style.display=active?'block':'none';
+    p.style.setProperty('display', active ? 'block' : 'none', 'important');
     p.hidden=!active;
   }
 
@@ -2241,7 +2256,7 @@ function switchTab(tabName){
     for(var k=0;k<all.length;k++){
       var a=all[k].id==='tab-'+tabName;
       all[k].classList.toggle('active',a);
-      all[k].style.display=a?'block':'none';
+      all[k].style.setProperty('display', a ? 'block' : 'none', 'important');
       all[k].hidden=!a;
     }
   });
