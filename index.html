@@ -314,7 +314,7 @@ tbody tr:hover{background:#FAFBFC;}
       <input id="loginPassword" type="password" class="input" autocomplete="current-password" placeholder="Contraseña">
       <label class="checkbox-label"><input type="checkbox" id="loginRemember"> Mantener sesión en este navegador</label>
       <button id="btnLogin" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Ingresar</button>
-      <div class="login-help">Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.</div>
+      <div class="login-help">Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>.</div>
     </div>
   </div>
 </div>
@@ -377,7 +377,7 @@ tbody tr:hover{background:#FAFBFC;}
       </button>
     </nav>
     <div class="sidebar-footer">
-      <div class="storage-pill"><span class="storage-dot"></span><span>Datos en este navegador</span></div>
+      <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div>
     </div>
   </aside>
 
@@ -1286,25 +1286,93 @@ function openImportModeModal(type, records){
     return;
   }
 
-  /* ============================================================
-     IMPORTACIONES DE COLABORADORES Y SUCURSALES
-     No deben pasar por enriquecerAusencia(), porque esas tablas
-     no utilizan los campos de vacaciones/licencias.
-     ============================================================ */
+  /*
+   * IMPORTACION SEGURA
+   * - Sucursales: solo codigo, nombre, region, comuna, direccion, encargado.
+   * - Colaboradores: solo los campos definidos para colaboradores.
+   * - Vacaciones: se separan las filas LM/licencia hacia licencias.
+   * - Licencias: se guardan directamente como licencias.
+   *
+   * Esto evita enviar campos de otra tabla a Supabase.
+   */
+
+  function cleanSucursalRecord(r){
+    return {
+      codigo: String(r.codigo || '').trim(),
+      nombre: String(r.nombre || '').trim(),
+      region: String(r.region || '').trim(),
+      comuna: String(r.comuna || '').trim(),
+      direccion: String(r.direccion || '').trim(),
+      encargado: String(r.encargado || '').trim()
+    };
+  }
+
+  function cleanColaboradorRecord(r){
+    return {
+      rut: cleanRut(r.rut),
+      nombre: String(r.nombre || '').trim(),
+      cargo: String(r.cargo || '').trim() || 'Sin cargo',
+      sucursalActual: String(r.sucursalActual || '').trim(),
+      area: String(r.area || '').trim(),
+      fechaIngreso: r.fechaIngreso || '',
+      email: String(r.email || '').trim(),
+      telefono: String(r.telefono || '').trim(),
+      estado: String(r.estado || '').trim() || 'Activo'
+    };
+  }
+
+  function cleanAusenciaRecord(r, prefix){
+    return {
+      id: r.id || uid(prefix),
+      rut: cleanRut(r.rut),
+      nombreColaborador: String(r.nombreColaborador || '').trim(),
+      nombre: String(r.nombre || r.nombreColaborador || '').trim(),
+      cargo: String(r.cargo || '').trim(),
+      sucursal: String(r.sucursal || '').trim(),
+      tipoAusencia: String(r.tipoAusencia || '').trim() || 'Ausencia',
+      numeroDias: Number(r.numeroDias || 0) || 0,
+      fechaInicio: r.fechaInicio || '',
+      fechaTermino: r.fechaTermino || ''
+    };
+  }
 
   var vacaciones = [];
   var licencias = [];
 
-  if(type === 'vacaciones' || type === 'licencias'){
+  if(type === 'vacaciones'){
     records.forEach(function(rec){
-      rec = enriquecerAusencia(rec);
+      var ausencia = cleanAusenciaRecord(enriquecerAusencia(rec), 'vac');
 
-      if(esLicenciaMedica(rec.tipoAusencia)){
-        licencias.push(rec);
+      if(esLicenciaMedica(ausencia.tipoAusencia)){
+        ausencia.id = rec.id || uid('lic');
+        licencias.push(ausencia);
       } else {
-        vacaciones.push(rec);
+        ausencia.id = rec.id || uid('vac');
+        vacaciones.push(ausencia);
       }
     });
+  } else if(type === 'licencias'){
+    records.forEach(function(rec){
+      var licencia = cleanAusenciaRecord(enriquecerAusencia(rec), 'lic');
+      licencia.id = rec.id || uid('lic');
+      licencias.push(licencia);
+    });
+  }
+
+  var safeRecords;
+
+  if(type === 'sucursales'){
+    safeRecords = records.map(cleanSucursalRecord).filter(function(r){
+      return r.codigo && r.nombre;
+    });
+  } else if(type === 'colaboradores'){
+    safeRecords = records.map(cleanColaboradorRecord).filter(function(r){
+      return r.rut && r.nombre;
+    });
+  } else if(type === 'licencias'){
+    safeRecords = licencias;
+  } else {
+    safeRecords = vacaciones;
   }
 
   var body = el('div');
@@ -1326,7 +1394,7 @@ function openImportModeModal(type, records){
     summary.appendChild(
       el('div', {
         class:'muted',
-        text:'• Colaboradores: ' + records.length
+        text:'• Colaboradores: ' + safeRecords.length
       })
     );
   }
@@ -1335,20 +1403,18 @@ function openImportModeModal(type, records){
     summary.appendChild(
       el('div', {
         class:'muted',
-        text:'• Sucursales: ' + records.length
+        text:'• Sucursales: ' + safeRecords.length
       })
     );
   }
 
   if(type === 'vacaciones'){
-    if(vacaciones.length){
-      summary.appendChild(
-        el('div', {
-          class:'muted',
-          text:'• Vacaciones: ' + vacaciones.length
-        })
-      );
-    }
+    summary.appendChild(
+      el('div', {
+        class:'muted',
+        text:'• Vacaciones: ' + vacaciones.length
+      })
+    );
 
     if(licencias.length){
       summary.appendChild(
@@ -1364,52 +1430,37 @@ function openImportModeModal(type, records){
     summary.appendChild(
       el('div', {
         class:'muted',
-        text:'• Licencias médicas: ' + records.length
+        text:'• Licencias médicas: ' + licencias.length
       })
     );
   }
 
   body.appendChild(summary);
 
-  /* Texto informativo según el tipo */
   if(type === 'sucursales'){
-
     body.appendChild(
       el('p', {
         class:'muted',
         text:'Las sucursales se guardarán en el maestro de sucursales mediante su código.'
       })
     );
-
   } else if(type === 'colaboradores'){
-
     body.appendChild(
       el('p', {
         class:'muted',
         text:'Los colaboradores se vinculan por RUT y se actualizarán si ya existen.'
       })
     );
-
   } else if(type === 'vacaciones'){
-
-    if(licencias.length){
-      body.appendChild(
-        el('p', {
-          class:'muted',
-          text:'Las filas cuyo tipo de ausencia indique LM o Licencia se guardarán automáticamente en "Licencias médicas".'
-        })
-      );
-    } else {
-      body.appendChild(
-        el('p', {
-          class:'muted',
-          text:'Las vacaciones se vinculan al colaborador por RUT.'
-        })
-      );
-    }
-
+    body.appendChild(
+      el('p', {
+        class:'muted',
+        text:licencias.length
+          ? 'Las filas cuyo tipo de ausencia indique LM o Licencia se guardarán automáticamente en "Licencias médicas".'
+          : 'Las vacaciones se vinculan al colaborador por RUT.'
+      })
+    );
   } else if(type === 'licencias'){
-
     body.appendChild(
       el('p', {
         class:'muted',
@@ -1419,115 +1470,64 @@ function openImportModeModal(type, records){
   }
 
   function saveBuckets(replaceAll){
+    /*
+     * La operación "Reemplazar" requiere clearTable en el backend.
+     * El backend central protege esa operación para evitar borrados
+     * accidentales. Por eso el botón informa al usuario y no borra datos.
+     */
+    if(replaceAll && CENTRAL_TOKEN){
+      showToast('Para reemplazar datos use el respaldo administrativo. No se borró ningún dato.', 'error');
+      return;
+    }
+
     var jobs = [];
 
-    if(type === 'vacaciones'){
+    if(type === 'sucursales'){
+      jobs.push(dbBulkPut(STORES.SUC, safeRecords));
 
-      if(replaceAll){
-        jobs.push(
-          dbClear(STORES.VAC).then(function(){
-            return vacaciones.length
-              ? dbBulkPut(STORES.VAC, vacaciones)
-              : Promise.resolve();
-          })
-        );
-
-        if(licencias.length){
-          jobs.push(
-            dbClear(STORES.LIC).then(function(){
-              return dbBulkPut(STORES.LIC, licencias);
-            })
-          );
-        }
-
-      } else {
-
-        if(vacaciones.length){
-          jobs.push(
-            dbBulkPut(STORES.VAC, vacaciones)
-          );
-        }
-
-        if(licencias.length){
-          jobs.push(
-            dbBulkPut(STORES.LIC, licencias)
-          );
-        }
-      }
+    } else if(type === 'colaboradores'){
+      jobs.push(dbBulkPut(STORES.COLAB, safeRecords));
 
     } else if(type === 'licencias'){
+      jobs.push(dbBulkPut(STORES.LIC, licencias));
 
-      if(replaceAll){
-
-        jobs.push(
-          dbClear(STORES.LIC).then(function(){
-            return dbBulkPut(STORES.LIC, records);
-          })
-        );
-
-      } else {
-
-        jobs.push(
-          dbBulkPut(STORES.LIC, records)
-        );
+    } else if(type === 'vacaciones'){
+      if(vacaciones.length){
+        jobs.push(dbBulkPut(STORES.VAC, vacaciones));
       }
 
-    } else {
-
-      /* Colaboradores o Sucursales */
-      var storeName = type === 'colaboradores'
-        ? STORES.COLAB
-        : STORES.SUC;
-
-      if(replaceAll){
-
-        jobs.push(
-          dbClear(storeName).then(function(){
-            return dbBulkPut(storeName, records);
-          })
-        );
-
-      } else {
-
-        jobs.push(
-          dbBulkPut(storeName, records)
-        );
+      if(licencias.length){
+        jobs.push(dbBulkPut(STORES.LIC, licencias));
       }
+    }
+
+    if(!jobs.length){
+      showToast('No hay registros válidos para importar.', 'error');
+      return;
     }
 
     return Promise.all(jobs)
       .then(reloadStateFromDB)
       .then(function(){
-
         closeModal();
         rerenderAll();
 
         var msg;
 
         if(type === 'sucursales'){
-          msg = 'Importado: ' + records.length + ' sucursales.';
-
+          msg = 'Importado: ' + safeRecords.length + ' sucursales.';
         } else if(type === 'colaboradores'){
-          msg = 'Importado: ' + records.length + ' colaboradores.';
-
+          msg = 'Importado: ' + safeRecords.length + ' colaboradores.';
         } else if(type === 'vacaciones'){
-          msg =
-            'Importado: ' +
-            vacaciones.length +
-            ' vacaciones' +
-            (licencias.length
-              ? ' y ' + licencias.length + ' licencias.'
-              : '.');
-
+          msg = 'Importado: ' + vacaciones.length + ' vacaciones' +
+            (licencias.length ? ' y ' + licencias.length + ' licencias.' : '.');
         } else if(type === 'licencias'){
-          msg = 'Importado: ' + records.length + ' licencias.';
+          msg = 'Importado: ' + licencias.length + ' licencias.';
         }
 
         showToast(msg, 'success');
-
       })
       .catch(function(err){
-
         console.error('Error guardando importación:', err);
 
         showToast(
