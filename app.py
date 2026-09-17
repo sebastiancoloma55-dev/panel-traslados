@@ -91,7 +91,8 @@ function centralHeaders(extra){
 }
 function centralRequest(path, options){
   options = options || {};
-  return fetch(CENTRAL_API + path, {
+  var target = CENTRAL_API + (path || '');
+  return fetch(target, {
     method: options.method || 'GET',
     headers: centralHeaders(options.headers),
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
@@ -187,7 +188,7 @@ loginUser = function(){
   if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
   var btn = document.getElementById('btnLogin');
   if(btn) btn.disabled = true;
-  centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
+  centralRequest('/login', { method:'POST', body:{ username:username, password:password } }).then(function(result){
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
     centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
@@ -202,6 +203,9 @@ loginUser = function(){
     showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success');
   }).catch(function(err){
     console.error('Login central:', err);
+    CENTRAL_TOKEN = null;
+    centralStorageClear();
+    currentUser = null;
     showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
   }).finally(function(){ if(btn) btn.disabled = false; });
 };
@@ -241,15 +245,15 @@ logout = function(){
 /* Eliminaciones directas para no borrar y reconstruir tablas completas. */
 deleteColaborador = function(rut){
   if(!confirm('¿Eliminar este colaborador?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', record:{rut:rut}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', id:rut}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
 };
 deleteSucursal = function(codigo){
   if(!confirm('¿Eliminar esta sucursal?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', record:{codigo:codigo}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', id:codigo}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
 };
 eliminarTraslado = function(id){
   if(!confirm('¿Eliminar este traslado?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', record:{id:id}}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', id:id}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
 };
 
 /* El respaldo conserva su exportación local, pero la restauración queda centralizada. */
@@ -311,6 +315,72 @@ importBackup = function(file){
       --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
       --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
     }
+
+    /* ===== LOGIN VERDE PASTEL ===== */
+    .login-screen{
+      position:fixed !important; inset:0 !important;
+      background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
+      display:flex !important; align-items:center !important; justify-content:center !important;
+      padding:20px !important; z-index:1000 !important;
+    }
+    .login-card{
+      width:100% !important; max-width:430px !important;
+      background:#fff !important; border-radius:20px !important;
+      box-shadow:0 24px 80px rgba(18,67,51,.28) !important;
+      overflow:hidden !important; border:1px solid #DDEBE3 !important;
+    }
+    .login-head{
+      padding:28px 30px 20px !important;
+      background:linear-gradient(180deg,#F8FCF9,#fff) !important;
+      border-bottom:1px solid #DDEBE3 !important;
+    }
+    .login-mark{
+      background:#D6A23A !important; color:#164437 !important;
+      box-shadow:0 5px 14px rgba(214,162,58,.20) !important;
+    }
+    .login-title,.login-card h1,.login-card h2,.login-card h3{
+      color:#164437 !important;
+    }
+    .login-sub,.login-help{
+      color:#71857D !important;
+    }
+    .login-body{padding:26px 30px 30px !important;}
+    .login-card label{color:#596D66 !important;font-weight:700 !important;}
+    .login-card input{
+      border:1px solid #C7DDD1 !important;
+      background:#fff !important;
+      color:#164437 !important;
+      border-radius:9px !important;
+    }
+    .login-card input:focus{
+      border-color:#58A982 !important;
+      box-shadow:0 0 0 3px rgba(88,169,130,.15) !important;
+      outline:none !important;
+    }
+    .login-card input::placeholder{color:#9AA9A3 !important;}
+    .login-error{
+      background:#FBE2DF !important;
+      color:#A83D35 !important;
+      border-color:#E8B8AF !important;
+    }
+    .login-card .btn-primary,
+    #btnLogin{
+      background:#277454 !important;
+      border-color:#277454 !important;
+      color:#fff !important;
+      border-radius:9px !important;
+      transition:transform .18s ease,box-shadow .18s ease,background .18s ease !important;
+    }
+    .login-card .btn-primary:hover,
+    #btnLogin:hover{
+      background:#1F6247 !important;
+      transform:translateY(-1px) !important;
+      box-shadow:0 8px 18px rgba(39,116,84,.18) !important;
+    }
+    .login-card .btn-primary:disabled,
+    #btnLogin:disabled{opacity:.65 !important;cursor:wait !important;}
+    .login-card a{color:#277454 !important;}
+
     body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
     .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
     .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
