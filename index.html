@@ -38,8 +38,32 @@ a{color:inherit;}
 .hidden{display:none !important;}
 
 /* ---------- autenticacion / usuarios ---------- */
-.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--ink) 0%,var(--ink-2) 60%,#31466D 100%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
-.login-card{width:100%;max-width:430px;background:var(--surface);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.35);overflow:hidden;}
+.login-screen{
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    background:linear-gradient(135deg,#174A3B 0%,#1F604B 60%,#2D705A 100%) !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:20px !important;
+    box-sizing:border-box !important;
+    z-index:99999 !important;
+    overflow:hidden !important;
+}
+
+.login-card{
+    width:100% !important;
+    max-width:430px !important;
+    margin:0 auto !important;
+    background:#FFFFFF !important;
+    border-radius:20px !important;
+    box-shadow:0 24px 80px rgba(0,0,0,.35) !important;
+    overflow:hidden !important;
+    position:relative !important;
+}
 .login-head{padding:28px 30px 20px;background:linear-gradient(180deg,#F8F9FB,#fff);border-bottom:1px solid var(--border);}
 .login-brand{display:flex;align-items:center;gap:12px;}
 .login-mark{width:44px;height:44px;border-radius:11px;background:var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--ink);}
