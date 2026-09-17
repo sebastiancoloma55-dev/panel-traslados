@@ -277,6 +277,137 @@ tbody tr:hover{background:#FAFBFC;}
 .tab-panel.active{display:block !important;animation:fadeIn .18s ease;}
 .creator-footer{margin-top:32px;padding:16px 20px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--slate);clear:both;}
 .creator-footer strong{color:var(--ink);}
+
+.topbar-brandline{display:flex;align-items:center;gap:12px}.topbar-logo{width:46px;height:46px;border-radius:13px;background:#54c48e;color:#0c5a43;display:grid;place-items:center;font-size:25px;box-shadow:0 6px 18px rgba(56,160,112,.18)}.top-notify{position:relative;font-size:25px;color:#173d4d;display:inline-flex;align-items:center;justify-content:center;width:35px;height:35px}.top-notify b{position:absolute;right:-1px;top:-3px;background:#dc544e;color:#fff;border-radius:50%;font-size:9px;min-width:15px;height:15px;display:grid;place-items:center}.topbar-brandline h1{font-size:29px!important}.topbar-brandline h1:after{content:none!important}.topbar-center-search{flex:1;max-width:390px;margin-left:auto;margin-right:auto}.topbar-center-search input{height:18px}
+/* ===== PREMIUM DASHBOARD OVERRIDE ===== */
+html,body{overflow-x:hidden!important;overflow-y:auto!important;min-height:100%!important;background:#edf8f2!important;}
+body{font-size:14px!important;}
+.app-shell{min-height:100vh!important;}
+.sidebar{width:256px!important;background:linear-gradient(180deg,#124d3d 0%,#0f6049 55%,#0d4b3b 100%)!important;}
+.main{margin-left:256px!important;padding:18px 28px 55px!important;background:linear-gradient(135deg,#effaf5 0%,#f7fbf8 100%)!important;min-height:100vh!important;}
+.brand{padding:18px 18px 16px!important;}
+.brand-mark{width:42px!important;height:42px!important;border-radius:13px!important;background:#dff6e9!important;color:#147052!important;box-shadow:0 5px 15px rgba(0,0,0,.08);}
+.nav{padding:16px 9px!important;}
+.nav-item{border-radius:12px!important;padding:11px 13px!important;color:#effcf6!important;transition:.18s ease!important;}
+.nav-item:hover{background:rgba(223,246,233,.13)!important;transform:translateX(2px);}
+.nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
+.nav-badge{background:rgba(255,255,255,.13)!important;}
+.nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
+.sidebar-footer{padding:14px 14px 18px!important;}
+.storage-pill{color:#bfe0d1!important;}
+.storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
+.topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
+.topbar h1{font-size:0!important;color:#102b3f!important;line-height:1.1;}
+.topbar h1:after{content:'Hola, Sebastián 👋';font-size:29px;font-family:var(--font-display);font-weight:700;}
+.topbar p{font-size:14px!important;color:#607287!important;}
+.topbar-actions{gap:10px!important;}
+.user-chip{background:#fff!important;border:1px solid #d8ebe1!important;box-shadow:0 4px 12px rgba(28,90,68,.06)!important;padding:8px 12px!important;}
+.btn-ghost{background:#fff!important;border-color:#d8ebe1!important;}
+.premium-search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #cfe3da;border-radius:11px;padding:9px 13px;min-width:360px;box-shadow:0 3px 12px rgba(32,91,72,.05);}
+.premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
+.premium-search span{font-size:18px;color:#507064;}
+/* Summary */
+#tab-resumen{display:block!important;}
+#tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
+#tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
+#tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
+#tab-resumen .stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(39,116,84,.12)!important;}
+#tab-resumen .stat-card .small{position:relative;text-transform:none;color:#5e7180;font-size:11px;letter-spacing:.02em;}
+#tab-resumen .stat-card .big{position:relative;font-family:var(--font-display);font-size:31px!important;color:#122c3d!important;margin:4px 0!important;}
+#tab-resumen .stat-card:nth-child(2) .big{color:#16835f!important;}
+#tab-resumen .stat-card:nth-child(3) .big{color:#c98700!important;}
+#tab-resumen .stat-card:nth-child(4) .big{color:#d5544b!important;}
+#tab-resumen .stat-card:nth-child(5) .big{color:#178c68!important;}
+#tab-resumen .stat-card .hint{position:relative;color:#7a8995!important;font-size:12px!important;}
+#dashVacaciones{display:block;}
+.kpi-board{background:linear-gradient(90deg,#185c47,#237456)!important;border-radius:15px!important;box-shadow:0 10px 24px rgba(22,89,68,.13)!important;margin-bottom:18px!important;}
+.kpi-cell{padding:15px 20px!important;}
+.kpi-value{font-size:25px!important;color:#fff!important;}
+.kpi-value.amber,.kpi-value.gold{color:#f5cf6b!important;}.kpi-value.teal{color:#b6eed6!important;}.kpi-value.terracotta{color:#ffb3aa!important;}
+#tab-resumen .premium-summary-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.72fr);gap:18px;align-items:start;}
+#tab-resumen .premium-left{display:flex;flex-direction:column;gap:18px;min-width:0;}
+#tab-resumen .premium-right{display:flex;flex-direction:column;gap:14px;min-width:0;}
+.premium-panel{background:#fff;border:1px solid #dceee6;border-radius:15px;box-shadow:0 7px 20px rgba(39,116,84,.065);padding:18px;}
+.premium-panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.premium-panel-title h3{font-family:var(--font-body);font-size:15px;color:#172c3d;}
+.premium-panel-title a{font-size:12px;color:#16835f;text-decoration:underline;cursor:pointer;}
+.quick-card-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px!important;margin:0!important;}
+.quick-card{background:#fff!important;border:1px solid #dceee6!important;border-radius:13px!important;box-shadow:0 5px 16px rgba(39,116,84,.055)!important;cursor:pointer!important;transition:.18s ease!important;padding:13px!important;}
+.quick-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(39,116,84,.11)!important;}
+.quick-icon{width:35px!important;height:35px!important;border-radius:11px!important;display:flex;align-items:center;justify-content:center;font-size:18px!important;}
+.quick-card.green .quick-icon{background:#ddf4e8!important;}.quick-card.yellow .quick-icon{background:#fff0c9!important;}.quick-card.red .quick-icon{background:#ffe0dc!important;}.quick-card.purple .quick-icon{background:#eee5ff!important;}
+.quick-title{font-weight:700!important;color:#19384a!important;font-size:12px!important;}.quick-sub{font-size:10.5px!important;color:#7a8995!important;}
+.activity-item{display:flex!important;align-items:center!important;gap:10px!important;padding:9px 0!important;border-bottom:1px solid #edf2ef!important;}
+.activity-item:last-child{border-bottom:0!important;}.activity-dot{width:28px!important;height:28px!important;border-radius:10px!important;background:#ddf4e8!important;color:#13805e!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:700!important;flex:none!important;}.activity-dot.yellow{background:#fff0c9!important;color:#b57900!important}.activity-dot.red{background:#ffe0dc!important;color:#c84e46!important}.activity-dot.blue{background:#e1edff!important;color:#2266c4!important}.activity-main{flex:1;min-width:0}.activity-title{font-weight:600;color:#20384a;font-size:12px}.activity-sub{font-size:10.5px;color:#16835f}.activity-time{font-size:10px;color:#8996a1;white-space:nowrap}
+.donut-wrap{display:flex;align-items:center;gap:15px;}.donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(#48b982 0deg 270deg,#f2bb38 270deg 330deg,#ed655b 330deg 360deg);position:relative;display:grid;place-items:center;flex:none}.donut:after{content:'';width:72px;height:72px;border-radius:50%;background:#fff;position:absolute}.donut-center{position:relative;z-index:1;text-align:center;font-family:var(--font-display);font-size:24px;color:#17384a}.donut-center small{display:block;font-family:var(--font-body);font-size:10px;color:#7d8c97}.legend{display:flex;flex-direction:column;gap:8px;flex:1}.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#536676}.legend-left{display:flex;align-items:center;gap:7px}.legend-dot{width:9px;height:9px;border-radius:50%;}.lg-green{background:#48b982}.lg-yellow{background:#f2bb38}.lg-red{background:#ed655b}.lg-blue{background:#6ca2e9}
+.month-chart{height:150px;display:flex;align-items:flex-end;gap:13px;padding:15px 5px 0;border-bottom:1px solid #e8efeb}.month-bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.month-bar{width:100%;max-width:28px;background:linear-gradient(180deg,#65c99e,#2c936d);border-radius:7px 7px 2px 2px;min-height:10px;box-shadow:0 4px 9px rgba(45,147,109,.13)}.month-label{font-size:10px;color:#768895}.month-val{font-size:9px;color:#5c7180}.alert-strip{display:flex;align-items:center;gap:10px;border:1px solid #d8ebe1;background:#f5fbf7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#2a4b3d}.alert-strip.yellow{background:#fffaf0;border-color:#f3dfaa}.alert-strip.blue{background:#f2f7ff;border-color:#d8e6fa}
+.creator-footer{margin:22px 0 0!important;text-align:center!important;padding:16px 0 2px!important;border-top:1px solid #d9ebe3!important;color:#7a8b95!important;font-size:11px!important;}.creator-footer strong{color:#164c3b!important;}
+@media(max-width:1100px){#tab-resumen .dashboard-grid{grid-template-columns:repeat(2,1fr)!important}.quick-card-grid{grid-template-columns:repeat(2,1fr)!important}#tab-resumen .premium-summary-grid{grid-template-columns:1fr!important}.premium-search{min-width:260px}}
+
+html,body{overflow-x:hidden!important;overflow-y:auto!important;min-height:100%!important;background:#edf8f2!important;}
+body{font-size:14px!important;}
+.app-shell{min-height:100vh!important;}
+.sidebar{width:256px!important;background:linear-gradient(180deg,#124d3d 0%,#0f6049 55%,#0d4b3b 100%)!important;}
+.main{margin-left:256px!important;padding:18px 28px 55px!important;background:linear-gradient(135deg,#effaf5 0%,#f7fbf8 100%)!important;min-height:100vh!important;}
+.brand{padding:18px 18px 16px!important;}
+.brand-mark{width:42px!important;height:42px!important;border-radius:13px!important;background:#dff6e9!important;color:#147052!important;box-shadow:0 5px 15px rgba(0,0,0,.08);}
+.nav{padding:16px 9px!important;}
+.nav-item{border-radius:12px!important;padding:11px 13px!important;color:#effcf6!important;transition:.18s ease!important;}
+.nav-item:hover{background:rgba(223,246,233,.13)!important;transform:translateX(2px);}
+.nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
+.nav-badge{background:rgba(255,255,255,.13)!important;}
+.nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
+.sidebar-footer{padding:14px 14px 18px!important;}
+.storage-pill{color:#bfe0d1!important;}
+.storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
+.topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
+.topbar h1{font-size:0!important;color:#102b3f!important;line-height:1.1;}
+.topbar h1:after{content:'Hola, Sebastián 👋';font-size:29px;font-family:var(--font-display);font-weight:700;}
+.topbar p{font-size:14px!important;color:#607287!important;}
+.topbar-actions{gap:10px!important;}
+.user-chip{background:#fff!important;border:1px solid #d8ebe1!important;box-shadow:0 4px 12px rgba(28,90,68,.06)!important;padding:8px 12px!important;}
+.btn-ghost{background:#fff!important;border-color:#d8ebe1!important;}
+.premium-search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #cfe3da;border-radius:11px;padding:9px 13px;min-width:360px;box-shadow:0 3px 12px rgba(32,91,72,.05);}
+.premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
+.premium-search span{font-size:18px;color:#507064;}
+/* Summary */
+#tab-resumen{display:block!important;}
+#tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
+#tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
+#tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
+#tab-resumen .stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(39,116,84,.12)!important;}
+#tab-resumen .stat-card .small{position:relative;text-transform:none;color:#5e7180;font-size:11px;letter-spacing:.02em;}
+#tab-resumen .stat-card .big{position:relative;font-family:var(--font-display);font-size:31px!important;color:#122c3d!important;margin:4px 0!important;}
+#tab-resumen .stat-card:nth-child(2) .big{color:#16835f!important;}
+#tab-resumen .stat-card:nth-child(3) .big{color:#c98700!important;}
+#tab-resumen .stat-card:nth-child(4) .big{color:#d5544b!important;}
+#tab-resumen .stat-card:nth-child(5) .big{color:#178c68!important;}
+#tab-resumen .stat-card .hint{position:relative;color:#7a8995!important;font-size:12px!important;}
+#dashVacaciones{display:block;}
+.kpi-board{background:linear-gradient(90deg,#185c47,#237456)!important;border-radius:15px!important;box-shadow:0 10px 24px rgba(22,89,68,.13)!important;margin-bottom:18px!important;}
+.kpi-cell{padding:15px 20px!important;}
+.kpi-value{font-size:25px!important;color:#fff!important;}
+.kpi-value.amber,.kpi-value.gold{color:#f5cf6b!important;}.kpi-value.teal{color:#b6eed6!important;}.kpi-value.terracotta{color:#ffb3aa!important;}
+#tab-resumen .premium-summary-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.72fr);gap:18px;align-items:start;}
+#tab-resumen .premium-left{display:flex;flex-direction:column;gap:18px;min-width:0;}
+#tab-resumen .premium-right{display:flex;flex-direction:column;gap:14px;min-width:0;}
+.premium-panel{background:#fff;border:1px solid #dceee6;border-radius:15px;box-shadow:0 7px 20px rgba(39,116,84,.065);padding:18px;}
+.premium-panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.premium-panel-title h3{font-family:var(--font-body);font-size:15px;color:#172c3d;}
+.premium-panel-title a{font-size:12px;color:#16835f;text-decoration:underline;cursor:pointer;}
+.quick-card-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px!important;margin:0!important;}
+.quick-card{background:#fff!important;border:1px solid #dceee6!important;border-radius:13px!important;box-shadow:0 5px 16px rgba(39,116,84,.055)!important;cursor:pointer!important;transition:.18s ease!important;padding:13px!important;}
+.quick-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(39,116,84,.11)!important;}
+.quick-icon{width:35px!important;height:35px!important;border-radius:11px!important;display:flex;align-items:center;justify-content:center;font-size:18px!important;}
+.quick-card.green .quick-icon{background:#ddf4e8!important;}.quick-card.yellow .quick-icon{background:#fff0c9!important;}.quick-card.red .quick-icon{background:#ffe0dc!important;}.quick-card.purple .quick-icon{background:#eee5ff!important;}
+.quick-title{font-weight:700!important;color:#19384a!important;font-size:12px!important;}.quick-sub{font-size:10.5px!important;color:#7a8995!important;}
+.activity-item{display:flex!important;align-items:center!important;gap:10px!important;padding:9px 0!important;border-bottom:1px solid #edf2ef!important;}
+.activity-item:last-child{border-bottom:0!important;}.activity-dot{width:28px!important;height:28px!important;border-radius:10px!important;background:#ddf4e8!important;color:#13805e!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:700!important;flex:none!important;}.activity-dot.yellow{background:#fff0c9!important;color:#b57900!important}.activity-dot.red{background:#ffe0dc!important;color:#c84e46!important}.activity-dot.blue{background:#e1edff!important;color:#2266c4!important}.activity-main{flex:1;min-width:0}.activity-title{font-weight:600;color:#20384a;font-size:12px}.activity-sub{font-size:10.5px;color:#16835f}.activity-time{font-size:10px;color:#8996a1;white-space:nowrap}
+.donut-wrap{display:flex;align-items:center;gap:15px;}.donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(#48b982 0deg 270deg,#f2bb38 270deg 330deg,#ed655b 330deg 360deg);position:relative;display:grid;place-items:center;flex:none}.donut:after{content:'';width:72px;height:72px;border-radius:50%;background:#fff;position:absolute}.donut-center{position:relative;z-index:1;text-align:center;font-family:var(--font-display);font-size:24px;color:#17384a}.donut-center small{display:block;font-family:var(--font-body);font-size:10px;color:#7d8c97}.legend{display:flex;flex-direction:column;gap:8px;flex:1}.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#536676}.legend-left{display:flex;align-items:center;gap:7px}.legend-dot{width:9px;height:9px;border-radius:50%;}.lg-green{background:#48b982}.lg-yellow{background:#f2bb38}.lg-red{background:#ed655b}.lg-blue{background:#6ca2e9}
+.month-chart{height:150px;display:flex;align-items:flex-end;gap:13px;padding:15px 5px 0;border-bottom:1px solid #e8efeb}.month-bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.month-bar{width:100%;max-width:28px;background:linear-gradient(180deg,#65c99e,#2c936d);border-radius:7px 7px 2px 2px;min-height:10px;box-shadow:0 4px 9px rgba(45,147,109,.13)}.month-label{font-size:10px;color:#768895}.month-val{font-size:9px;color:#5c7180}.alert-strip{display:flex;align-items:center;gap:10px;border:1px solid #d8ebe1;background:#f5fbf7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#2a4b3d}.alert-strip.yellow{background:#fffaf0;border-color:#f3dfaa}.alert-strip.blue{background:#f2f7ff;border-color:#d8e6fa}
+.creator-footer{margin:22px 0 0!important;text-align:center!important;padding:16px 0 2px!important;border-top:1px solid #d9ebe3!important;color:#7a8b95!important;font-size:11px!important;}.creator-footer strong{color:#164c3b!important;}
+@media(max-width:1100px){#tab-resumen .dashboard-grid{grid-template-columns:repeat(2,1fr)!important}.quick-card-grid{grid-template-columns:repeat(2,1fr)!important}#tab-resumen .premium-summary-grid{grid-template-columns:1fr!important}.premium-search{min-width:260px}}
+
 </style>
 
 <style id="ui-premium-enhancement">
@@ -396,7 +527,7 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
       <input id="loginPassword" type="password" class="input" autocomplete="current-password" placeholder="Contraseña">
       <label class="checkbox-label"><input type="checkbox" id="loginRemember"> Mantener sesión en este navegador</label>
       <button id="btnLogin" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Ingresar</button>
-      <div class="login-help">Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.</div>
+      <div class="login-help">Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>.</div>
     </div>
   </div>
 </div>
@@ -459,17 +590,22 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
       </button>
     </nav>
     <div class="sidebar-footer">
-      <div class="storage-pill"><span class="storage-dot"></span><span>Datos en este navegador</span></div>
+      <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div><div style="margin-top:28px;color:#d9efe5;font-size:10px;line-height:1.5">Farmacias de Similares Chile<br><strong>Sistema creado por Sebastián Coloma</strong></div>
     </div>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div>
-        <h1 id="pageTitle">Resumen general</h1>
-        <p class="muted" id="pageSubtitle">Visión global del personal y los traslados activos</p>
+      <div class="topbar-brandline">
+        <div class="topbar-logo">◈</div>
+        <div>
+          <h1 id="pageTitle">Resumen general</h1>
+          <p class="muted" id="pageSubtitle">Panel de Traslados · Gestión de Sucursales</p>
+        </div>
       </div>
+      <div class="topbar-center-search premium-search"><span>⌕</span><input id="globalSearch" placeholder="Buscar colaborador, RUT o sucursal..."><span style="font-size:10px;background:#f1f5f3;border-radius:6px;padding:3px 6px;color:#71827d">⌘ K</span></div>
       <div class="topbar-actions">
+        <span class="top-notify">♧<b>3</b></span>
         <span id="currentUserChip" class="user-chip hidden"></span>
         <button id="btnLogout" class="btn btn-ghost hidden">Cerrar sesión</button>
       </div>
@@ -478,10 +614,11 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== RESUMEN ===================== -->
     <section id="tab-resumen" class="tab-panel active">
       <div class="dashboard-grid">
-        <div class="stat-card"><div class="small">Personal activo</div><div class="big" id="dashActivos">0</div><div class="hint">Colaboradores disponibles</div></div>
-        <div class="stat-card"><div class="small">Traslados activos</div><div class="big" id="dashTrasActivos">0</div><div class="hint">Con cambio vigente hoy</div></div>
-        <div class="stat-card"><div class="small">Movimientos próximos</div><div class="big" id="dashProximos">0</div><div class="hint">Próximos 7 días</div></div>
-        <div class="stat-card"><div class="small">Ausencias vigentes</div><div class="big" id="dashAusencias">0</div><div class="hint">Vacaciones + licencias</div></div>
+        <div class="stat-card"><div class="small">Total de traslados</div><div class="big" id="dashTrasTotal">0</div><div class="hint">Todos los traslados</div></div>
+        <div class="stat-card"><div class="small">Aprobados</div><div class="big" id="dashAprobados">0</div><div class="hint">Traslados finalizados</div></div>
+        <div class="stat-card"><div class="small">En observación</div><div class="big" id="dashEspera">0</div><div class="hint">En revisión</div></div>
+        <div class="stat-card"><div class="small">Rechazados</div><div class="big" id="dashRechazados">0</div><div class="hint">No aprobados</div></div>
+        <div class="stat-card"><div class="small">Este mes</div><div class="big" id="dashMes">0</div><div class="hint">Traslados creados</div></div>
       </div>
       <div class="kpi-board">
         <div class="kpi-cell"><span class="kpi-label">Colaboradores</span><span class="kpi-value" id="kpiColaboradores">0</span></div>
@@ -491,11 +628,25 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
         <div class="kpi-cell"><span class="kpi-label">De vacaciones</span><span class="kpi-value teal" id="kpiVacaciones">0</span></div>
         <div class="kpi-cell"><span class="kpi-label">Con licencia</span><span class="kpi-value terracotta" id="kpiLicencias">0</span></div>
       </div>
-      <div class="grid-2">
-        <div class="card"><div class="card-title">Alertas operativas</div><p class="muted">Situaciones que requieren atención.</p><div id="dashboardAlerts" class="alert-list"></div></div>
-        <div class="card"><div class="card-title">Próximos movimientos</div><p class="muted">Cambios programados y vencimientos.</p><div id="dashboardEvents" class="event-list"></div></div>
+      <div class="premium-summary-grid">
+        <div class="premium-left">
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Alertas operativas</h3><a>Ver todas</a></div><div id="dashboardAlerts" class="alert-list"></div></div>
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Próximos movimientos</h3><a>Calendario</a></div><div id="dashboardEvents" class="event-list"></div></div>
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Distribución por sucursal</h3><span class="muted">Personal actualmente asignado</span></div><div id="branchDistribution"></div></div>
+        </div>
+        <div class="premium-right">
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Actividad reciente</h3><a>Ver todas</a></div><div id="premiumRecentTransfers"></div></div>
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Distribución por estado</h3><select id="dashboardStateFilter" class="select" style="width:auto;padding:5px 8px"><option>Todos los traslados</option></select></div><div class="donut-wrap"><div class="donut"><div class="donut-center" id="donutTotal">0<small>Total</small></div></div><div class="legend" id="dashboardLegend"></div></div></div>
+          <div class="premium-panel"><div class="premium-panel-title"><h3>Traslados por mes</h3><select class="select" style="width:auto;padding:5px 8px"><option>Últimos 6 meses</option></select></div><div class="month-chart" id="monthChart"></div></div>
+        </div>
       </div>
-      <div class="card"><div class="card-title">Distribución por sucursal</div><p class="muted">Personal actualmente asignado.</p><div id="branchDistribution"></div></div>
+      <div style="margin-top:18px"><div class="quick-card-grid">
+        <div class="quick-card green" data-go-tab="colaboradores"><div class="quick-icon">👥</div><div><div class="quick-title">Gestionar Colaboradores</div><div class="quick-sub">Abrir módulo</div></div></div>
+        <div class="quick-card green" data-go-tab="sucursales"><div class="quick-icon">🏢</div><div><div class="quick-title">Administrar Sucursales</div><div class="quick-sub">Abrir módulo</div></div></div>
+        <div class="quick-card yellow" data-go-tab="vacaciones"><div class="quick-icon">🌿</div><div><div class="quick-title">Control de Vacaciones</div><div class="quick-sub">Abrir módulo</div></div></div>
+        <div class="quick-card red" data-go-tab="licencias"><div class="quick-icon">🩺</div><div><div class="quick-title">Gestionar Licencias médicas</div><div class="quick-sub">Abrir módulo</div></div></div>
+        <div class="quick-card purple" data-go-tab="reportes"><div class="quick-icon">📊</div><div><div class="quick-title">Generar Reportes</div><div class="quick-sub">Abrir módulo</div></div></div>
+      </div></div>
     </section>
 
     <!-- ===================== COLABORADORES ===================== -->
@@ -976,6 +1127,10 @@ function hideLogin(){
 function updateSessionUI(){
   var chip = document.getElementById('currentUserChip');
   var logout = document.getElementById('btnLogout');
+  var welcome = document.querySelector('.topbar-brandline h1');
+  if(welcome){ var nm=currentUser ? (currentUser.nombre||currentUser.username||'Usuario') : 'Usuario'; var first=String(nm).trim().split(/\s+/)[0]||'Usuario'; welcome.textContent='Hola, '+first+' 👋'; }
+  var global=document.getElementById('globalSearch'); if(global&&!global.__wired){global.__wired=true;global.addEventListener('keydown',function(e){if(e.key==='Enter'&&typeof switchTab==='function'){var q=global.value.trim();if(q){switchTab('colaboradores');var sc=document.getElementById('searchColab');if(sc){sc.value=q;sc.dispatchEvent(new Event('input'));}}}});}
+
   var navUsers = document.getElementById('navUsuarios');
   if(currentUser){
     chip.classList.remove('hidden');
@@ -1939,7 +2094,10 @@ function renderDashboardDetails(){
   var hoy=hoyISO(),activos=state.colaboradores.filter(function(c){return normalizeSearch(c.estado||'Activo')==='activo';}).length;
   var trasAct=state.traslados.filter(function(t){return t.estado==='aprobado'&&(t.fechaInicio||'')<=hoy&&(t.indefinido||!t.fechaTermino||t.fechaTermino>=hoy);}).length;
   var eventos=getUpcomingEvents(7);var aus=state.vacaciones.filter(function(v){return isAusenciaVigente(v);}).length+state.licencias.filter(function(v){return isAusenciaVigente(v);}).length;
-  document.getElementById('dashActivos').textContent=activos;document.getElementById('dashTrasActivos').textContent=trasAct;document.getElementById('dashProximos').textContent=eventos.length;document.getElementById('dashAusencias').textContent=aus;
+  var totalTras=state.traslados.length, aprob=state.traslados.filter(function(t){return t.estado==='aprobado';}).length, espera=state.traslados.filter(function(t){return t.estado==='espera';}).length, rech=state.traslados.filter(function(t){return t.estado==='rechazado';}).length;
+  var now=new Date(), ym=now.getFullYear()+'-'+pad2(now.getMonth()+1), mes=state.traslados.filter(function(t){return String(t.fechaInicio||t.createdAt||'').indexOf(ym)===0;}).length;
+  var setText=function(id,v){var x=document.getElementById(id);if(x)x.textContent=v;};
+  setText('dashActivos',activos);setText('dashTrasActivos',trasAct);setText('dashProximos',eventos.length);setText('dashAusencias',aus);setText('dashTrasTotal',totalTras);setText('dashAprobados',aprob);setText('dashEspera',espera);setText('dashRechazados',rech);setText('dashMes',mes);
   var alerts=document.getElementById('dashboardAlerts');alerts.innerHTML='';var alertsArr=[];
   var pend=state.traslados.filter(function(t){return t.estado==='pendiente';}).length;if(pend)alertsArr.push(['amber','Hay '+pend+' traslado(s) pendientes de aprobación.']);
   var starts=eventos.filter(function(e){return e.title.indexOf('Inicio')===0;}).length;if(starts)alertsArr.push(['teal',starts+' movimiento(s) comienzan dentro de los próximos 7 días.']);
@@ -1948,6 +2106,9 @@ function renderDashboardDetails(){
   alertsArr.forEach(function(a){alerts.appendChild(el('div',{class:'alert-item',children:[el('span',{class:'alert-dot '+a[0]}),el('div',{text:a[1]})]}));});
   var ev=document.getElementById('dashboardEvents');ev.innerHTML='';eventos.slice(0,8).forEach(function(x){ev.appendChild(el('div',{class:'event-item',children:[el('div',{class:'event-date',text:formatDateDisplay(x.date)}),el('div',{class:'event-main',children:[el('div',{class:'event-title',text:x.title}),el('div',{class:'event-sub',text:x.sub})]})]}));});if(!eventos.length)ev.appendChild(el('div',{class:'muted',text:'No hay movimientos próximos.'}));
   var dist=document.getElementById('branchDistribution');dist.innerHTML='';var rows=state.sucursales.map(function(s){return {s:s,n:countPersonalForSucursal(s.nombre)};}).filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;});var max=rows.length?rows[0].n:1;rows.slice(0,15).forEach(function(x){var row=el('div',{class:'branch-row'});var main=el('div',{class:'branch-main'});main.appendChild(el('div',{class:'branch-name',text:x.s.nombre}));var bar=el('div',{class:'branch-bar'});bar.appendChild(el('div',{style:'width:'+Math.max(4,(x.n/max)*100)+'%'}));main.appendChild(bar);row.appendChild(main);row.appendChild(el('div',{class:'branch-count',text:String(x.n)}));dist.appendChild(row);});if(!rows.length)dist.appendChild(el('div',{class:'muted',text:'No hay personal asignado a sucursales.'}));
+  var ra=document.getElementById('premiumRecentTransfers'); if(ra){var recent=state.traslados.slice().sort(function(a,b){return String(b.fechaInicio||b.createdAt||'').localeCompare(String(a.fechaInicio||a.createdAt||''));}).slice(0,5);ra.innerHTML=recent.length?recent.map(function(t){var k=String(t.estado||'pendiente').toLowerCase(),cl=k==='rechazado'?'red':k==='espera'?'yellow':k==='pendiente'?'blue':'';return '<div class="activity-item"><div class="activity-dot '+cl+'">'+(k==='aprobado'?'✓':k==='rechazado'?'×':k==='espera'?'◷':'•')+'</div><div class="activity-main"><div class="activity-title">'+escapeHtml(t.nombre||t.colaboradorNombre||t.rut||'Sin nombre')+'</div><div class="activity-sub">'+escapeHtml(t.estado||'Pendiente')+'</div></div><div class="activity-time">'+escapeHtml(t.fechaInicio||'')+'</div></div>';}).join(''):'<div class="muted">No hay actividad reciente.</div>'; }
+  var lg=document.getElementById('dashboardLegend'),dt=document.getElementById('donutTotal'); if(lg){lg.innerHTML='<div class="legend-row"><span class="legend-left"><i class="legend-dot lg-green"></i>Aprobados</span><strong>'+aprob+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-yellow"></i>En observación</span><strong>'+espera+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-red"></i>Rechazados</span><strong>'+rech+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-blue"></i>Pendientes</span><strong>'+state.traslados.filter(function(t){return t.estado==='pendiente';}).length+'</strong></div>'; } if(dt)dt.innerHTML=totalTras+'<small>Total</small>';
+  var mc=document.getElementById('monthChart'); if(mc){var vals=[],labels=[],d0=new Date();for(var mi=5;mi>=0;mi--){var d=new Date(d0.getFullYear(),d0.getMonth()-mi,1),key=d.getFullYear()+'-'+pad2(d.getMonth()+1);labels.push(new Intl.DateTimeFormat('es-CL',{month:'short'}).format(d).replace('.',''));vals.push(state.traslados.filter(function(t){return String(t.fechaInicio||t.createdAt||'').indexOf(key)===0;}).length);}var mx=Math.max.apply(null,vals.concat([1]));mc.innerHTML=vals.map(function(v,i){return '<div class="month-bar-wrap"><span class="month-val">'+v+'</span><div class="month-bar" style="height:'+Math.max(10,(v/mx)*105)+'px"></div><span class="month-label">'+labels[i]+'</span></div>';}).join('');}
 }
 
 var calendarCursor=new Date();calendarCursor.setDate(1);
@@ -2017,8 +2178,14 @@ function switchTab(tabName){
 
   if(titles[tabName]){
     var pt=document.getElementById('pageTitle'), ps=document.getElementById('pageSubtitle');
-    if(pt)pt.textContent=titles[tabName][0];
-    if(ps)ps.textContent=titles[tabName][1];
+    if(pt){
+      pt.textContent=titles[tabName][0];
+      if(tabName==='resumen' && currentUser){
+        var nm=String(currentUser.nombre||currentUser.username||'Usuario').trim().split(/\s+/)[0]||'Usuario';
+        pt.textContent='Hola, '+nm+' 👋';
+      }
+    }
+    if(ps)ps.textContent=tabName==='resumen'?'Panel de Traslados · Gestión de Sucursales':titles[tabName][1];
   }
 
   if(tabName==='resumen')renderResumen();
