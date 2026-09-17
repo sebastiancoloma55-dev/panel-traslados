@@ -453,8 +453,11 @@ html_content = html_content.replace(
     "Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>."
 )
 
+# Un solo desplazamiento: el documento de Streamlit se encarga del scroll; el iframe no crea otro.
+html_content = html_content.replace("</head>", "<style>html,body{overflow:visible!important;overflow-x:hidden!important;} .app-shell{min-height:auto!important;} </style></head>", 1)
+
 st.components.v1.html(
     html_content,
-    height=3600,
+    height=5200,
     scrolling=False,
 )
