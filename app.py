@@ -455,6 +455,6 @@ html_content = html_content.replace(
 
 st.components.v1.html(
     html_content,
-    height=1000,
-    scrolling=True,
+    height=3600,
+    scrolling=False,
 )
