@@ -49,12 +49,6 @@ if not index_path.exists():
 
 html_content = index_path.read_text(encoding="utf-8")
 
-# Refuerzo de login: el botón lleva un handler inline y nunca queda bloqueado por la inicialización.
-html_content = html_content.replace(
-    '<button id="btnLogin" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Ingresar</button>',
-    '<button id="btnLogin" type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;" onclick="return window.__panelDirectLogin(event);">Ingresar</button>'
-)
-
 # El login y almacenamiento central se inyectan dentro del mismo IIFE
 # del index para poder reemplazar las funciones internas sin rehacer la UI.
 central_sync = r"""
@@ -97,34 +91,22 @@ function centralHeaders(extra){
 }
 function centralRequest(path, options){
   options = options || {};
-  var target = CENTRAL_API + (path || '');
-  var requestOptions = {
+  return fetch(CENTRAL_API + path, {
     method: options.method || 'GET',
     headers: centralHeaders(options.headers),
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  };
-
-  function parseResponse(r){
-    return r.text().then(function(raw){
+  }).then(function(r){
+    return r.text().then(function(text){
       var data = {};
-      try { data = raw ? JSON.parse(raw) : {}; }
-      catch(e) { data = { error: raw || ('HTTP ' + r.status) }; }
-
+      try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { error:text || 'Respuesta inválida' }; }
       if(!r.ok){
-        var err = new Error(
-          data.error ||
-          data.message ||
-          ('HTTP ' + r.status + ' al conectar con el servidor')
-        );
+        var err = new Error(data.error || ('HTTP ' + r.status));
         err.status = r.status;
-        err.data = data;
         throw err;
       }
       return data;
     });
-  }
-
-  return fetch(target, requestOptions).then(parseResponse);
+  });
 }
 function centralStoreName(storeName){ return storeName; }
 
@@ -199,98 +181,29 @@ reloadStateFromDB = function(){
 
 /* Login centralizado contra PostgreSQL/Supabase. */
 loginUser = function(){
-  var usernameEl = document.getElementById('loginUsername');
-  var passwordEl = document.getElementById('loginPassword');
-  var rememberEl = document.getElementById('loginRemember');
+  var username = document.getElementById('loginUsername').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var remember = document.getElementById('loginRemember').checked;
+  if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
   var btn = document.getElementById('btnLogin');
-
-  var username = usernameEl ? usernameEl.value.trim() : '';
-  var password = passwordEl ? passwordEl.value : '';
-  var remember = !!(rememberEl && rememberEl.checked);
-
-  if(!username || !password){
-    showLogin('Ingrese usuario y contraseña.');
-    return false;
-  }
-
   if(btn) btn.disabled = true;
-
-  var body = { username: username, password: password };
-
-  function doLogin(){
-    return centralRequest('/login', {
-      method:'POST',
-      body:body
-    }).catch(function(err){
-      /*
-       * Compatibilidad definitiva: si una versión antigua de la Edge Function
-       * no reconoce /login, prueba la raíz una sola vez.
-       */
-      if(err && (err.status === 404 || err.status === 405)){
-        return centralRequest('', {
-          method:'POST',
-          body:body
-        });
-      }
-      throw err;
-    });
-  }
-
-  doLogin().then(function(result){
-    if(!result || !result.token || !result.user){
-      throw new Error('El servidor respondió sin una sesión válida.');
-    }
-
+  centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
-
-    centralStorageSet(
-      CENTRAL_TOKEN_KEY,
-      CENTRAL_TOKEN,
-      remember
-    );
-    centralStorageSet(
-      CENTRAL_USER_KEY,
-      JSON.stringify(currentUser),
-      remember
-    );
-
+    centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
+    centralStorageSet(CENTRAL_USER_KEY, JSON.stringify(currentUser), remember);
     return centralLoadState();
   }).then(function(){
     hideLogin();
     updateSessionUI();
     rerenderAll();
-
-    if(typeof bootAdv === 'function'){
-      try { bootAdv(); } catch(e) { console.warn('bootAdv:', e); }
-    }
-
+    if(typeof bootAdv === 'function') bootAdv();
     switchTab('resumen');
-
-    showToast(
-      'Bienvenido, ' +
-      (currentUser.nombre || currentUser.username) +
-      '.',
-      'success'
-    );
+    showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success');
   }).catch(function(err){
-    console.error('LOGIN CENTRAL DEFINITIVO:', err);
-
-    CENTRAL_TOKEN = null;
-    currentUser = null;
-    centralStorageClear();
-
-    var msg = 'No fue posible iniciar sesión.';
-    if(err && err.message){
-      msg = err.message;
-    }
-
-    showLogin(msg);
-  }).finally(function(){
-    if(btn) btn.disabled = false;
-  });
-
-  return false;
+    console.error('Login central:', err);
+    showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
+  }).finally(function(){ if(btn) btn.disabled = false; });
 };
 
 restoreSession = function(){
@@ -328,15 +241,15 @@ logout = function(){
 /* Eliminaciones directas para no borrar y reconstruir tablas completas. */
 deleteColaborador = function(rut){
   if(!confirm('¿Eliminar este colaborador?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', id:rut}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', record:{rut:rut}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
 };
 deleteSucursal = function(codigo){
   if(!confirm('¿Eliminar esta sucursal?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', id:codigo}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', record:{codigo:codigo}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
 };
 eliminarTraslado = function(id){
   if(!confirm('¿Eliminar este traslado?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', id:id}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', record:{id:id}}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
 };
 
 /* El respaldo conserva su exportación local, pero la restauración queda centralizada. */
@@ -398,72 +311,6 @@ importBackup = function(file){
       --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
       --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
     }
-
-    /* ===== LOGIN VERDE PASTEL ===== */
-    .login-screen{
-      position:fixed !important; inset:0 !important;
-      background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
-      display:flex !important; align-items:flex-start !important; justify-content:center !important;
-      padding:28px 20px 40px !important; z-index:1000 !important;
-    }
-    .login-card{
-      width:100% !important; max-width:430px !important;
-      background:#fff !important; border-radius:20px !important;
-      box-shadow:0 24px 80px rgba(18,67,51,.28) !important;
-      overflow:hidden !important; border:1px solid #DDEBE3 !important;
-    }
-    .login-head{
-      padding:28px 30px 20px !important;
-      background:linear-gradient(180deg,#F8FCF9,#fff) !important;
-      border-bottom:1px solid #DDEBE3 !important;
-    }
-    .login-mark{
-      background:#D6A23A !important; color:#164437 !important;
-      box-shadow:0 5px 14px rgba(214,162,58,.20) !important;
-    }
-    .login-title,.login-card h1,.login-card h2,.login-card h3{
-      color:#164437 !important;
-    }
-    .login-sub,.login-help{
-      color:#71857D !important;
-    }
-    .login-body{padding:26px 30px 30px !important;}
-    .login-card label{color:#596D66 !important;font-weight:700 !important;}
-    .login-card input{
-      border:1px solid #C7DDD1 !important;
-      background:#fff !important;
-      color:#164437 !important;
-      border-radius:9px !important;
-    }
-    .login-card input:focus{
-      border-color:#58A982 !important;
-      box-shadow:0 0 0 3px rgba(88,169,130,.15) !important;
-      outline:none !important;
-    }
-    .login-card input::placeholder{color:#9AA9A3 !important;}
-    .login-error{
-      background:#FBE2DF !important;
-      color:#A83D35 !important;
-      border-color:#E8B8AF !important;
-    }
-    .login-card .btn-primary,
-    #btnLogin{
-      background:#277454 !important;
-      border-color:#277454 !important;
-      color:#fff !important;
-      border-radius:9px !important;
-      transition:transform .18s ease,box-shadow .18s ease,background .18s ease !important;
-    }
-    .login-card .btn-primary:hover,
-    #btnLogin:hover{
-      background:#1F6247 !important;
-      transform:translateY(-1px) !important;
-      box-shadow:0 8px 18px rgba(39,116,84,.18) !important;
-    }
-    .login-card .btn-primary:disabled,
-    #btnLogin:disabled{opacity:.65 !important;cursor:wait !important;}
-    .login-card a{color:#277454 !important;}
-
     body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
     .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
     .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
@@ -591,43 +438,6 @@ importBackup = function(file){
   };
 })();
 
-
-/* ====== LOGIN ROBUSTO / SIN RECARGA ====== */
-(function(){
-  function bindLogin(){
-    var btn = document.getElementById('btnLogin');
-    var form = btn ? btn.closest('form') : null;
-
-    if(btn && !btn.__centralBound){
-      btn.type = 'button';
-      btn.addEventListener('click', function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        return loginUser();
-      }, true);
-      btn.__centralBound = true;
-    }
-
-    if(form && !form.__centralBound){
-      form.addEventListener('submit', function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        return loginUser();
-      }, true);
-      form.__centralBound = true;
-    }
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bindLogin, {once:true});
-  } else {
-    bindLogin();
-  }
-
-  setTimeout(bindLogin, 250);
-  setTimeout(bindLogin, 1000);
-})();
-
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
 
 """
@@ -638,17 +448,13 @@ if marker not in html_content:
     st.stop()
 
 html_content = html_content.replace(marker, central_sync + "\n" + marker, 1)
-html_content = html_content.rsplit("</body>", 1)[0] + "\n<script>\n(function(){\n  'use strict';\n  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';\n  var busy=false;\n  function byId(id){return document.getElementById(id);}\n  function showErr(msg){var x=byId('loginError');if(x){x.textContent=String(msg||'No fue posible iniciar sesión.');x.style.display='block';x.classList.add('show');}}\n  function hideErr(){var x=byId('loginError');if(x){x.textContent='';x.style.display='none';x.classList.remove('show');}}\n  function clearSession(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}\n  function save(k,v,remember){try{localStorage.removeItem(k);sessionStorage.removeItem(k);(remember?localStorage:sessionStorage).setItem(k,v);}catch(e){}}\n  function parse(r){return r.text().then(function(raw){var d={};try{d=raw?JSON.parse(raw):{};}catch(e){d={error:raw};}if(!r.ok){var er=new Error(d.error||d.message||('HTTP '+r.status));er.status=r.status;throw er;}return d;});}\n  window.__panelDirectLogin=function(ev){\n    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}\n    if(busy)return false;\n    var u=byId('loginUsername'),p=byId('loginPassword'),r=byId('loginRemember'),b=byId('btnLogin');\n    var username=u?String(u.value||'').trim():'', password=p?String(p.value||''):'', remember=!!(r&&r.checked);\n    if(!username||!password){showErr('Ingrese usuario y contraseña.');return false;}\n    busy=true;hideErr();\n    if(b){b.disabled=false;b.textContent='Ingresando...';b.style.pointerEvents='none';}\n    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})\n      .then(parse)\n      .then(function(d){\n        if(!d.token||!d.user)throw new Error('El servidor no entregó una sesión válida.');\n        window.CENTRAL_TOKEN=d.token;window.currentUser=d.user;\n        save('panelCentralToken',d.token,remember);save('panelCentralUser',JSON.stringify(d.user),remember);\n        if(typeof window.centralLoadState==='function')return window.centralLoadState();\n        return fetch(API+'/state',{headers:{Authorization:'Bearer '+d.token}}).then(parse);\n      })\n      .then(function(){\n        var login=byId('loginScreen');if(login){login.classList.add('hidden');login.style.display='none';}\n        if(typeof window.hideLogin==='function'){try{window.hideLogin();}catch(e){}}\n        if(typeof window.updateSessionUI==='function'){try{window.updateSessionUI();}catch(e){}}\n        if(typeof window.rerenderAll==='function'){try{window.rerenderAll();}catch(e){}}\n        if(typeof window.bootAdv==='function'){try{window.bootAdv();}catch(e){}}\n        if(typeof window.switchTab==='function'){try{window.switchTab('resumen');}catch(e){}}\n      })\n      .catch(function(e){console.error('LOGIN DEFINITIVO',e);window.CENTRAL_TOKEN=null;window.currentUser=null;clearSession();showErr(e&&e.message?e.message:'No fue posible iniciar sesión.');})\n      .finally(function(){busy=false;var b=byId('btnLogin');if(b){b.disabled=false;b.style.pointerEvents='auto';b.textContent='Ingresar';}});\n    return false;\n  };\n  function unlock(){var b=byId('btnLogin');if(b){b.disabled=false;b.type='button';b.style.pointerEvents='auto';b.onclick=window.__panelDirectLogin;}}\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',unlock,{once:true});\n  else unlock();\n  var i=0,t=setInterval(function(){unlock();if(++i>80)clearInterval(t);},250);\n})();\n</script>\n" + "</body>"
 html_content = html_content.replace(
     "Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.",
     "Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>."
 )
 
-# Un solo desplazamiento: el documento de Streamlit se encarga del scroll; el iframe no crea otro.
-html_content = html_content.replace("</head>", "<style>html,body{overflow:visible!important;overflow-x:hidden!important;} .app-shell{min-height:auto!important;} </style></head>", 1)
-
 st.components.v1.html(
     html_content,
-    height=5200,
-    scrolling=False,
+    height=900,
+    scrolling=True,
 )
