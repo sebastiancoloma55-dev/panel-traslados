@@ -38,45 +38,8 @@ a{color:inherit;}
 .hidden{display:none !important;}
 
 /* ---------- autenticacion / usuarios ---------- */
-.login-screen{
-    position:fixed !important;
-    inset:0 !important;
-    width:100vw !important;
-    height:100vh !important;
-    min-height:100vh !important;
-
-    background:linear-gradient(
-        135deg,
-        #174A3B 0%,
-        #1F604B 60%,
-        #2D705A 100%
-    ) !important;
-
-    display:flex !important;
-    align-items:flex-start !important;
-    justify-content:center !important;
-
-    padding:90px 20px 40px !important;
-    box-sizing:border-box !important;
-
-    z-index:99999 !important;
-    overflow:hidden !important;
-}
-
-.login-card{
-    width:100% !important;
-    max-width:430px !important;
-    margin:0 auto !important;
-
-    background:#FFFFFF !important;
-    border-radius:20px !important;
-
-    box-shadow:
-        0 24px 80px rgba(0,0,0,.35) !important;
-
-    overflow:hidden !important;
-    position:relative !important;
-}
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--ink) 0%,var(--ink-2) 60%,#31466D 100%);display:flex;align-items:flex-start;justify-content:center;padding:48px 20px 20px;z-index:1000;overflow:auto;}
+.login-card{width:100%;max-width:430px;background:var(--surface);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.35);overflow:hidden;}
 .login-head{padding:28px 30px 20px;background:linear-gradient(180deg,#F8F9FB,#fff);border-bottom:1px solid var(--border);}
 .login-brand{display:flex;align-items:center;gap:12px;}
 .login-mark{width:44px;height:44px;border-radius:11px;background:var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--ink);}
@@ -2417,6 +2380,75 @@ setInterval(function(){if(window.currentUser&&document.getElementById('tab-contr
   setInterval(function(){enhance();},5000);
 })();
 
+</script>
+<script id="central-login-bridge">
+(function(){
+  'use strict';
+  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';
+  var busy=false;
+  function id(x){return document.getElementById(x);}
+  function msg(text){
+    var e=id('loginError');
+    if(e){e.textContent=text||'';e.classList.toggle('show',!!text);e.style.display=text?'block':'none';}
+  }
+  function save(key,val,remember){
+    try{localStorage.removeItem(key);sessionStorage.removeItem(key);(remember?localStorage:sessionStorage).setItem(key,val);}catch(e){}
+  }
+  function clear(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}
+  function parse(r){return r.text().then(function(t){var d={};try{d=t?JSON.parse(t):{};}catch(e){d={error:t};}if(!r.ok)throw new Error(d.error||d.message||('HTTP '+r.status));return d;});}
+  function doLogin(ev){
+    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}
+    if(busy)return false;
+    var u=id('loginUsername'),p=id('loginPassword'),remember=!!(id('loginRemember')&&id('loginRemember').checked),b=id('btnLogin');
+    var username=u?String(u.value||'').trim():'',password=p?String(p.value||''):'';
+    if(!username||!password){msg('Ingrese usuario y contraseña.');return false;}
+    busy=true;msg('');
+    if(b){b.disabled=false;b.textContent='Ingresando...';b.style.pointerEvents='none';}
+    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})
+      .then(parse)
+      .then(function(r){
+        if(!r.token||!r.user)throw new Error('El servidor no entregó una sesión válida.');
+        window.CENTRAL_TOKEN=r.token;
+        window.currentUser=r.user;
+        save('panelCentralToken',r.token,remember);
+        save('panelCentralUser',JSON.stringify(r.user),remember);
+        if(typeof window.centralLoadState==='function')return window.centralLoadState();
+        return fetch(API+'/state',{headers:{Authorization:'Bearer '+r.token}}).then(parse).then(function(x){
+          var s=x.state||{}; if(window.state){Object.keys(s).forEach(function(k){window.state[k]=s[k]||[];});}
+        });
+      })
+      .then(function(){
+        var screen=id('loginScreen');
+        if(screen){screen.classList.add('hidden');screen.style.display='none';}
+        if(typeof window.updateSessionUI==='function')window.updateSessionUI();
+        if(typeof window.rerenderAll==='function')window.rerenderAll();
+        if(typeof window.switchTab==='function')window.switchTab('resumen');
+        if(typeof window.showToast==='function')window.showToast('Bienvenido, '+(window.currentUser.nombre||window.currentUser.username)+'.','success');
+      })
+      .catch(function(e){
+        console.error('LOGIN CENTRAL',e);
+        window.CENTRAL_TOKEN=null;window.currentUser=null;clear();
+        msg(e&&e.message?e.message:'No fue posible iniciar sesión.');
+      })
+      .finally(function(){busy=false;if(b){b.disabled=false;b.style.pointerEvents='auto';b.textContent='Ingresar';}});
+    return false;
+  }
+  function bind(){
+    var b=id('btnLogin');
+    if(!b)return false;
+    b.type='button';b.disabled=false;
+    if(!b.__centralBridge){
+      b.__centralBridge=true;
+      b.addEventListener('click',doLogin,true);
+    }
+    var p=id('loginPassword');
+    if(p&&!p.__centralBridge){p.__centralBridge=true;p.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin(e);},true);}
+    return true;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});
+  else bind();
+  var n=0,t=setInterval(function(){if(bind()||++n>40)clearInterval(t);},250);
+})();
 </script>
 </body>
 </html>
