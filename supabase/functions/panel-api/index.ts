@@ -441,12 +441,17 @@ async function bulkUpsert(
       "id",
       "rut",
       "nombreColaborador",
+      "nombre",
       "cargo",
       "sucursal",
       "tipoAusencia",
+      "tipo",
       "numeroDias",
+      "dias",
       "fechaInicio",
+      "inicio",
       "fechaTermino",
+      "termino",
       "estado",
     ],
 
@@ -454,12 +459,17 @@ async function bulkUpsert(
       "id",
       "rut",
       "nombreColaborador",
+      "nombre",
       "cargo",
       "sucursal",
       "tipoAusencia",
+      "tipo",
       "numeroDias",
+      "dias",
       "fechaInicio",
+      "inicio",
       "fechaTermino",
+      "termino",
       "estado",
     ],
 
@@ -502,12 +512,7 @@ async function bulkUpsert(
     const clean: any = {};
 
     for (const field of allowedFields) {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          record,
-          field
-        )
-      ) {
+      if (Object.prototype.hasOwnProperty.call(record, field)) {
         const value = record[field];
 
         if (value !== undefined) {
@@ -516,46 +521,120 @@ async function bulkUpsert(
       }
     }
 
+    // Vacaciones/licencias pueden venir con nombres equivalentes según el Excel.
+    // Enviamos las variantes y el backend elimina automáticamente las columnas
+    // que no existan en la tabla real, sin perder la importación.
+    if (table === "vacaciones" || table === "licencias") {
+      if (!clean.nombre && clean.nombreColaborador) {
+        clean.nombre = clean.nombreColaborador;
+      }
+      if (!clean.nombreColaborador && clean.nombre) {
+        clean.nombreColaborador = clean.nombre;
+      }
+      if (clean.tipo === undefined && clean.tipoAusencia !== undefined) {
+        clean.tipo = clean.tipoAusencia;
+      }
+      if (clean.tipoAusencia === undefined && clean.tipo !== undefined) {
+        clean.tipoAusencia = clean.tipo;
+      }
+      if (clean.dias === undefined && clean.numeroDias !== undefined) {
+        clean.dias = clean.numeroDias;
+      }
+      if (clean.numeroDias === undefined && clean.dias !== undefined) {
+        clean.numeroDias = clean.dias;
+      }
+      if (clean.inicio === undefined && clean.fechaInicio !== undefined) {
+        clean.inicio = clean.fechaInicio;
+      }
+      if (clean.fechaInicio === undefined && clean.inicio !== undefined) {
+        clean.fechaInicio = clean.inicio;
+      }
+      if (clean.termino === undefined && clean.fechaTermino !== undefined) {
+        clean.termino = clean.fechaTermino;
+      }
+      if (clean.fechaTermino === undefined && clean.termino !== undefined) {
+        clean.fechaTermino = clean.termino;
+      }
+
+      // Una fecha de término vacía debe ser NULL, no una cadena vacía.
+      if (clean.fechaTermino === "") clean.fechaTermino = null;
+      if (clean.termino === "") clean.termino = null;
+    }
+
     return convertToDb(clean);
   });
 
-  /*
-   * Archivos grandes se guardan en bloques.
-   */
+  function schemaColumnFromError(error: any): string | null {
+    const message = String(error?.message || "");
+    const match = message.match(/Could not find the '([^']+)' column/i);
+    return match ? match[1] : null;
+  }
+
+  async function upsertChunkWithSchemaFallback(chunk: any[]) {
+    let working = chunk.map((row) => ({ ...row }));
+
+    // PostgREST informa la columna desconocida una por una.
+    // La eliminamos y repetimos, permitiendo trabajar con el esquema real
+    // aunque existan diferencias de nombres entre versiones de la tabla.
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const { data, error } = await supabase
+        .from(table)
+        .upsert(working)
+        .select();
+
+      if (!error) {
+        return data || [];
+      }
+
+      const badColumn = schemaColumnFromError(error);
+      if (!badColumn) {
+        console.error(
+          `Error guardando masivamente ${table}:`,
+          error
+        );
+        throw new Error(
+          `Error guardando ${table}: ${error.message || "Error desconocido"}`
+        );
+      }
+
+      let removed = false;
+      working = working.map((row) => {
+        if (Object.prototype.hasOwnProperty.call(row, badColumn)) {
+          const copy = { ...row };
+          delete copy[badColumn];
+          removed = true;
+          return copy;
+        }
+        return row;
+      });
+
+      if (!removed) {
+        console.error(
+          `PostgREST rechazó una columna que no estaba en el payload de ${table}:`,
+          badColumn,
+          error
+        );
+        throw new Error(
+          `Error guardando ${table}: ${error.message || "Esquema incompatible"}`
+        );
+      }
+
+      console.warn(
+        `Se omitirá la columna inexistente ${badColumn} de ${table} y se reintentará la importación.`
+      );
+    }
+
+    throw new Error(`No fue posible guardar ${table}: demasiadas diferencias de esquema.`);
+  }
+
+  /* Archivos grandes se guardan en bloques. */
   const CHUNK_SIZE = 100;
   const saved: any[] = [];
 
-  for (
-    let i = 0;
-    i < cleanRecords.length;
-    i += CHUNK_SIZE
-  ) {
-    const chunk = cleanRecords.slice(
-      i,
-      i + CHUNK_SIZE
-    );
-
-    const { data, error } = await supabase
-      .from(table)
-      .upsert(chunk)
-      .select();
-
-    if (error) {
-      console.error(
-        `Error guardando masivamente ${table}:`,
-        error
-      );
-
-      throw new Error(
-        `Error guardando ${table}: ${
-          error.message || "Error desconocido"
-        }`
-      );
-    }
-
-    if (data) {
-      saved.push(...data);
-    }
+  for (let i = 0; i < cleanRecords.length; i += CHUNK_SIZE) {
+    const chunk = cleanRecords.slice(i, i + CHUNK_SIZE);
+    const data = await upsertChunkWithSchemaFallback(chunk);
+    saved.push(...data);
   }
 
   return convertFromDb(saved);
