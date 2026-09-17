@@ -294,7 +294,8 @@ body{font-size:14px!important;}
 .nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
 .nav-badge{background:rgba(255,255,255,.13)!important;}
 .nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
-.sidebar-footer{padding:14px 14px 18px!important;}
+.sidebar-footer{padding:14px 14px 18px!important;display:none!important;}
+.sidebar-footer.summary-visible{display:block!important;}
 .storage-pill{color:#bfe0d1!important;}
 .storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
 .topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
@@ -358,7 +359,8 @@ body{font-size:14px!important;}
 .nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
 .nav-badge{background:rgba(255,255,255,.13)!important;}
 .nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
-.sidebar-footer{padding:14px 14px 18px!important;}
+.sidebar-footer{padding:14px 14px 18px!important;display:none!important;}
+.sidebar-footer.summary-visible{display:block!important;}
 .storage-pill{color:#bfe0d1!important;}
 .storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
 .topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
@@ -590,7 +592,7 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
         Respaldo
       </button>
     </nav>
-    <div class="sidebar-footer">
+    <div class="sidebar-footer summary-visible">
       <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div><div style="margin-top:28px;color:#d9efe5;font-size:10px;line-height:1.5">Farmacias de Similares Chile<br><strong>Sistema creado por Sebastián Coloma</strong></div>
     </div>
   </aside>
@@ -2152,6 +2154,8 @@ function renderResumen(){
 
 
 function switchTab(tabName){
+  var _sidebarFooter=document.querySelector('.sidebar-footer');
+  if(_sidebarFooter){ _sidebarFooter.classList.toggle('summary-visible', tabName === 'resumen'); }
   if(tabName === 'usuarios' && !requireSuperAdmin()) return;
 
   var navItems=document.querySelectorAll('.nav-item');
@@ -2247,7 +2251,15 @@ function init(){
     wireFileInput(document.getElementById('uploadSucInput'), 'sucursales');
     wireFileInput(document.getElementById('uploadVacInput'), 'vacaciones');
     wireFileInput(document.getElementById('uploadLicInput'), 'licencias');
-    document.getElementById('btnLogin').addEventListener('click', loginUser);
+    var _panelLoginButton = document.getElementById('btnLogin');
+    if(_panelLoginButton && !_panelLoginButton.__panelLoginBound){
+      _panelLoginButton.__panelLoginBound = true;
+      _panelLoginButton.addEventListener('click', function(e){
+        e.preventDefault();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+        loginUser();
+      });
+    }
     document.getElementById('loginPassword').addEventListener('keydown', function(e){ if(e.key==='Enter') loginUser(); });
     document.getElementById('loginUsername').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('loginPassword').focus(); });
     document.getElementById('btnLogout').addEventListener('click', logout);
