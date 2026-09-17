@@ -1118,12 +1118,19 @@ function showLogin(error){
   var screen = document.getElementById('loginScreen');
   if(!screen) return;
   screen.classList.remove('hidden');
+  screen.style.removeProperty('display');
+  screen.removeAttribute('aria-hidden');
   document.getElementById('loginUsername').focus();
   var err = document.getElementById('loginError');
   if(error){ err.textContent = error; err.classList.add('show'); } else { err.classList.remove('show'); }
 }
 function hideLogin(){
-  document.getElementById('loginScreen').classList.add('hidden');
+  var screen = document.getElementById('loginScreen');
+  if(screen){
+    screen.classList.add('hidden');
+    screen.style.setProperty('display','none','important');
+    screen.setAttribute('aria-hidden','true');
+  }
 }
 function updateSessionUI(){
   var chip = document.getElementById('currentUserChip');
