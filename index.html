@@ -1,6 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script id="streamlit-frame-fix">
+(function () {
+    "use strict";
+
+    function forceFullViewport() {
+        try {
+            var frame = window.frameElement;
+            if (!frame) return;
+
+            var css = {
+                position: "fixed",
+                top: "0px",
+                left: "0px",
+                right: "auto",
+                bottom: "auto",
+                width: "100vw",
+                height: "100vh",
+                minWidth: "100vw",
+                maxWidth: "100vw",
+                minHeight: "100vh",
+                maxHeight: "100vh",
+                margin: "0",
+                padding: "0",
+                border: "0",
+                display: "block",
+                zIndex: "2147483647",
+                background: "transparent"
+            };
+
+            Object.keys(css).forEach(function (key) {
+                frame.style.setProperty(
+                    key.replace(/[A-Z]/g, function (m) {
+                        return "-" + m.toLowerCase();
+                    }),
+                    css[key],
+                    "important"
+                );
+            });
+
+            var parent = frame.parentElement;
+            if (parent) {
+                parent.style.setProperty("margin", "0", "important");
+                parent.style.setProperty("padding", "0", "important");
+                parent.style.setProperty("width", "100vw", "important");
+                parent.style.setProperty("max-width", "100vw", "important");
+            }
+
+            var root = document.documentElement;
+            var body = document.body;
+            root.style.setProperty("margin", "0", "important");
+            root.style.setProperty("padding", "0", "important");
+            root.style.setProperty("width", "100%", "important");
+            root.style.setProperty("height", "100%", "important");
+            body.style.setProperty("margin", "0", "important");
+            body.style.setProperty("padding", "0", "important");
+            body.style.setProperty("width", "100%", "important");
+            body.style.setProperty("min-height", "100%", "important");
+            body.style.setProperty("overflow", "hidden", "important");
+        } catch (e) {
+            console.warn("No se pudo ajustar el iframe de Streamlit:", e);
+        }
+    }
+
+    forceFullViewport();
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", forceFullViewport);
+    }
+
+    window.addEventListener("load", forceFullViewport);
+    window.addEventListener("resize", forceFullViewport);
+
+    setTimeout(forceFullViewport, 50);
+    setTimeout(forceFullViewport, 250);
+    setTimeout(forceFullViewport, 1000);
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel de Traslados de Sucursales</title>
@@ -277,19 +355,99 @@ tbody tr:hover{background:#FAFBFC;}
 .creator-footer strong{color:var(--ink);}
 </style>
 
-<style id="traslados-rebuild-css">
-#trasFormColabSearch{
-  width:100%;
-  margin-bottom:0;
+<style id="ui-premium-enhancement">
+:root{
+  --green-950:#0f3f33; --green-900:#145746; --green-800:#1d6a53; --green-700:#2f8a6a;
+  --green-100:#e7f7ef; --green-50:#f4fbf7; --mint:#d9f3e7; --mint-2:#c9ebdc;
+  --yellow:#e7ad3e; --yellow-soft:#fff3d7; --red:#db625b; --red-soft:#ffe5e2;
+  --blue:#4d86d8; --blue-soft:#e6efff; --purple:#8b67c4; --purple-soft:#eee7fb;
+  --ui-shadow:0 12px 32px rgba(20,87,70,.09);
 }
-#trasFormColabResults button{
-  font-family:var(--font-body);
-}
+body{background:linear-gradient(135deg,#f4fbf7 0%,#edf7f3 45%,#f7fbf9 100%)!important;color:#18332c!important;}
+.sidebar{width:258px!important;background:linear-gradient(180deg,#104b3c 0%,#0c3e32 100%)!important;box-shadow:10px 0 35px rgba(11,64,50,.12)!important;}
+.main{margin-left:258px!important;padding:28px 34px 60px!important;}
+.brand{padding:20px 18px!important;border-bottom:1px solid rgba(255,255,255,.12)!important;}
+.brand-mark{width:44px!important;height:44px!important;border-radius:13px!important;background:#dff6e9!important;color:#1c7559!important;font-size:25px!important;box-shadow:0 8px 18px rgba(0,0,0,.12)!important;}
+.brand-title{font-size:19px!important;letter-spacing:.08em!important;}
+.nav{padding:14px 10px!important;gap:4px!important;}
+.nav-item{padding:11px 12px!important;border-radius:11px!important;color:#dcefe8!important;transition:all .18s ease!important;}
+.nav-item:hover{background:rgba(214,247,233,.12)!important;transform:translateX(2px)!important;}
+.nav-item.active{background:#dff5e9!important;color:#114d3d!important;border-left:0!important;box-shadow:0 7px 20px rgba(0,0,0,.08)!important;}
+.nav-item.active .nav-badge{background:#3db27e!important;color:white!important;}
+.nav-badge{background:rgba(255,255,255,.13)!important;border-radius:999px!important;}
+.topbar{align-items:center!important;margin-bottom:22px!important;padding:0 4px!important;}
+.topbar h1{font-size:32px!important;color:#123b31!important;}
+.topbar-actions{align-items:center!important;}
+.user-chip{background:#fff!important;border-color:#cfe5da!important;box-shadow:0 5px 18px rgba(20,87,70,.07)!important;}
+.btn{border-radius:11px!important;padding:10px 15px!important;transition:all .18s ease!important;}
+.btn-primary{background:#155b48!important;border-color:#155b48!important;}
+.btn-primary:hover{background:#0f4b3b!important;transform:translateY(-2px)!important;box-shadow:0 9px 20px rgba(21,91,72,.18)!important;}
+.btn-amber{background:#f2c55b!important;border-color:#e1ad3f!important;}
+.btn-teal{background:#3aa879!important;border-color:#2b8d65!important;}
+.card,.stat-card,.table-wrap,.adv-section,.kpi-board{border:1px solid #d9ebe2!important;border-radius:18px!important;box-shadow:var(--ui-shadow)!important;background:rgba(255,255,255,.94)!important;}
+.stat-card{padding:19px 20px!important;position:relative;overflow:hidden!important;}
+.stat-card:after{content:"";position:absolute;right:-25px;top:-35px;width:100px;height:100px;border-radius:50%;background:rgba(92,194,145,.09);}
+.stat-card .big{font-size:32px!important;color:#0e493a!important;position:relative;z-index:1;}
+.kpi-board{overflow:hidden!important;background:linear-gradient(90deg,#155b48,#1d6a53)!important;border-color:#155b48!important;}
+.kpi-cell{padding:17px 18px!important;border-color:rgba(255,255,255,.15)!important;}
+.kpi-value{color:#fff!important;}
+.kpi-value.amber{color:#f7cf72!important}.kpi-value.gold{color:#f3cc68!important}.kpi-value.teal{color:#9de2c2!important}.kpi-value.terracotta{color:#ffaaa2!important}
+.tab-panel{min-height:calc(100vh - 130px)!important;}
+.section-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 16px;padding:20px 22px;border:1px solid #d6ebe1;border-radius:18px;background:linear-gradient(135deg,#ffffff 0%,#eefaf4 100%);box-shadow:var(--ui-shadow);}
+.section-hero-left{display:flex;align-items:center;gap:14px;min-width:0;}
+.section-hero-icon{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#dcf4e8;color:#1d7b5c;box-shadow:inset 0 0 0 1px #c8e9d9;}
+.section-hero h2{font-family:var(--font-display);font-size:25px;color:#123f33;margin:0;}
+.section-hero p{margin:3px 0 0;color:#647a72;font-size:12.5px;}
+.section-hero-badge{padding:7px 11px;border-radius:999px;background:#e2f5eb;color:#1b7457;font-size:11px;font-weight:800;white-space:nowrap;}
+.section-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+.section-metric{padding:15px 17px;background:#fff;border:1px solid #dcebe4;border-radius:15px;box-shadow:0 7px 22px rgba(20,87,70,.06);transition:transform .18s ease,box-shadow .18s ease;}
+.section-metric:hover{transform:translateY(-3px);box-shadow:0 13px 28px rgba(20,87,70,.10);}
+.section-metric .sm-label{text-transform:uppercase;font-size:9.5px;letter-spacing:.08em;color:#789088;font-weight:800;}
+.section-metric .sm-value{font:700 27px var(--font-mono);color:#123f33;margin-top:3px;}
+.section-metric.green .sm-value{color:#21815f}.section-metric.yellow .sm-value{color:#c18a17}.section-metric.red .sm-value{color:#c94f49}.section-metric.blue .sm-value{color:#447bc4}.section-metric.purple .sm-value{color:#7855ae}
+.toolbar{padding:14px!important;background:#f7fcf9!important;border:1px solid #dcece5!important;border-radius:15px!important;margin-bottom:12px!important;box-shadow:0 5px 15px rgba(20,87,70,.04)!important;}
+.toolbar .input,.toolbar select,.filter-row select,.history-filter select{border-color:#cfe2d9!important;border-radius:10px!important;background:#fff!important;}
+.table-wrap{overflow:hidden!important;}
+table thead th{background:linear-gradient(90deg,#e9f7f0,#f2faf6)!important;color:#294a40!important;border-bottom:1px solid #d7e9e1!important;}
+table tbody tr{transition:background .15s ease,transform .15s ease!important;}
+table tbody tr:hover{background:#f4fbf7!important;}
+table tbody td{border-bottom:1px solid #edf2ef!important;}
+.tickets-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;}
+.ticket{border-radius:16px!important;border:1px solid #dcebe4!important;box-shadow:0 8px 22px rgba(20,87,70,.07)!important;transition:transform .18s ease,box-shadow .18s ease!important;background:#fff!important;}
+.ticket:hover{transform:translateY(-3px)!important;box-shadow:0 15px 30px rgba(20,87,70,.11)!important;}
+.ticket-aprobado{background:linear-gradient(135deg,#fafffc,#effaf4)!important;border-top:4px solid #42a977!important;}
+.ticket-espera{background:linear-gradient(135deg,#fffef9,#fff7e3)!important;border-top:4px solid #e2ae3d!important;}
+.ticket-rechazado{background:linear-gradient(135deg,#fffafa,#fff0ee)!important;border-top:4px solid #d95f57!important;}
+.ticket-pendiente{background:linear-gradient(135deg,#fbfdff,#edf4ff)!important;border-top:4px solid #5b8bd4!important;}
+.pill-teal{background:#d9f3e7!important;color:#176b4e!important}.pill-amber{background:#fff0cb!important;color:#996b0f!important}.pill-terracotta{background:#ffe1de!important;color:#b63f38!important}.pill-slate{background:#e7efff!important;color:#3567af!important}
+.tras-interactive-summary{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:12px!important;margin-bottom:14px!important;}
+.tras-summary-card{border:1px solid #dcebe4!important;background:#fff!important;border-radius:15px!important;padding:15px!important;box-shadow:0 7px 22px rgba(20,87,70,.06)!important;cursor:pointer!important;transition:.18s!important;}
+.tras-summary-card:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(20,87,70,.10)!important;}
+.tras-interactive-toolbar{display:flex!important;gap:10px!important;align-items:center!important;background:#f7fcf9!important;border:1px solid #dcece5!important;border-radius:15px!important;padding:12px!important;margin-bottom:14px!important;}
+.tras-interactive-toolbar input{flex:1;border:1px solid #cfe2d9;border-radius:10px;padding:10px 12px;background:#fff;}
+.tras-interactive-toolbar select{border:1px solid #cfe2d9;border-radius:10px;padding:10px 12px;background:#fff;}
+.tras-filter-count{font-size:12px;font-weight:700;color:#54736a;white-space:nowrap;}
+.calendar-grid{border-radius:16px!important;border-color:#d7e9e1!important;box-shadow:var(--ui-shadow)!important;}
+.cal-weekday{background:#eaf7f1!important;color:#3c5e53!important;}
+.cal-day{transition:background .15s ease!important;}.cal-day:hover{background:#f4fbf7!important;}
+.adv-kpi,.adv-section{border-radius:16px!important;box-shadow:var(--ui-shadow)!important;border-color:#d8ebe2!important;}
+.adv-kpi:before{background:#2e8b69!important}.adv-kpi.amber:before{background:#e4ad3d!important}.adv-kpi.teal:before{background:#3aa879!important}.adv-kpi.purple:before{background:#8a67c2!important}.adv-kpi.red:before{background:#d85e56!important}
+.adv-section-head{background:linear-gradient(90deg,#f5fbf8,#fff)!important;border-bottom-color:#e1eee8!important;}
+.adv-table th{background:#eaf7f1!important;border-bottom-color:#d8e9e1!important;}
+.backup-note{background:#eff9f4!important;border-color:#d5e9df!important;}
+.quick-card-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px;}
+.quick-card{border:1px solid #d9ebe2;background:#fff;border-radius:15px;padding:14px 15px;display:flex;gap:11px;align-items:center;box-shadow:0 7px 20px rgba(20,87,70,.06);cursor:pointer;transition:.18s;}
+.quick-card:hover{transform:translateY(-3px);box-shadow:0 13px 28px rgba(20,87,70,.10);}
+.quick-icon{width:38px;height:38px;border-radius:11px;background:#e3f6eb;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;}.quick-card.yellow .quick-icon{background:#fff0cb}.quick-card.red .quick-icon{background:#ffe3e0}.quick-card.blue .quick-icon{background:#e5efff}.quick-card.purple .quick-icon{background:#eee7fb}
+.quick-title{font-weight:800;font-size:12px;color:#20483d}.quick-sub{font-size:10.5px;color:#738880;margin-top:2px;}
+.activity-panel{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px;}
+.activity-box{background:#fff;border:1px solid #d9ebe2;border-radius:16px;padding:16px;box-shadow:var(--ui-shadow);}
+.activity-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf2ef;}.activity-item:last-child{border-bottom:0}.activity-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e0f5ea;color:#1d7a5a;font-size:13px}.activity-dot.yellow{background:#fff0cb;color:#a36f0e}.activity-dot.red{background:#ffe1de;color:#b64038}.activity-dot.blue{background:#e6efff;color:#3d70ba}
+.activity-main{flex:1}.activity-title{font-weight:700;font-size:12px}.activity-sub{font-size:10.5px;color:#7b8d87}.activity-time{font-size:10px;color:#9aa8a3;white-space:nowrap;}
+@media(max-width:1100px){.section-metrics{grid-template-columns:repeat(2,1fr)}.quick-card-grid{grid-template-columns:repeat(2,1fr)}.tras-interactive-summary{grid-template-columns:repeat(3,1fr)}.tickets-grid{grid-template-columns:1fr}.activity-panel{grid-template-columns:1fr}}
+@media(max-width:720px){.sidebar{width:220px!important}.main{margin-left:220px!important;padding:20px!important}.section-metrics{grid-template-columns:1fr}.quick-card-grid{grid-template-columns:1fr}.tras-interactive-summary{grid-template-columns:1fr 1fr}.tras-interactive-toolbar{flex-direction:column;align-items:stretch}}
 </style>
 
-<style id="sucursal-personal-filter-fix">
-  #filterColabSucursal { min-width: 190px; }
-</style>
 </head>
 <body>
 
@@ -314,7 +472,7 @@ tbody tr:hover{background:#FAFBFC;}
       <input id="loginPassword" type="password" class="input" autocomplete="current-password" placeholder="Contraseña">
       <label class="checkbox-label"><input type="checkbox" id="loginRemember"> Mantener sesión en este navegador</label>
       <button id="btnLogin" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Ingresar</button>
-      <div class="login-help">Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>.</div>
+      <div class="login-help">Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.</div>
     </div>
   </div>
 </div>
@@ -377,7 +535,7 @@ tbody tr:hover{background:#FAFBFC;}
       </button>
     </nav>
     <div class="sidebar-footer">
-      <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div>
+      <div class="storage-pill"><span class="storage-dot"></span><span>Datos en este navegador</span></div>
     </div>
   </aside>
 
@@ -1286,257 +1444,72 @@ function openImportModeModal(type, records){
     return;
   }
 
-  /*
-   * IMPORTACION SEGURA
-   * - Sucursales: solo codigo, nombre, region, comuna, direccion, encargado.
-   * - Colaboradores: solo los campos definidos para colaboradores.
-   * - Vacaciones: se separan las filas LM/licencia hacia licencias.
-   * - Licencias: se guardan directamente como licencias.
-   *
-   * Esto evita enviar campos de otra tabla a Supabase.
-   */
-
-  function cleanSucursalRecord(r){
-    return {
-      codigo: String(r.codigo || '').trim(),
-      nombre: String(r.nombre || '').trim(),
-      region: String(r.region || '').trim(),
-      comuna: String(r.comuna || '').trim(),
-      direccion: String(r.direccion || '').trim(),
-      encargado: String(r.encargado || '').trim()
-    };
-  }
-
-  function cleanColaboradorRecord(r){
-    return {
-      rut: cleanRut(r.rut),
-      nombre: String(r.nombre || '').trim(),
-      cargo: String(r.cargo || '').trim() || 'Sin cargo',
-      sucursalActual: String(r.sucursalActual || '').trim(),
-      area: String(r.area || '').trim(),
-      fechaIngreso: r.fechaIngreso || '',
-      email: String(r.email || '').trim(),
-      telefono: String(r.telefono || '').trim(),
-      estado: String(r.estado || '').trim() || 'Activo'
-    };
-  }
-
-  function cleanAusenciaRecord(r, prefix){
-    return {
-      id: r.id || uid(prefix),
-      rut: cleanRut(r.rut),
-      nombreColaborador: String(r.nombreColaborador || '').trim(),
-      nombre: String(r.nombre || r.nombreColaborador || '').trim(),
-      cargo: String(r.cargo || '').trim(),
-      sucursal: String(r.sucursal || '').trim(),
-      tipoAusencia: String(r.tipoAusencia || '').trim() || 'Ausencia',
-      numeroDias: Number(r.numeroDias || 0) || 0,
-      fechaInicio: r.fechaInicio || '',
-      fechaTermino: r.fechaTermino || ''
-    };
-  }
-
+  /* El Excel de vacaciones también puede traer filas de LM/licencia.
+     Se separan automáticamente para que cada registro termine en su módulo
+     y se refleje en Personal y Sucursales. */
   var vacaciones = [];
   var licencias = [];
 
-  if(type === 'vacaciones'){
-    records.forEach(function(rec){
-      var ausencia = cleanAusenciaRecord(enriquecerAusencia(rec), 'vac');
-
-      if(esLicenciaMedica(ausencia.tipoAusencia)){
-        ausencia.id = rec.id || uid('lic');
-        licencias.push(ausencia);
-      } else {
-        ausencia.id = rec.id || uid('vac');
-        vacaciones.push(ausencia);
-      }
-    });
-  } else if(type === 'licencias'){
-    records.forEach(function(rec){
-      var licencia = cleanAusenciaRecord(enriquecerAusencia(rec), 'lic');
-      licencia.id = rec.id || uid('lic');
-      licencias.push(licencia);
-    });
-  }
-
-  var safeRecords;
-
-  if(type === 'sucursales'){
-    safeRecords = records.map(cleanSucursalRecord).filter(function(r){
-      return r.codigo && r.nombre;
-    });
-  } else if(type === 'colaboradores'){
-    safeRecords = records.map(cleanColaboradorRecord).filter(function(r){
-      return r.rut && r.nombre;
-    });
-  } else if(type === 'licencias'){
-    safeRecords = licencias;
-  } else {
-    safeRecords = vacaciones;
-  }
-
-  var body = el('div');
-
-  var summary = el('div', {
-    class:'card',
-    attrs:{
-      style:'padding:14px;margin-bottom:12px;background:#F7F8FA;'
-    }
+  records.forEach(function(rec){
+    rec = enriquecerAusencia(rec);
+    if(esLicenciaMedica(rec.tipoAusencia)) licencias.push(rec);
+    else vacaciones.push(rec);
   });
 
-  summary.appendChild(
-    el('div', {
-      text:'Registros detectados: ' + records.length
-    })
-  );
-
-  if(type === 'colaboradores'){
-    summary.appendChild(
-      el('div', {
-        class:'muted',
-        text:'• Colaboradores: ' + safeRecords.length
-      })
-    );
-  }
-
-  if(type === 'sucursales'){
-    summary.appendChild(
-      el('div', {
-        class:'muted',
-        text:'• Sucursales: ' + safeRecords.length
-      })
-    );
-  }
-
-  if(type === 'vacaciones'){
-    summary.appendChild(
-      el('div', {
-        class:'muted',
-        text:'• Vacaciones: ' + vacaciones.length
-      })
-    );
-
-    if(licencias.length){
-      summary.appendChild(
-        el('div', {
-          class:'muted',
-          text:'• LM / Licencias médicas: ' + licencias.length
-        })
-      );
-    }
-  }
-
-  if(type === 'licencias'){
-    summary.appendChild(
-      el('div', {
-        class:'muted',
-        text:'• Licencias médicas: ' + licencias.length
-      })
-    );
-  }
-
+  var body = el('div');
+  var summary = el('div', { class:'card', attrs:{ style:'padding:14px;margin-bottom:12px;background:#F7F8FA;' } });
+  summary.appendChild(el('div', { text:'Registros detectados: ' + records.length }));
+  if(vacaciones.length) summary.appendChild(el('div', { class:'muted', text:'• Vacaciones: ' + vacaciones.length }));
+  if(licencias.length) summary.appendChild(el('div', { class:'muted', text:'• LM / Licencias médicas: ' + licencias.length }));
   body.appendChild(summary);
 
-  if(type === 'sucursales'){
-    body.appendChild(
-      el('p', {
-        class:'muted',
-        text:'Las sucursales se guardarán en el maestro de sucursales mediante su código.'
-      })
-    );
-  } else if(type === 'colaboradores'){
-    body.appendChild(
-      el('p', {
-        class:'muted',
-        text:'Los colaboradores se vinculan por RUT y se actualizarán si ya existen.'
-      })
-    );
-  } else if(type === 'vacaciones'){
-    body.appendChild(
-      el('p', {
-        class:'muted',
-        text:licencias.length
-          ? 'Las filas cuyo tipo de ausencia indique LM o Licencia se guardarán automáticamente en "Licencias médicas".'
-          : 'Las vacaciones se vinculan al colaborador por RUT.'
-      })
-    );
+  if(type === 'vacaciones' && licencias.length){
+    body.appendChild(el('p', { class:'muted', text:'Las filas cuyo tipo de ausencia indique LM o Licencia se guardarán automáticamente en "Licencias médicas".' }));
   } else if(type === 'licencias'){
-    body.appendChild(
-      el('p', {
-        class:'muted',
-        text:'Las filas se guardarán en "Licencias médicas" y se vincularán al colaborador por RUT.'
-      })
-    );
+    body.appendChild(el('p', { class:'muted', text:'Las filas se guardarán en "Licencias médicas" y se vincularán al colaborador por RUT.' }));
+  } else {
+    body.appendChild(el('p', { class:'muted', text:'Las vacaciones se vinculan al colaborador por RUT y se reflejan automáticamente en Personal y Sucursales mientras estén vigentes.' }));
   }
 
   function saveBuckets(replaceAll){
-    /*
-     * La operación "Reemplazar" requiere clearTable en el backend.
-     * El backend central protege esa operación para evitar borrados
-     * accidentales. Por eso el botón informa al usuario y no borra datos.
-     */
-    if(replaceAll && CENTRAL_TOKEN){
-      showToast('Para reemplazar datos use el respaldo administrativo. No se borró ningún dato.', 'error');
-      return;
-    }
-
     var jobs = [];
 
-    if(type === 'sucursales'){
-      jobs.push(dbBulkPut(STORES.SUC, safeRecords));
-
-    } else if(type === 'colaboradores'){
-      jobs.push(dbBulkPut(STORES.COLAB, safeRecords));
-
-    } else if(type === 'licencias'){
-      jobs.push(dbBulkPut(STORES.LIC, licencias));
-
-    } else if(type === 'vacaciones'){
-      if(vacaciones.length){
-        jobs.push(dbBulkPut(STORES.VAC, vacaciones));
-      }
-
-      if(licencias.length){
-        jobs.push(dbBulkPut(STORES.LIC, licencias));
-      }
-    }
-
-    if(!jobs.length){
-      showToast('No hay registros válidos para importar.', 'error');
-      return;
-    }
-
-    return Promise.all(jobs)
-      .then(reloadStateFromDB)
-      .then(function(){
-        closeModal();
-        rerenderAll();
-
-        var msg;
-
-        if(type === 'sucursales'){
-          msg = 'Importado: ' + safeRecords.length + ' sucursales.';
-        } else if(type === 'colaboradores'){
-          msg = 'Importado: ' + safeRecords.length + ' colaboradores.';
-        } else if(type === 'vacaciones'){
-          msg = 'Importado: ' + vacaciones.length + ' vacaciones' +
-            (licencias.length ? ' y ' + licencias.length + ' licencias.' : '.');
-        } else if(type === 'licencias'){
-          msg = 'Importado: ' + licencias.length + ' licencias.';
+    if(type === 'vacaciones'){
+      if(replaceAll){
+        jobs.push(dbClear(STORES.VAC).then(function(){ return vacaciones.length ? dbBulkPut(STORES.VAC, vacaciones) : Promise.resolve(); }));
+        if(licencias.length){
+          jobs.push(dbClear(STORES.LIC).then(function(){ return dbBulkPut(STORES.LIC, licencias); }));
         }
+      } else {
+        if(vacaciones.length) jobs.push(dbBulkPut(STORES.VAC, vacaciones));
+        if(licencias.length) jobs.push(dbBulkPut(STORES.LIC, licencias));
+      }
+    } else if(type === 'licencias'){
+      if(replaceAll){
+        jobs.push(dbClear(STORES.LIC).then(function(){ return dbBulkPut(STORES.LIC, records); }));
+      } else {
+        jobs.push(dbBulkPut(STORES.LIC, records));
+      }
+    } else {
+      var storeName = type === 'colaboradores' ? STORES.COLAB : STORES.SUC;
+      if(replaceAll){
+        jobs.push(dbClear(storeName).then(function(){ return dbBulkPut(storeName, records); }));
+      } else {
+        jobs.push(dbBulkPut(storeName, records));
+      }
+    }
 
-        showToast(msg, 'success');
-      })
-      .catch(function(err){
-        console.error('Error guardando importación:', err);
-
-        showToast(
-          err && err.message
-            ? 'No se pudo guardar: ' + err.message
-            : 'No se pudo guardar la importación.',
-          'error'
-        );
-      });
+    return Promise.all(jobs).then(reloadStateFromDB).then(function(){
+      closeModal();
+      rerenderAll();
+      var msg = type === 'vacaciones'
+        ? ('Importado: ' + vacaciones.length + ' vacaciones' + (licencias.length ? ' y ' + licencias.length + ' licencias.' : '.'))
+        : (type === 'licencias' ? ('Importado: ' + records.length + ' licencias.') : 'Importado con éxito.');
+      showToast(msg, 'success');
+    }).catch(function(err){
+      console.error(err);
+      showToast('No se pudo guardar la importación.', 'error');
+    });
   }
 
   openModal({
@@ -1544,28 +1517,13 @@ function openImportModeModal(type, records){
     bodyNode: body,
     wide: true,
     footerButtons: [
-      {
-        label: 'Cancelar',
-        class: 'btn btn-ghost',
-        onClick: closeModal
-      },
-      {
-        label: 'Reemplazar datos de este tipo',
-        class: 'btn btn-danger',
-        onClick: function(){
-          saveBuckets(true);
-        }
-      },
-      {
-        label: 'Agregar / actualizar',
-        class: 'btn btn-primary',
-        onClick: function(){
-          saveBuckets(false);
-        }
-      }
+      { label: 'Cancelar', class: 'btn btn-ghost', onClick: closeModal },
+      { label: 'Reemplazar datos de este tipo', class: 'btn btn-danger', onClick: function(){ saveBuckets(true); } },
+      { label: 'Agregar / actualizar', class: 'btn btn-primary', onClick: function(){ saveBuckets(false); } }
     ]
   });
 }
+
 
 /* ====================== CRUD COLABORADORES / SUCURSALES ====================== */
 function buildSucursalOptions(selected){
@@ -1715,461 +1673,100 @@ function deleteSucursal(codigo){
 }
 
 /* ====================== TRASLADOS ====================== */
-/*
- * MÓDULO DE TRASLADOS REHECHO
- * - Nuevo traslado funcional.
- * - Buscador de colaborador por nombre o RUT.
- * - Al seleccionar colaborador, la sucursal origen se completa automáticamente.
- * - Origen/destino son selectores normales y funcionales.
- * - Guardado y edición usan el RUT como llave.
- */
 function trasladoPill(estado){
   var cls=estado==='aprobado'?'pill-teal':estado==='rechazado'?'pill-terracotta':estado==='espera'?'pill-amber':'pill-slate';
   return el('span',{class:'pill '+cls,text:estadoLabel(estado||'pendiente')});
 }
-
 function selectColaborador(selected){
-  var wrap=el('div',{attrs:{style:'position:relative;'}});
-
-  var search=el('input',{
-    class:'input',
-    attrs:{
-      id:'trasFormColabSearch',
-      type:'text',
-      autocomplete:'off',
-      placeholder:'Buscar colaborador por nombre o RUT...'
-    }
-  });
-
-  var rutInput=el('input',{
-    attrs:{
-      id:'trasFormRut',
-      type:'hidden',
-      value:selected||''
-    }
-  });
-
-  var results=el('div',{attrs:{
-    id:'trasFormColabResults',
-    style:'display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1200;background:#fff;border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 10px 30px rgba(20,32,54,.18);max-height:280px;overflow-y:auto;'
-  }});
-
-  var all=state.colaboradores.slice().sort(function(a,b){
-    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
-  });
-
-  function choose(c){
-    rutInput.value=c.rut||'';
-    search.value=formatRut(c.rut||'')+' · '+(c.nombre||'');
-    results.style.display='none';
-    rutInput.dispatchEvent(new Event('change',{bubbles:true}));
-  }
-
-  function renderResults(){
-    var q=normalizeSearch(search.value||'');
-    results.innerHTML='';
-
-    var matches=all.filter(function(c){
-      var hay=normalizeSearch([
-        c.rut,
-        formatRut(c.rut),
-        c.nombre,
-        c.cargo,
-        c.sucursalActual
-      ].join(' '));
-      return !q || hay.indexOf(q)!==-1;
-    }).slice(0,100);
-
-    if(!matches.length){
-      results.appendChild(el('div',{
-        text:'No se encontraron colaboradores.',
-        attrs:{style:'padding:11px 12px;color:var(--slate);font-size:13px;'}
-      }));
-    }else{
-      matches.forEach(function(c){
-        var item=el('button',{
-          attrs:{
-            type:'button',
-            style:'display:block;width:100%;border:0;border-bottom:1px solid var(--border);background:#fff;color:var(--ink);text-align:left;padding:9px 12px;cursor:pointer;'
-          },
-          html:'<strong>'+escapeHtml(formatRut(c.rut||''))+'</strong> · '+escapeHtml(c.nombre||'')+
-               (c.cargo?'<div style="font-size:11px;color:var(--slate-light);margin-top:2px;">'+escapeHtml(c.cargo)+'</div>':'')
-        });
-
-        item.addEventListener('mouseenter',function(){
-          item.style.background='#F5F7FA';
-        });
-        item.addEventListener('mouseleave',function(){
-          item.style.background='#fff';
-        });
-        item.addEventListener('mousedown',function(e){
-          e.preventDefault();
-        });
-        item.addEventListener('click',function(){
-          choose(c);
-        });
-
-        results.appendChild(item);
-      });
-    }
-
-    results.style.display='block';
-  }
-
-  search.addEventListener('focus',renderResults);
-  search.addEventListener('input',function(){
-    rutInput.value='';
-    renderResults();
-  });
-  search.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){
-      results.style.display='none';
-      return;
-    }
-  });
-
-  document.addEventListener('mousedown',function(e){
-    if(!wrap.contains(e.target)){
-      results.style.display='none';
-    }
-  });
-
-  var initial=selected?buscarColaboradorPorRut(selected):null;
-  if(initial){
-    rutInput.value=initial.rut||'';
-    search.value=formatRut(initial.rut||'')+' · '+(initial.nombre||'');
-  }
-
-  wrap.appendChild(search);
-  wrap.appendChild(rutInput);
-  wrap.appendChild(results);
-  return wrap;
-}
-
-function selectSucursal(id,selected){
-  var sel=document.createElement('select');
-  sel.className='input';
-  sel.id=id;
-  sel.appendChild(el('option',{text:'Seleccione sucursal',attrs:{value:''}}));
-
-  state.sucursales.slice().sort(function(a,b){
-    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
-  }).forEach(function(s){
-    var o=el('option',{text:s.nombre,attrs:{value:s.nombre}});
-    if(selected && normalizeSucursalKey(selected)===normalizeSucursalKey(s.nombre)){
-      o.selected=true;
-    }
+  var sel=document.createElement('select');sel.className='input';sel.id='trasFormRut';
+  sel.appendChild(el('option',{text:'Seleccione un colaborador',attrs:{value:''}}));
+  state.colaboradores.slice().sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');}).forEach(function(c){
+    var o=el('option',{text:formatRut(c.rut)+' · '+c.nombre,attrs:{value:c.rut}});
+    if(selected&&c.rut===selected)o.selected=true;
     sel.appendChild(o);
   });
-
   return sel;
 }
-
+function selectSucursal(id,selected){
+  var sel=document.createElement('select');sel.className='input';sel.id=id;
+  sel.appendChild(el('option',{text:'Seleccione sucursal',attrs:{value:''}}));
+  state.sucursales.slice().sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');}).forEach(function(s){
+    var o=el('option',{text:s.nombre,attrs:{value:s.nombre}});
+    if(selected&&normalizeSucursalKey(selected)===normalizeSucursalKey(s.nombre))o.selected=true;
+    sel.appendChild(o);
+  });
+  return sel;
+}
 function openTrasladoModal(existing){
-  if(!currentUser){
-    showLogin('Debe iniciar sesión.');
-    return;
-  }
-
+  if(!currentUser){showLogin('Debe iniciar sesión.');return;}
   existing=existing||null;
-
   var body=el('div');
-  var rutWrap=selectColaborador(existing?existing.rut:'');
-  var rutInput=rutWrap.querySelector('#trasFormRut');
-
-  var origenSel=selectSucursal(
-    'trasFormOrigen',
-    existing?existing.origen:''
-  );
-
-  var destinoSel=selectSucursal(
-    'trasFormDestino',
-    existing?existing.destino:''
-  );
-
-  var fSol=el('input',{
-    class:'input',
-    attrs:{
-      id:'trasFormFechaSolicitud',
-      type:'date',
-      value:existing?(existing.fechaSolicitud||hoyISO()):hoyISO()
-    }
-  });
-
-  var fInicio=el('input',{
-    class:'input',
-    attrs:{
-      id:'trasFormFechaInicio',
-      type:'date',
-      value:existing?(existing.fechaInicio||existing.fechaEfectiva||hoyISO()):hoyISO()
-    }
-  });
-
-  var fTermino=el('input',{
-    class:'input',
-    attrs:{
-      id:'trasFormFechaTermino',
-      type:'date',
-      value:existing?(existing.fechaTermino||''):''
-    }
-  });
-
-  var indef=el('input',{
-    attrs:{
-      id:'trasFormIndefinido',
-      type:'checkbox'
-    }
-  });
-
+  var rutSel=selectColaborador(existing?existing.rut:'');
+  var origenSel=selectSucursal('trasFormOrigen',existing?existing.origen:'');
+  var destinoSel=selectSucursal('trasFormDestino',existing?existing.destino:'');
+  var fSol=el('input',{class:'input',attrs:{id:'trasFormFechaSolicitud',type:'date',value:existing?(existing.fechaSolicitud||hoyISO()):hoyISO()}});
+  var fInicio=el('input',{class:'input',attrs:{id:'trasFormFechaInicio',type:'date',value:existing?(existing.fechaInicio||existing.fechaEfectiva||hoyISO()):hoyISO()}});
+  var fTermino=el('input',{class:'input',attrs:{id:'trasFormFechaTermino',type:'date',value:existing?(existing.fechaTermino||''):''}});
+  var indef=el('input',{attrs:{id:'trasFormIndefinido',type:'checkbox'}});
   indef.checked=existing?!!existing.indefinido:false;
-  fTermino.disabled=indef.checked;
-
-  var motivo=el('textarea',{
-    class:'textarea',
-    attrs:{
-      id:'trasFormMotivo',
-      rows:'3',
-      placeholder:'Motivo del traslado'
-    }
-  });
+  if(indef.checked)fTermino.disabled=true;
+  var motivo=el('textarea',{class:'textarea',attrs:{id:'trasFormMotivo',rows:'3',placeholder:'Motivo del traslado'}});
   motivo.value=existing?(existing.motivo||''):'';
 
-  body.appendChild(el('label',{
-    class:'field-label',
-    text:'Colaborador *'
-  }));
-  body.appendChild(rutWrap);
+  body.appendChild(el('label',{class:'field-label',text:'Colaborador *'}));body.appendChild(rutSel);
+  body.appendChild(el('div',{class:'form-row',children:[
+    el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Sucursal origen *'}),origenSel]}),
+    el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Sucursal destino *'}),destinoSel]})
+  ]}));
+  body.appendChild(el('div',{class:'form-row',children:[
+    el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Fecha de solicitud'}),fSol]}),
+    el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Inicia el traslado *'}),fInicio]})
+  ]}));
+  var termWrap=el('div',{class:'form-col',children:[el('label',{class:'field-label',text:'Termina el traslado'}),fTermino]});
+  var indefWrap=el('label',{class:'checkbox-row',children:[indef,el('span',{text:'Traslado indefinido'})]});
+  body.appendChild(el('div',{class:'form-row',children:[termWrap,el('div',{class:'form-col',children:[indefWrap,el('small',{class:'muted',text:'Si es indefinido, el colaborador permanece en la sucursal destino hasta registrar otro traslado.'})]})]}));
+  body.appendChild(el('label',{class:'field-label',text:'Motivo'}));body.appendChild(motivo);
 
-  body.appendChild(el('div',{
-    class:'form-row',
-    children:[
-      el('div',{
-        class:'form-col',
-        children:[
-          el('label',{class:'field-label',text:'Sucursal origen *'}),
-          origenSel
-        ]
-      }),
-      el('div',{
-        class:'form-col',
-        children:[
-          el('label',{class:'field-label',text:'Sucursal destino *'}),
-          destinoSel
-        ]
-      })
-    ]
-  }));
-
-  body.appendChild(el('div',{
-    class:'form-row',
-    children:[
-      el('div',{
-        class:'form-col',
-        children:[
-          el('label',{class:'field-label',text:'Fecha de solicitud'}),
-          fSol
-        ]
-      }),
-      el('div',{
-        class:'form-col',
-        children:[
-          el('label',{class:'field-label',text:'Inicia el traslado *'}),
-          fInicio
-        ]
-      })
-    ]
-  }));
-
-  var termWrap=el('div',{
-    class:'form-col',
-    children:[
-      el('label',{class:'field-label',text:'Termina el traslado'}),
-      fTermino
-    ]
+  indef.addEventListener('change',function(){fTermino.disabled=indef.checked;if(indef.checked)fTermino.value='';});
+  rutSel.addEventListener('change',function(){
+    if(existing)return;
+    var c=buscarColaboradorPorRut(rutSel.value);
+    if(c)origenSel.value=c.sucursalActual||'';
   });
 
-  var indefWrap=el('label',{
-    class:'checkbox-label',
-    children:[
-      indef,
-      el('span',{text:'Traslado indefinido'})
-    ]
-  });
-
-  body.appendChild(el('div',{
-    class:'form-row',
-    children:[
-      termWrap,
-      el('div',{
-        class:'form-col',
-        children:[
-          indefWrap,
-          el('small',{
-            class:'muted',
-            text:'Si es indefinido, el colaborador permanece en la sucursal destino hasta registrar otro traslado.'
-          })
-        ]
-      })
-    ]
-  }));
-
-  body.appendChild(el('label',{
-    class:'field-label',
-    text:'Motivo'
-  }));
-  body.appendChild(motivo);
-
-  indef.addEventListener('change',function(){
-    fTermino.disabled=indef.checked;
-    if(indef.checked) fTermino.value='';
-  });
-
-  rutInput.addEventListener('change',function(){
-    if(existing) return;
-
-    var c=buscarColaboradorPorRut(rutInput.value);
-    if(c && c.sucursalActual){
-      origenSel.value=c.sucursalActual;
-    }
-  });
-
-  openModal({
-    title:existing?'Editar traslado':'Nuevo traslado',
-    bodyNode:body,
-    wide:true,
-    footerButtons:[
-      {
-        label:'Cancelar',
-        class:'btn btn-ghost',
-        onClick:closeModal
-      },
-      {
-        label:existing?'Guardar cambios':'Guardar traslado',
-        class:'btn btn-primary',
-        onClick:function(){
-          saveTraslado(existing);
-        }
-      }
-    ]
-  });
+  openModal({title:existing?'Editar traslado':'Nuevo traslado',bodyNode:body,wide:true,footerButtons:[
+    {label:'Cancelar',class:'btn btn-ghost',onClick:closeModal},
+    {label:'Guardar traslado',class:'btn btn-primary',onClick:function(){saveTraslado(existing);}}
+  ]});
 }
-
 function saveTraslado(existing){
-  var rutEl=document.getElementById('trasFormRut');
-  var origenEl=document.getElementById('trasFormOrigen');
-  var destinoEl=document.getElementById('trasFormDestino');
-  var fSolEl=document.getElementById('trasFormFechaSolicitud');
-  var fInicioEl=document.getElementById('trasFormFechaInicio');
-  var fTermEl=document.getElementById('trasFormFechaTermino');
-  var indefEl=document.getElementById('trasFormIndefinido');
-  var motivoEl=document.getElementById('trasFormMotivo');
+  var rut=document.getElementById('trasFormRut').value;
+  var origen=document.getElementById('trasFormOrigen').value;
+  var destino=document.getElementById('trasFormDestino').value;
+  var fechaSolicitud=document.getElementById('trasFormFechaSolicitud').value||hoyISO();
+  var fechaInicio=document.getElementById('trasFormFechaInicio').value;
+  var fechaTermino=document.getElementById('trasFormFechaTermino').value;
+  var indefinido=document.getElementById('trasFormIndefinido').checked;
+  var motivo=document.getElementById('trasFormMotivo').value.trim();
 
-  if(!rutEl||!origenEl||!destinoEl||!fInicioEl||!indefEl||!motivoEl){
-    showToast('No se pudo abrir correctamente el formulario de traslado.','error');
-    return;
-  }
-
-  var rut=cleanRut(rutEl.value||'');
-  var origen=origenEl.value||'';
-  var destino=destinoEl.value||'';
-  var fechaSolicitud=(fSolEl&&fSolEl.value)||hoyISO();
-  var fechaInicio=fInicioEl.value||'';
-  var fechaTermino=(fTermEl&&fTermEl.value)||'';
-  var indefinido=!!indefEl.checked;
-  var motivo=motivoEl.value.trim();
-
-  if(!rut||!origen||!destino||!fechaInicio){
-    showToast('Complete colaborador, origen, destino y fecha de inicio.','error');
-    return;
-  }
-
-  if(normalizeSucursalKey(origen)===normalizeSucursalKey(destino)){
-    showToast('Origen y destino no pueden ser iguales.','error');
-    return;
-  }
-
-  if(!indefinido && fechaTermino && fechaTermino<fechaInicio){
-    showToast('La fecha de término no puede ser anterior a la fecha de inicio.','error');
-    return;
-  }
-
-  if(indefinido) fechaTermino='';
-
-  var colaborador=buscarColaboradorPorRut(rut);
-  if(!colaborador){
-    showToast('Colaborador no encontrado.','error');
-    return;
-  }
-
-  var existeCruce=state.traslados.some(function(t){
-    if(existing && t.id===existing.id) return false;
-    if(cleanRut(t.rut)!==rut) return false;
-    if(t.estado==='rechazado') return false;
-
-    var a=fechaInicio;
-    var b=fechaTermino||'9999-12-31';
-    var c1=t.fechaInicio||t.fechaEfectiva||'';
-    var d=t.indefinido?'9999-12-31':(t.fechaTermino||c1);
-
+  if(!rut||!origen||!destino||!fechaInicio){showToast('Complete colaborador, origen, destino y fecha de inicio.','error');return;}
+  if(normalizeSucursalKey(origen)===normalizeSucursalKey(destino)){showToast('Origen y destino no pueden ser iguales.','error');return;}
+  if(!indefinido&&fechaTermino&&fechaTermino<fechaInicio){showToast('La fecha de término no puede ser anterior a la fecha de inicio.','error');return;}
+  if(indefinido)fechaTermino='';
+  var c=buscarColaboradorPorRut(rut);if(!c){showToast('Colaborador no encontrado.','error');return;}
+  var solapado=state.traslados.some(function(t){
+    if(existing && t.id===existing.id)return false;
+    if(cleanRut(t.rut)!==cleanRut(rut)||t.estado==='rechazado')return false;
+    var a=fechaInicio,b=fechaTermino||'9999-12-31',c1=t.fechaInicio||t.fechaEfectiva||'',d=t.indefinido?'9999-12-31':(t.fechaTermino||c1);
     return c1 && a<=d && c1<=b;
   });
+  if(solapado){showToast('Este colaborador ya tiene un traslado que se cruza con las fechas indicadas.','error');return;}
 
-  if(existeCruce){
-    showToast('Este colaborador ya tiene un traslado que se cruza con las fechas indicadas.','error');
-    return;
-  }
-
-  var rec=existing
-    ? Object.assign({},existing)
-    : {
-        id:uid('tra'),
-        createdAt:new Date().toISOString(),
-        estado:'pendiente'
-      };
-
-  Object.assign(rec,{
-    rut:rut,
-    colaboradorNombre:colaborador.nombre||'',
-    origen:origen,
-    destino:destino,
-    fechaSolicitud:fechaSolicitud,
-    fechaInicio:fechaInicio,
-    fechaTermino:fechaTermino,
-    indefinido:indefinido,
-    fechaEfectiva:fechaInicio,
-    motivo:motivo,
-    solicitadoPor:currentUser?currentUser.username:''
-  });
-
-  dbPut(STORES.TRAS,rec)
-    .then(reloadStateFromDB)
-    .then(function(){
-      return registrarAuditoria(
-        'traslado',
-        existing?'edicion':'creacion',
-        colaborador.nombre||rut,
-        (existing?'Se actualizó':'Se creó')+
-        ' traslado '+origen+' → '+destino+
-        ' desde '+fechaInicio+
-        (fechaTermino?' hasta '+fechaTermino:' indefinido')
-      );
-    })
-    .then(function(){
-      closeModal();
-      rerenderAll();
-      switchTab('traslados');
-      showToast(
-        existing?'Traslado actualizado.':'Traslado creado correctamente.',
-        'success'
-      );
-    })
-    .catch(function(err){
-      console.error(err);
-      showToast(
-        'No fue posible guardar el traslado.',
-        'error'
-      );
-    });
+  var rec=existing?Object.assign({},existing):{id:uid('tra'),createdAt:new Date().toISOString(),estado:'pendiente'};
+  Object.assign(rec,{rut:rut,colaboradorNombre:c.nombre,origen:origen,destino:destino,fechaSolicitud:fechaSolicitud,fechaInicio:fechaInicio,fechaTermino:fechaTermino,indefinido:indefinido,fechaEfectiva:fechaInicio,motivo:motivo,solicitadoPor:currentUser?currentUser.username:''});
+  dbPut(STORES.TRAS,rec).then(reloadStateFromDB).then(function(){
+    return registrarAuditoria('traslado',existing?'edicion':'creacion',c.nombre,(existing?'Se actualizó':'Se creó')+' traslado '+origen+' → '+destino+' desde '+fechaInicio+(fechaTermino?' hasta '+fechaTermino:' indefinido')).then(function(){closeModal();rerenderAll();switchTab('traslados');showToast(existing?'Traslado actualizado.':'Traslado creado correctamente.','success');});
+  }).catch(function(err){console.error(err);showToast('No fue posible guardar el traslado.','error');});
 }
 
 /* Aplica automáticamente los traslados aprobados según su rango de vigencia.
@@ -2346,23 +1943,7 @@ function renderSucursalesTable(){
       tr.appendChild(vacCell);
 
       var actions=el('td',{class:'row-actions'});
-      actions.appendChild(el('button',{
-        class:'icon-btn',
-        attrs:{title:'Ver colaboradores de esta sucursal'},
-        text:'👥',
-        on:{
-          click:function(){
-            switchTab('colaboradores');
-            var filtro=document.getElementById('filterColabSucursal');
-            if(filtro){
-              filtro.value=s2.nombre||'';
-              renderColaboradoresTable();
-            }
-            var buscador=document.getElementById('searchColab');
-            if(buscador) buscador.value='';
-          }
-        }
-      }));
+      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal'},text:'👥',on:{click:function(){switchTab('colaboradores');}}}));
       actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Editar'},text:'✎',on:{click:function(){openSucursalModal(s2);}}}));
       actions.appendChild(el('button',{class:'icon-btn icon-btn-danger',attrs:{title:'Eliminar'},text:'🗑',on:{click:function(){deleteSucursal(s2.codigo);}}}));
       tr.appendChild(actions);tbody.appendChild(tr);
@@ -2643,7 +2224,49 @@ function compareDates(){var a=document.getElementById('cmpFrom').value,b=documen
 function renderReplacements(){var S=currentState(),hoy=hoyISO(),abs=S.colaboradores.filter(function(c){return statusFor(c,hoy).key==='vacaciones'||statusFor(c,hoy).key==='licencia';}),available=S.colaboradores.filter(function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'&&statusFor(c,hoy).key==='trabajando';});var html=abs.length?'<table class="adv-table"><thead><tr><th>Ausente</th><th>Sucursal</th><th>Motivo</th><th>Disponibles</th></tr></thead><tbody>'+abs.map(function(c){var av=available.filter(function(x){return normalizeSearch(x.sucursalActual)!==normalizeSearch(c.sucursalActual);}).slice(0,5);return '<tr><td><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+'</div></td><td>'+h(c.sucursalActual||'—')+'</td><td><span class="badge-warn">'+h(statusFor(c).label)+'</span></td><td>'+ (av.length?av.map(function(x){return '<span class="badge-good" style="margin:2px">'+h(x.nombre)+'</span>';}).join(''):'<span class="badge-bad">Sin sugerencias</span>')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty-adv">No hay ausencias vigentes. No se requieren reemplazos.</div>';document.getElementById('advReplacements').innerHTML=html;}
 function csv(name,headers,rows){var all=[headers].concat(rows),txt=all.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\n');var blob=new Blob(['\\ufeff'+txt],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},500);}
 function renderReportes(){var m=document.getElementById('closeMonth');if(!m.value)m.value=hoyISO().slice(0,7);renderCloseHistory();}
-function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table></body></html>');w.document.close();w.print();};}
+function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table><script id="ui-premium-behavior">
+(function(){
+  'use strict';
+  function qs(s,c){return (c||document).querySelector(s)}
+  function qsa(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))}
+  function num(id){var e=qs('#'+id);return e?e.textContent.trim():'0'}
+  function S(){try{return typeof currentState==='function'?currentState():state||{colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}catch(e){return {colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}}
+  function activeCount(arr,fn){return (arr||[]).filter(fn||function(){return true}).length}
+  var defs={
+    colaboradores:{icon:'👥',title:'Colaboradores',sub:'Gestión completa del personal, estado y situación actual.',metrics:function(s){return [['Total',s.colaboradores.length,'green'],['Activos',activeCount(s.colaboradores,function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'}),'green'],['Vacaciones',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='vacaciones'}),'yellow'],['Licencia médica',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='licencia'}),'red']]}},
+    sucursales:{icon:'🏢',title:'Sucursales',sub:'Directorio, cobertura, encargados y dotación por sucursal.',metrics:function(s){var total=s.colaboradores.length;return [['Sucursales',s.sucursales.length,'green'],['Personal',total,'green'],['Con licencia',activeCount(s.licencias,function(x){return true}),'red'],['Vacaciones',activeCount(s.vacaciones,function(x){return true}),'yellow']]}},
+    vacaciones:{icon:'🌿',title:'Vacaciones',sub:'Solicitudes, periodos, días y seguimiento de ausencias.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.vacaciones,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)}),prox=activeCount(s.vacaciones,function(x){return x.fechaInicio>=hoy&&x.fechaInicio<=((typeof addDays==='function'?addDays(hoy,7):hoy))});return [['Solicitudes',s.vacaciones.length,'green'],['Vigentes',vig,'yellow'],['Próximas 7 días',prox,'blue'],['Días registrados',s.vacaciones.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple']]}},
+    licencias:{icon:'🩺',title:'Licencias médicas',sub:'Control de licencias, vigencia, duración y trazabilidad.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.licencias,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)});return [['Registros',s.licencias.length,'red'],['Vigentes',vig,'red'],['Días registrados',s.licencias.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple'],['RUT únicos',Object.keys(s.licencias.reduce(function(a,x){a[String(x.rut||'')]=1;return a},{})).filter(Boolean).length,'blue']]}},
+    usuarios:{icon:'🔐',title:'Usuarios',sub:'Accesos, roles, sucursal asignada y permisos del sistema.',metrics:function(s){return [['Usuarios',s.usuarios.length,'green'],['Activos',activeCount(s.usuarios,function(u){return u.activo!==false}),'green'],['Super Admin',activeCount(s.usuarios,function(u){return String(u.role||'').toLowerCase()==='superadmin'}),'purple'],['Con sucursal',activeCount(s.usuarios,function(u){return u.sucursal&&u.sucursal!=='Todas'}),'blue']]}},
+    calendario:{icon:'📅',title:'Calendario',sub:'Vista visual de vacaciones, licencias y traslados por fecha.',metrics:function(s){return [['Vacaciones',s.vacaciones.length,'yellow'],['Licencias',s.licencias.length,'red'],['Traslados',s.traslados.length,'green'],['Eventos',s.vacaciones.length+s.licencias.length+s.traslados.length,'purple']]}},
+    historial:{icon:'🕘',title:'Historial',sub:'Trazabilidad de acciones, cambios y movimientos realizados.',metrics:function(s){var a=s.auditoria||[];return [['Eventos',a.length,'green'],['Traslados',activeCount(a,function(x){return String(x.tipo||x.type).toLowerCase().indexOf('tras')>=0}),'green'],['Ausencias',activeCount(a,function(x){var t=String(x.tipo||x.type).toLowerCase();return t.indexOf('vac')>=0||t.indexOf('lic')>=0}),'yellow'],['Usuarios',activeCount(a,function(x){return String(x.tipo||x.type).toLowerCase().indexOf('usu')>=0}),'purple']]}},
+    respaldo:{icon:'🛡️',title:'Respaldo',sub:'Exportación y restauración de información para continuidad operativa.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Traslados',s.traslados.length,'blue'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow']]}},
+    control:{icon:'🎯',title:'Control',sub:'Indicadores, calidad de datos, búsqueda global y cobertura.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow'],['Traslados',s.traslados.length,'blue']]}},
+    planificacion:{icon:'🧭',title:'Planificación',sub:'Simulación, comparación de fechas y sugerencias de reemplazo.',metrics:function(s){return [['Personal',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Vacaciones',s.vacaciones.length,'yellow'],['Licencias',s.licencias.length,'red']]}},
+    reportes:{icon:'📊',title:'Reportes',sub:'Exportaciones operativas y cierres mensuales.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Traslados',s.traslados.length,'blue'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow']]}},
+    configuracion:{icon:'⚙️',title:'Configuración',sub:'Parámetros operativos, objetivos por sucursal y fichas documentales.',metrics:function(s){return [['Sucursales',s.sucursales.length,'green'],['Usuarios',s.usuarios.length,'purple'],['Colaboradores',s.colaboradores.length,'green'],['Alertas','Activas','yellow']]}}
+  };
+  function ensureHero(tab){
+    if(!tab||tab.id==='tab-resumen'||tab.querySelector('.section-hero'))return;
+    var key=tab.id.replace('tab-',''),d=defs[key];if(!d)return;
+    var hero=document.createElement('div');hero.className='section-hero';hero.innerHTML='<div class="section-hero-left"><div class="section-hero-icon">'+d.icon+'</div><div><h2>'+d.title+'</h2><p>'+d.sub+'</p></div></div><span class="section-hero-badge">Panel operativo</span>';
+    tab.insertBefore(hero,tab.firstChild);
+    var metrics=document.createElement('div');metrics.className='section-metrics';tab.insertBefore(metrics,hero.nextSibling);
+    renderMetrics(tab);
+  }
+  function renderMetrics(tab){var key=tab.id.replace('tab-',''),d=defs[key],box=tab.querySelector('.section-metrics');if(!d||!box)return;var s=S(),m=d.metrics(s);box.innerHTML=m.map(function(x){return '<div class="section-metric '+x[2]+'"><div class="sm-label">'+x[0]+'</div><div class="sm-value">'+x[1]+'</div></div>'}).join('');}
+  function addQuickCards(){var tab=qs('#tab-resumen');if(!tab||tab.querySelector('.quick-card-grid'))return;var grid=document.createElement('div');grid.className='quick-card-grid';var items=[['colaboradores','👥','Gestionar','Colaboradores','green'],['sucursales','🏢','Administrar','Sucursales','green'],['vacaciones','🌿','Control de','Vacaciones','yellow'],['licencias','🩺','Gestionar','Licencias médicas','red'],['reportes','📊','Generar','Reportes','purple']];grid.innerHTML=items.map(function(x){return '<div class="quick-card '+x[4]+'" data-go-tab="'+x[0]+'"><div class="quick-icon">'+x[1]+'</div><div><div class="quick-title">'+x[2]+' '+x[3]+'</div><div class="quick-sub">Abrir módulo</div></div></div>'}).join('');tab.appendChild(grid);qsa('[data-go-tab]',grid).forEach(function(b){b.onclick=function(){if(typeof switchTab==='function')switchTab(b.getAttribute('data-go-tab'));}});}
+  function addTransferActivity(){var tab=qs('#tab-traslados');if(!tab||tab.querySelector('.activity-panel'))return;var p=document.createElement('div');p.className='activity-panel';p.innerHTML='<div class="activity-box"><h3 style="font-size:16px;margin-bottom:8px">Actividad reciente</h3><div id="premiumRecentTransfers"></div></div><div class="activity-box"><h3 style="font-size:16px;margin-bottom:8px">Resumen del estado</h3><div id="premiumTransferState"></div></div>';tab.appendChild(p);}
+  function renderTransferActivity(){var s=S(),out=qs('#premiumRecentTransfers'),stateOut=qs('#premiumTransferState');if(!out||!stateOut)return;var arr=(s.traslados||[]).slice().sort(function(a,b){return String(b.fechaInicio||b.createdAt||'').localeCompare(String(a.fechaInicio||a.createdAt||''))}).slice(0,6);out.innerHTML=arr.length?arr.map(function(t){var st=String(t.estado||'pendiente').toLowerCase(),cls=st==='aprobado'?'':' '+(st==='rechazado'?'red':st==='espera'?'yellow':'blue');return '<div class="activity-item"><div class="activity-dot'+cls+'">'+(st==='aprobado'?'✓':st==='rechazado'?'×':st==='espera'?'◷':'•')+'</div><div class="activity-main"><div class="activity-title">'+(t.nombre||t.rut||'Sin nombre')+'</div><div class="activity-sub">'+(t.origen||'—')+' → '+(t.destino||'—')+'</div></div><div class="activity-time">'+(t.fechaInicio||'')+'</div></div>'}).join(''):'<div class="muted">No hay traslados registrados.</div>';
+    var c={pendiente:0,espera:0,aprobado:0,rechazado:0};(s.traslados||[]).forEach(function(t){var k=String(t.estado||'pendiente').toLowerCase();if(c[k]===undefined)c[k]=0;c[k]++});stateOut.innerHTML='<div class="activity-item"><div class="activity-dot blue">•</div><div class="activity-main"><div class="activity-title">Pendientes</div><div class="activity-sub">En espera de resolución</div></div><strong>'+c.pendiente+'</strong></div><div class="activity-item"><div class="activity-dot yellow">◷</div><div class="activity-main"><div class="activity-title">En observación</div><div class="activity-sub">Revisión requerida</div></div><strong>'+c.espera+'</strong></div><div class="activity-item"><div class="activity-dot">✓</div><div class="activity-main"><div class="activity-title">Aprobados</div><div class="activity-sub">Traslados finalizados</div></div><strong>'+c.aprobado+'</strong></div><div class="activity-item"><div class="activity-dot red">×</div><div class="activity-main"><div class="activity-title">Rechazados</div><div class="activity-sub">No aprobados</div></div><strong>'+c.rechazado+'</strong></div>';
+  }
+  function enhance(){qsa('.tab-panel').forEach(ensureHero);addQuickCards();addTransferActivity();qsa('.tab-panel').forEach(renderMetrics);renderTransferActivity();}
+  var tries=0;function boot(){enhance();tries++;if(tries<8)setTimeout(boot,500);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  setInterval(function(){enhance();},5000);
+})();
+</script>
+</body></html>');w.document.close();w.print();};}
 function renderCloseHistory(){var out=document.getElementById('closeHistory');var arr=Object.keys(adv.closures).sort().reverse();out.innerHTML=arr.length?'<div class="adv-list">'+arr.map(function(k){var c=adv.closures[k];return '<div class="adv-item"><div class="adv-item-title">'+h(k)+'</div><div class="adv-item-sub">'+c.colaboradores+' colaboradores · '+c.sucursales+' sucursales · '+c.vacaciones+' vacaciones · '+c.licencias+' licencias · '+c.traslados+' traslados</div></div>';}).join('')+'</div>':'<div class="empty-adv">Todavía no hay cierres mensuales guardados.</div>';}
 function renderConfiguracion(){document.getElementById('cfgEmpresa').value=adv.settings.empresa||'';document.getElementById('cfgAlertDays').value=adv.settings.alertDays||7;var S=currentState(),out=document.getElementById('cfgBranches');out.innerHTML=S.sucursales.map(function(s){return '<div class="coverage-row"><div><strong>'+h(s.nombre)+'</strong><div class="muted">'+h(s.codigo||'')+'</div></div><div>Objetivo</div><input type="number" min="0" data-obj-suc="'+h(s.nombre)+'" value="'+h(adv.settings.objetivos[s.nombre]||'')+'" placeholder="0"><div></div><button class="btn btn-sm btn-primary" data-save-obj="'+h(s.nombre)+'">Guardar</button></div>';}).join('')||'<div class="empty-adv">No hay sucursales.</div>';out.querySelectorAll('[data-save-obj]').forEach(function(b){b.onclick=function(){var n=b.getAttribute('data-save-obj'),inp=out.querySelector('[data-obj-suc="'+CSS.escape(n)+'"]');adv.settings.objetivos[n]=Number(inp.value||0);saveAdv();renderConfiguracion();renderControl();showToast('Dotación objetivo actualizada.','success');};});}
 function openNotes(rut){var S=currentState(),c=S.colaboradores.find(function(x){return cleanRut(x.rut)===cleanRut(rut);});if(!c){showToast('No se encontró el colaborador.','error');return;}var key=cleanRut(rut),notes=adv.notes[key]||[],files=adv.files[key]||[];var html='<div class="adv-section"><div class="adv-section-body"><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+' · '+h(c.cargo||'')+' · '+h(c.sucursalActual||'Sin sucursal')+'</div></div></div><label class="field-label">Nueva nota</label><textarea id="advNewNote" class="textarea" placeholder="Escribe una nota interna..."></textarea><div style="margin-top:15px"><strong>Notas</strong><div id="advNotesList" style="margin-top:8px">'+(notes.length?notes.slice().reverse().map(function(n){return '<div class="note-box"><div>'+h(n.text)+'</div><small>'+h(n.by||'sistema')+' · '+h(fmtDate(n.date.slice(0,10)))+'</small></div>';}).join(''):'<div class="muted">Sin notas.</div>')+'</div></div><div style="margin-top:18px"><strong>Adjuntos</strong><input id="advFileInput" type="file" multiple style="display:block;margin:8px 0"><div>'+(files.length?files.map(function(f,i){return '<div class="file-chip"><a href="'+f.data+'" download="'+h(f.name)+'">'+h(f.name)+'</a><button class="btn btn-sm btn-danger" data-del-file="'+i+'">Eliminar</button></div>';}).join(''):'<div class="muted">Sin archivos adjuntos.</div>')+'</div></div>';openAdvModal('Ficha documental — '+c.nombre,html,function(){var t=document.getElementById('advNewNote').value.trim();if(t){adv.notes[key]=adv.notes[key]||[];adv.notes[key].push({text:t,by:(window.currentUser&&currentUser.nombre)||'sistema',date:new Date().toISOString()});}var inp=document.getElementById('advFileInput'),fs=inp.files;var pending=[];for(var i=0;i<fs.length;i++){if(fs[i].size>1024*1024){showToast('Archivo '+fs[i].name+' supera 1 MB.','error');continue;} (function(f){pending.push(new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve({name:f.name,type:f.type,data:r.result,date:new Date().toISOString()});};r.onerror=reject;r.readAsDataURL(f);}));})(fs[i]);}if(pending.length){Promise.all(pending).then(function(a){adv.files[key]=(adv.files[key]||[]).concat(a);saveAdv();});}else saveAdv();return true;});var mr=document.getElementById('modalRoot');mr.querySelectorAll('[data-del-file]').forEach(function(b){b.onclick=function(){var idx=Number(b.getAttribute('data-del-file'));if(adv.files[key]){adv.files[key].splice(idx,1);saveAdv();openNotes(key);}};});}
