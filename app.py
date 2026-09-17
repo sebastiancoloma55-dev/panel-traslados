@@ -196,18 +196,40 @@ loginUser = function(){
     currentUser = result.user;
     centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
     centralStorageSet(CENTRAL_USER_KEY, JSON.stringify(currentUser), remember);
-    /* Entrar al panel no depende de ninguna operación secundaria. */
-    hideLogin();
+
+    /* LOGIN OK: ocultar la pantalla inmediatamente y no volver a mostrarla
+       por errores secundarios de renderizado o sincronización. */
+    var screen = document.getElementById('loginScreen');
+    if(screen){ screen.classList.add('hidden'); screen.style.setProperty('display','none','important'); }
     updateSessionUI();
-    return centralLoadState();
+
+    return centralLoadState().catch(function(err){
+      console.warn('Carga central posterior al login:', err);
+      /* Un error de carga no invalida el login. Solo un 401 indica sesión inválida. */
+      if(err && err.status === 401){
+        CENTRAL_TOKEN = null;
+        centralStorageClear();
+        currentUser = null;
+        throw err;
+      }
+      return null;
+    });
   }).then(function(){
-    rerenderAll();
-    if(typeof bootAdv === 'function') bootAdv();
-    switchTab('resumen');
-    showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success');
+    /* El panel debe mostrarse aunque alguna mejora visual falle. */
+    try{ rerenderAll(); }catch(e){ console.error('Error renderizando panel:', e); }
+    try{ if(typeof bootAdv === 'function') bootAdv(); }catch(e){ console.error('Error bootAdv:', e); }
+    try{ switchTab('resumen'); }catch(e){ console.error('Error cambiando pestaña:', e); }
+    try{ showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success'); }catch(e){}
   }).catch(function(err){
     console.error('Login central:', err);
-    showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
+    if(err && err.status === 401){
+      showLogin('La sesión no es válida. Inicie sesión nuevamente.');
+    } else {
+      /* Si login ya devolvió 200, NO volver a abrir el formulario por un error secundario. */
+      var screen = document.getElementById('loginScreen');
+      if(currentUser && screen){ screen.classList.add('hidden'); screen.style.setProperty('display','none','important'); }
+      else showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
+    }
   }).finally(function(){ if(btn) btn.disabled = false; });
 };
 
@@ -453,6 +475,8 @@ if marker not in html_content:
     st.stop()
 
 html_content = html_content.replace(marker, central_sync + "\n" + marker, 1)
+html_content = html_content.replace("</head>", "<style>/* Posición login */ .login-screen{align-items:flex-start!important;justify-content:center!important;padding-top:28px!important;box-sizing:border-box!important;} .login-card{margin-top:0!important;} </style></head>", 1)
+
 html_content = html_content.replace(
     "Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.",
     "Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>."
