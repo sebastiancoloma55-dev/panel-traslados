@@ -934,7 +934,10 @@ function normalizeSearch(str){
 }
 function cleanRut(value){
   if(value === null || value === undefined) return '';
-  return String(value).trim().toUpperCase().replace(/\./g,'').replace(/\s+/g,'');
+  var s=String(value).trim().toUpperCase();
+  /* Normaliza RUT con o sin puntos/guion para que Excel y PostgreSQL coincidan. */
+  s=s.replace(/[^0-9K]/g,'');
+  return s;
 }
 function formatRut(rut){
   if(!rut) return '';
@@ -2350,6 +2353,18 @@ function addDays(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n)
 function parseISO(iso){return iso?new Date(iso+'T12:00:00'):null}
 function daysDiff(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000)}
 function currentState(){return window.state||{colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],auditoria:[]};}
+function parseDateOnly(value){
+  if(value===null || value===undefined || value==='') return '';
+  if(value instanceof Date){
+    return value.getFullYear()+'-'+pad2(value.getMonth()+1)+'-'+pad2(value.getDate());
+  }
+  var s=String(value).trim();
+  var m=/^(\\d{4})[-\\/](\\d{1,2})[-\\/](\\d{1,2})/.exec(s);
+  if(m)return m[1]+'-'+pad2(m[2])+'-'+pad2(m[3]);
+  m=/^(\\d{1,2})[-\\/](\\d{1,2})[-\\/](\\d{4})/.exec(s);
+  if(m)return m[3]+'-'+pad2(m[2])+'-'+pad2(m[1]);
+  return '';
+}
 function statusFor(c,date){date=date||hoyISO();var rut=cleanRut(c.rut);var S=currentState();var v=(S.vacaciones||[]).filter(function(x){return cleanRut(x.rut||x.RUT)===rut&&x.fechaInicio<=date&&(!x.fechaTermino||x.fechaTermino>=date);}).sort(function(a,b){return String(b.fechaInicio).localeCompare(String(a.fechaInicio));})[0];if(v)return {key:'vacaciones',label:'Vacaciones',detail:v.fechaTermino?'Hasta '+fmtDate(v.fechaTermino):'Sin término'};var l=(S.licencias||[]).filter(function(x){return cleanRut(x.rut||x.RUT)===rut&&x.fechaInicio<=date&&(!x.fechaTermino||x.fechaTermino>=date);}).sort(function(a,b){return String(b.fechaInicio).localeCompare(String(a.fechaInicio));})[0];if(l)return {key:'licencia',label:'Licencia médica',detail:l.fechaTermino?'Hasta '+fmtDate(l.fechaTermino):'Sin término'};var t=(S.traslados||[]).filter(function(x){return x.estado==='aprobado'&&cleanRut(x.rut)===rut&&(x.fechaInicio||x.fechaEfectiva||'')<=date&&(x.indefinido||!x.fechaTermino||x.fechaTermino>=date);}).sort(function(a,b){return String(b.fechaInicio||b.fechaEfectiva||'').localeCompare(String(a.fechaInicio||a.fechaEfectiva||''));})[0];if(t)return {key:'traslado',label:'Traslado vigente',detail:'En '+(t.destino||t.sucursalDestino||'destino')};return {key:'trabajando',label:'Trabajando',detail:c.sucursalActual||'Sin sucursal'};}
 function fmtDate(iso){if(!iso)return '—';var p=String(iso).split('-');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:iso;}
 function openAdvModal(title,html,onSave){var root=document.getElementById('modalRoot');root.innerHTML='';var overlay=document.createElement('div');overlay.className='modal-overlay';var modal=document.createElement('div');modal.className='modal modal-wide';modal.innerHTML='<div class="modal-header"><h3>'+h(title)+'</h3><button class="modal-close" type="button">×</button></div><div class="modal-body">'+html+'</div><div class="modal-footer"><button class="btn btn-ghost" type="button" data-cancel>Cancelar</button><button class="btn btn-primary" type="button" data-save>Guardar</button></div>';overlay.appendChild(modal);root.appendChild(overlay);modal.querySelector('.modal-close').onclick=closeModal;modal.querySelector('[data-cancel]').onclick=closeModal;modal.querySelector('[data-save]').onclick=function(){if(onSave())closeModal();};}
@@ -2404,7 +2419,26 @@ setInterval(function(){if(window.currentUser&&document.getElementById('tab-contr
   function S(){try{return typeof currentState==='function'?currentState():state||{colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}catch(e){return {colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}}
   function activeCount(arr,fn){return (arr||[]).filter(fn||function(){return true}).length}
   var defs={
-    colaboradores:{icon:'👥',title:'Colaboradores',sub:'Gestión completa del personal, estado y situación actual.',metrics:function(s){return [['Total',s.colaboradores.length,'green'],['Activos',activeCount(s.colaboradores,function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'}),'green'],['Vacaciones',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='vacaciones'}),'yellow'],['Licencia médica',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='licencia'}),'red']]}},
+    colaboradores:{icon:'👥',title:'Colaboradores',sub:'Gestión completa del personal, estado y situación actual.',metrics:function(s){
+      var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10);
+      function vigente(a){
+        var ini=parseDateOnly(a.fechaInicio||a.inicio||'');
+        var fin=parseDateOnly(a.fechaTermino||a.termino||'');
+        return !!ini && ini<=hoy && (!fin || fin>=hoy);
+      }
+      function idsVigentes(arr){
+        var seen={}, n=0;
+        (arr||[]).forEach(function(a){
+          var r=cleanRut(a.rut||a.RUT||'');
+          if(r && vigente(a) && !seen[r]){seen[r]=true;n++;}
+        });
+        return n;
+      }
+      return [['Total',s.colaboradores.length,'green'],
+        ['Activos',activeCount(s.colaboradores,function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'}),'green'],
+        ['Vacaciones',idsVigentes(s.vacaciones),'yellow'],
+        ['Licencia médica',idsVigentes(s.licencias),'red']];
+    }}, 
     sucursales:{icon:'🏢',title:'Sucursales',sub:'Directorio, cobertura, encargados y dotación por sucursal.',metrics:function(s){var total=s.colaboradores.length;return [['Sucursales',s.sucursales.length,'green'],['Personal',total,'green'],['Con licencia',activeCount(s.licencias,function(x){return true}),'red'],['Vacaciones',activeCount(s.vacaciones,function(x){return true}),'yellow']]}},
     vacaciones:{icon:'🌿',title:'Vacaciones',sub:'Solicitudes, periodos, días y seguimiento de ausencias.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.vacaciones,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)}),prox=activeCount(s.vacaciones,function(x){return x.fechaInicio>=hoy&&x.fechaInicio<=((typeof addDays==='function'?addDays(hoy,7):hoy))});return [['Solicitudes',s.vacaciones.length,'green'],['Vigentes',vig,'yellow'],['Próximas 7 días',prox,'blue'],['Días registrados',s.vacaciones.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple']]}},
     licencias:{icon:'🩺',title:'Licencias médicas',sub:'Control de licencias, vigencia, duración y trazabilidad.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.licencias,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)});return [['Registros',s.licencias.length,'red'],['Vigentes',vig,'red'],['Días registrados',s.licencias.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple'],['RUT únicos',Object.keys(s.licencias.reduce(function(a,x){a[String(x.rut||'')]=1;return a},{})).filter(Boolean).length,'blue']]}},
