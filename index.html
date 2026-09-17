@@ -1,83 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<script id="streamlit-frame-fix">
-(function () {
-    "use strict";
 
-    function forceFullViewport() {
-        try {
-            var frame = window.frameElement;
-            if (!frame) return;
-
-            var css = {
-                position: "fixed",
-                top: "0px",
-                left: "0px",
-                right: "auto",
-                bottom: "auto",
-                width: "100vw",
-                height: "100vh",
-                minWidth: "100vw",
-                maxWidth: "100vw",
-                minHeight: "100vh",
-                maxHeight: "100vh",
-                margin: "0",
-                padding: "0",
-                border: "0",
-                display: "block",
-                zIndex: "2147483647",
-                background: "transparent"
-            };
-
-            Object.keys(css).forEach(function (key) {
-                frame.style.setProperty(
-                    key.replace(/[A-Z]/g, function (m) {
-                        return "-" + m.toLowerCase();
-                    }),
-                    css[key],
-                    "important"
-                );
-            });
-
-            var parent = frame.parentElement;
-            if (parent) {
-                parent.style.setProperty("margin", "0", "important");
-                parent.style.setProperty("padding", "0", "important");
-                parent.style.setProperty("width", "100vw", "important");
-                parent.style.setProperty("max-width", "100vw", "important");
-            }
-
-            var root = document.documentElement;
-            var body = document.body;
-            root.style.setProperty("margin", "0", "important");
-            root.style.setProperty("padding", "0", "important");
-            root.style.setProperty("width", "100%", "important");
-            root.style.setProperty("height", "100%", "important");
-            body.style.setProperty("margin", "0", "important");
-            body.style.setProperty("padding", "0", "important");
-            body.style.setProperty("width", "100%", "important");
-            body.style.setProperty("min-height", "100%", "important");
-            body.style.setProperty("overflow", "hidden", "important");
-        } catch (e) {
-            console.warn("No se pudo ajustar el iframe de Streamlit:", e);
-        }
-    }
-
-    forceFullViewport();
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", forceFullViewport);
-    }
-
-    window.addEventListener("load", forceFullViewport);
-    window.addEventListener("resize", forceFullViewport);
-
-    setTimeout(forceFullViewport, 50);
-    setTimeout(forceFullViewport, 250);
-    setTimeout(forceFullViewport, 1000);
-})();
-</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,8 +29,8 @@
   --font-mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-body{font-family:var(--font-body);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14.5px;line-height:1.5;}
+html,body{margin:0;padding:0;overflow-x:hidden;overflow-y:auto;}
+body{font-family:var(--font-body);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14.5px;line-height:1.5;overflow-x:hidden;overflow-y:auto;}
 button{font-family:inherit;cursor:pointer;}
 input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);}
 a{color:inherit;}
@@ -363,7 +287,7 @@ tbody tr:hover{background:#FAFBFC;}
   --blue:#4d86d8; --blue-soft:#e6efff; --purple:#8b67c4; --purple-soft:#eee7fb;
   --ui-shadow:0 12px 32px rgba(20,87,70,.09);
 }
-body{background:linear-gradient(135deg,#f4fbf7 0%,#edf7f3 45%,#f7fbf9 100%)!important;color:#18332c!important;}
+body{background:linear-gradient(135deg,#f4fbf7 0%,#edf7f3 45%,#f7fbf9 100%)!important;color:#18332c!important;overflow-y:auto!important;overflow-x:hidden!important;}
 .sidebar{width:258px!important;background:linear-gradient(180deg,#104b3c 0%,#0c3e32 100%)!important;box-shadow:10px 0 35px rgba(11,64,50,.12)!important;}
 .main{margin-left:258px!important;padding:28px 34px 60px!important;}
 .brand{padding:20px 18px!important;border-bottom:1px solid rgba(255,255,255,.12)!important;}
