@@ -309,7 +309,7 @@ body{font-size:14px!important;}
 .premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
 .premium-search span{font-size:18px;color:#507064;}
 /* Summary */
-#tab-resumen{display:block!important;}
+#tab-resumen.active{display:block!important;}
 #tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
 #tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
 #tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
@@ -374,7 +374,7 @@ body{font-size:14px!important;}
 .premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
 .premium-search span{font-size:18px;color:#507064;}
 /* Summary */
-#tab-resumen{display:block!important;}
+#tab-resumen.active{display:block!important;}
 #tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
 #tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
 #tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
@@ -512,6 +512,20 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 .activity-main{flex:1}.activity-title{font-weight:700;font-size:12px}.activity-sub{font-size:10.5px;color:#7b8d87}.activity-time{font-size:10px;color:#9aa8a3;white-space:nowrap;}
 @media(max-width:1100px){.section-metrics{grid-template-columns:repeat(2,1fr)}.quick-card-grid{grid-template-columns:repeat(2,1fr)}.tras-interactive-summary{grid-template-columns:repeat(3,1fr)}.tickets-grid{grid-template-columns:1fr}.activity-panel{grid-template-columns:1fr}}
 @media(max-width:720px){.sidebar{width:220px!important}.main{margin-left:220px!important;padding:20px!important}.section-metrics{grid-template-columns:1fr}.quick-card-grid{grid-template-columns:1fr}.tras-interactive-summary{grid-template-columns:1fr 1fr}.tras-interactive-toolbar{flex-direction:column;align-items:stretch}}
+</style>
+
+
+<style id="dashboard-only-summary-fix">
+/* El dashboard completo existe exclusivamente en Resumen */
+.tab-panel:not(#tab-resumen) #dashboardAlerts,
+.tab-panel:not(#tab-resumen) #dashboardEvents,
+.tab-panel:not(#tab-resumen) #branchDistribution,
+.tab-panel:not(#tab-resumen) #premiumRecentTransfers,
+.tab-panel:not(#tab-resumen) #dashboardLegend,
+.tab-panel:not(#tab-resumen) #donutTotal,
+.tab-panel:not(#tab-resumen) #monthChart {
+  display:none !important;
+}
 </style>
 
 </head>
@@ -2398,11 +2412,11 @@ setInterval(function(){if(window.currentUser&&document.getElementById('tab-contr
   }
   function renderMetrics(tab){var key=tab.id.replace('tab-',''),d=defs[key],box=tab.querySelector('.section-metrics');if(!d||!box)return;var s=S(),m=d.metrics(s);box.innerHTML=m.map(function(x){return '<div class="section-metric '+x[2]+'"><div class="sm-label">'+x[0]+'</div><div class="sm-value">'+x[1]+'</div></div>'}).join('');}
   function addQuickCards(){var tab=qs('#tab-resumen');if(!tab||tab.querySelector('.quick-card-grid'))return;var grid=document.createElement('div');grid.className='quick-card-grid';var items=[['colaboradores','👥','Gestionar','Colaboradores','green'],['sucursales','🏢','Administrar','Sucursales','green'],['vacaciones','🌿','Control de','Vacaciones','yellow'],['licencias','🩺','Gestionar','Licencias médicas','red'],['reportes','📊','Generar','Reportes','purple']];grid.innerHTML=items.map(function(x){return '<div class="quick-card '+x[4]+'" data-go-tab="'+x[0]+'"><div class="quick-icon">'+x[1]+'</div><div><div class="quick-title">'+x[2]+' '+x[3]+'</div><div class="quick-sub">Abrir módulo</div></div></div>'}).join('');tab.appendChild(grid);qsa('[data-go-tab]',grid).forEach(function(b){b.onclick=function(){if(typeof switchTab==='function')switchTab(b.getAttribute('data-go-tab'));}});}
-  function addTransferActivity(){var tab=qs('#tab-traslados');if(!tab||tab.querySelector('.activity-panel'))return;var p=document.createElement('div');p.className='activity-panel';p.innerHTML='<div class="activity-box"><h3 style="font-size:16px;margin-bottom:8px">Actividad reciente</h3><div id="premiumRecentTransfers"></div></div><div class="activity-box"><h3 style="font-size:16px;margin-bottom:8px">Resumen del estado</h3><div id="premiumTransferState"></div></div>';tab.appendChild(p);}
+  function addTransferActivity(){}
   function renderTransferActivity(){var s=S(),out=qs('#premiumRecentTransfers'),stateOut=qs('#premiumTransferState');if(!out||!stateOut)return;var arr=(s.traslados||[]).slice().sort(function(a,b){return String(b.fechaInicio||b.createdAt||'').localeCompare(String(a.fechaInicio||a.createdAt||''))}).slice(0,6);out.innerHTML=arr.length?arr.map(function(t){var st=String(t.estado||'pendiente').toLowerCase(),cls=st==='aprobado'?'':' '+(st==='rechazado'?'red':st==='espera'?'yellow':'blue');return '<div class="activity-item"><div class="activity-dot'+cls+'">'+(st==='aprobado'?'✓':st==='rechazado'?'×':st==='espera'?'◷':'•')+'</div><div class="activity-main"><div class="activity-title">'+(t.nombre||t.rut||'Sin nombre')+'</div><div class="activity-sub">'+(t.origen||'—')+' → '+(t.destino||'—')+'</div></div><div class="activity-time">'+(t.fechaInicio||'')+'</div></div>'}).join(''):'<div class="muted">No hay traslados registrados.</div>';
     var c={pendiente:0,espera:0,aprobado:0,rechazado:0};(s.traslados||[]).forEach(function(t){var k=String(t.estado||'pendiente').toLowerCase();if(c[k]===undefined)c[k]=0;c[k]++});stateOut.innerHTML='<div class="activity-item"><div class="activity-dot blue">•</div><div class="activity-main"><div class="activity-title">Pendientes</div><div class="activity-sub">En espera de resolución</div></div><strong>'+c.pendiente+'</strong></div><div class="activity-item"><div class="activity-dot yellow">◷</div><div class="activity-main"><div class="activity-title">En observación</div><div class="activity-sub">Revisión requerida</div></div><strong>'+c.espera+'</strong></div><div class="activity-item"><div class="activity-dot">✓</div><div class="activity-main"><div class="activity-title">Aprobados</div><div class="activity-sub">Traslados finalizados</div></div><strong>'+c.aprobado+'</strong></div><div class="activity-item"><div class="activity-dot red">×</div><div class="activity-main"><div class="activity-title">Rechazados</div><div class="activity-sub">No aprobados</div></div><strong>'+c.rechazado+'</strong></div>';
   }
-  function enhance(){qsa('.tab-panel').forEach(ensureHero);addQuickCards();addTransferActivity();qsa('.tab-panel').forEach(renderMetrics);renderTransferActivity();}
+  function enhance(){qsa('.tab-panel').forEach(ensureHero);addQuickCards();qsa('.tab-panel').forEach(renderMetrics);renderTransferActivity();}
   var tries=0;function boot(){enhance();tries++;if(tries<8)setTimeout(boot,500);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   setInterval(function(){enhance();},5000);
