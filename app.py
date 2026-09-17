@@ -127,7 +127,10 @@ function centralLoadState(){
     state.usuarios = s.usuarios || [];
     state.auditoria = s.auditoria || [];
     if(result.user && currentUser) currentUser = Object.assign({}, currentUser, result.user);
-    return sincronizarTrasladosConColaboradores();
+    /* La carga del estado central no debe bloquear el acceso si la sincronización secundaria falla. */
+    return sincronizarTrasladosConColaboradores().catch(function(err){
+      console.warn('Sincronización de traslados omitida:', err);
+    });
   });
 }
 
@@ -188,14 +191,16 @@ loginUser = function(){
   var btn = document.getElementById('btnLogin');
   if(btn) btn.disabled = true;
   centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
+    if(!result || !result.token || !result.user) throw new Error('El servidor no entregó una sesión válida.');
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
     centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
     centralStorageSet(CENTRAL_USER_KEY, JSON.stringify(currentUser), remember);
-    return centralLoadState();
-  }).then(function(){
+    /* Entrar al panel no depende de ninguna operación secundaria. */
     hideLogin();
     updateSessionUI();
+    return centralLoadState();
+  }).then(function(){
     rerenderAll();
     if(typeof bootAdv === 'function') bootAdv();
     switchTab('resumen');
