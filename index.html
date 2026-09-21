@@ -1,7 +1,83 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script id="streamlit-frame-fix">
+(function () {
+    "use strict";
 
+    function forceFullViewport() {
+        try {
+            var frame = window.frameElement;
+            if (!frame) return;
+
+            var css = {
+                position: "fixed",
+                top: "0px",
+                left: "0px",
+                right: "auto",
+                bottom: "auto",
+                width: "100vw",
+                height: "100vh",
+                minWidth: "100vw",
+                maxWidth: "100vw",
+                minHeight: "100vh",
+                maxHeight: "100vh",
+                margin: "0",
+                padding: "0",
+                border: "0",
+                display: "block",
+                zIndex: "2147483647",
+                background: "transparent"
+            };
+
+            Object.keys(css).forEach(function (key) {
+                frame.style.setProperty(
+                    key.replace(/[A-Z]/g, function (m) {
+                        return "-" + m.toLowerCase();
+                    }),
+                    css[key],
+                    "important"
+                );
+            });
+
+            var parent = frame.parentElement;
+            if (parent) {
+                parent.style.setProperty("margin", "0", "important");
+                parent.style.setProperty("padding", "0", "important");
+                parent.style.setProperty("width", "100vw", "important");
+                parent.style.setProperty("max-width", "100vw", "important");
+            }
+
+            var root = document.documentElement;
+            var body = document.body;
+            root.style.setProperty("margin", "0", "important");
+            root.style.setProperty("padding", "0", "important");
+            root.style.setProperty("width", "100%", "important");
+            root.style.setProperty("height", "100%", "important");
+            body.style.setProperty("margin", "0", "important");
+            body.style.setProperty("padding", "0", "important");
+            body.style.setProperty("width", "100%", "important");
+            body.style.setProperty("min-height", "100%", "important");
+            body.style.setProperty("overflow", "hidden", "important");
+        } catch (e) {
+            console.warn("No se pudo ajustar el iframe de Streamlit:", e);
+        }
+    }
+
+    forceFullViewport();
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", forceFullViewport);
+    }
+
+    window.addEventListener("load", forceFullViewport);
+    window.addEventListener("resize", forceFullViewport);
+
+    setTimeout(forceFullViewport, 50);
+    setTimeout(forceFullViewport, 250);
+    setTimeout(forceFullViewport, 1000);
+})();
+</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,8 +105,8 @@
   --font-mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;overflow-x:hidden;overflow-y:auto;}
-body{font-family:var(--font-body);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14.5px;line-height:1.5;overflow-x:hidden;overflow-y:auto;}
+html,body{margin:0;padding:0;}
+body{font-family:var(--font-body);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14.5px;line-height:1.5;}
 button{font-family:inherit;cursor:pointer;}
 input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);}
 a{color:inherit;}
@@ -38,8 +114,7 @@ a{color:inherit;}
 .hidden{display:none !important;}
 
 /* ---------- autenticacion / usuarios ---------- */
-.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--ink) 0%,var(--ink-2) 60%,#31466D 100%);display:flex;align-items:flex-start;justify-content:center;padding:20px;z-index:1000;overflow:auto;}
-.login-screen.hidden{display:none !important;}
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--ink) 0%,var(--ink-2) 60%,#31466D 100%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
 .login-card{width:100%;max-width:430px;background:var(--surface);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.35);overflow:hidden;}
 .login-head{padding:28px 30px 20px;background:linear-gradient(180deg,#F8F9FB,#fff);border-bottom:1px solid var(--border);}
 .login-brand{display:flex;align-items:center;gap:12px;}
@@ -278,339 +353,7 @@ tbody tr:hover{background:#FAFBFC;}
 .tab-panel.active{display:block !important;animation:fadeIn .18s ease;}
 .creator-footer{margin-top:32px;padding:16px 20px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--slate);clear:both;}
 .creator-footer strong{color:var(--ink);}
-
-.topbar-brandline{display:flex;align-items:center;gap:12px}.topbar-logo{width:46px;height:46px;border-radius:13px;background:#54c48e;color:#0c5a43;display:grid;place-items:center;font-size:25px;box-shadow:0 6px 18px rgba(56,160,112,.18)}.top-notify{position:relative;font-size:25px;color:#173d4d;display:inline-flex;align-items:center;justify-content:center;width:35px;height:35px}.top-notify b{position:absolute;right:-1px;top:-3px;background:#dc544e;color:#fff;border-radius:50%;font-size:9px;min-width:15px;height:15px;display:grid;place-items:center}.topbar-brandline h1{font-size:29px!important}.topbar-brandline h1:after{content:none!important}.topbar-center-search{flex:1;max-width:390px;margin-left:auto;margin-right:auto}.topbar-center-search input{height:18px}
-/* ===== PREMIUM DASHBOARD OVERRIDE ===== */
-html,body{overflow-x:hidden!important;overflow-y:auto!important;min-height:100%!important;background:#edf8f2!important;}
-body{font-size:14px!important;}
-.app-shell{min-height:100vh!important;}
-.sidebar{width:256px!important;background:linear-gradient(180deg,#124d3d 0%,#0f6049 55%,#0d4b3b 100%)!important;}
-.main{margin-left:256px!important;padding:18px 28px 55px!important;background:linear-gradient(135deg,#effaf5 0%,#f7fbf8 100%)!important;min-height:100vh!important;}
-.brand{padding:18px 18px 16px!important;}
-.brand-mark{width:42px!important;height:42px!important;border-radius:13px!important;background:#dff6e9!important;color:#147052!important;box-shadow:0 5px 15px rgba(0,0,0,.08);}
-.nav{padding:16px 9px!important;}
-.nav-item{border-radius:12px!important;padding:11px 13px!important;color:#effcf6!important;transition:.18s ease!important;}
-.nav-item:hover{background:rgba(223,246,233,.13)!important;transform:translateX(2px);}
-.nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
-.nav-badge{background:rgba(255,255,255,.13)!important;}
-.nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
-.sidebar-footer{padding:14px 14px 18px!important;display:none!important;}
-.sidebar-footer.summary-visible{display:block!important;}
-.storage-pill{color:#bfe0d1!important;}
-.storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
-.topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
-.topbar h1{font-size:0!important;color:#102b3f!important;line-height:1.1;}
-.topbar h1:after{content:'Hola, Sebastián 👋';font-size:29px;font-family:var(--font-display);font-weight:700;}
-.topbar p{font-size:14px!important;color:#607287!important;}
-.topbar-actions{gap:10px!important;}
-.user-chip{background:#fff!important;border:1px solid #d8ebe1!important;box-shadow:0 4px 12px rgba(28,90,68,.06)!important;padding:8px 12px!important;}
-.btn-ghost{background:#fff!important;border-color:#d8ebe1!important;}
-.premium-search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #cfe3da;border-radius:11px;padding:9px 13px;min-width:360px;box-shadow:0 3px 12px rgba(32,91,72,.05);}
-.premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
-.premium-search span{font-size:18px;color:#507064;}
-/* Summary */
-#tab-resumen.active{display:block!important;}
-#tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
-#tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
-#tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
-#tab-resumen .stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(39,116,84,.12)!important;}
-#tab-resumen .stat-card .small{position:relative;text-transform:none;color:#5e7180;font-size:11px;letter-spacing:.02em;}
-#tab-resumen .stat-card .big{position:relative;font-family:var(--font-display);font-size:31px!important;color:#122c3d!important;margin:4px 0!important;}
-#tab-resumen .stat-card:nth-child(2) .big{color:#16835f!important;}
-#tab-resumen .stat-card:nth-child(3) .big{color:#c98700!important;}
-#tab-resumen .stat-card:nth-child(4) .big{color:#d5544b!important;}
-#tab-resumen .stat-card:nth-child(5) .big{color:#178c68!important;}
-#tab-resumen .stat-card .hint{position:relative;color:#7a8995!important;font-size:12px!important;}
-#dashVacaciones{display:block;}
-.kpi-board{background:linear-gradient(90deg,#185c47,#237456)!important;border-radius:15px!important;box-shadow:0 10px 24px rgba(22,89,68,.13)!important;margin-bottom:18px!important;}
-.kpi-cell{padding:15px 20px!important;}
-.kpi-value{font-size:25px!important;color:#fff!important;}
-.kpi-value.amber,.kpi-value.gold{color:#f5cf6b!important;}.kpi-value.teal{color:#b6eed6!important;}.kpi-value.terracotta{color:#ffb3aa!important;}
-#tab-resumen .premium-summary-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.72fr);gap:18px;align-items:start;}
-#tab-resumen .premium-left{display:flex;flex-direction:column;gap:18px;min-width:0;}
-#tab-resumen .premium-right{display:flex;flex-direction:column;gap:14px;min-width:0;}
-.premium-panel{background:#fff;border:1px solid #dceee6;border-radius:15px;box-shadow:0 7px 20px rgba(39,116,84,.065);padding:18px;}
-.premium-panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.premium-panel-title h3{font-family:var(--font-body);font-size:15px;color:#172c3d;}
-.premium-panel-title a{font-size:12px;color:#16835f;text-decoration:underline;cursor:pointer;}
-.quick-card-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px!important;margin:0!important;}
-.quick-card{background:#fff!important;border:1px solid #dceee6!important;border-radius:13px!important;box-shadow:0 5px 16px rgba(39,116,84,.055)!important;cursor:pointer!important;transition:.18s ease!important;padding:13px!important;}
-.quick-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(39,116,84,.11)!important;}
-.quick-icon{width:35px!important;height:35px!important;border-radius:11px!important;display:flex;align-items:center;justify-content:center;font-size:18px!important;}
-.quick-card.green .quick-icon{background:#ddf4e8!important;}.quick-card.yellow .quick-icon{background:#fff0c9!important;}.quick-card.red .quick-icon{background:#ffe0dc!important;}.quick-card.purple .quick-icon{background:#eee5ff!important;}
-.quick-title{font-weight:700!important;color:#19384a!important;font-size:12px!important;}.quick-sub{font-size:10.5px!important;color:#7a8995!important;}
-.activity-item{display:flex!important;align-items:center!important;gap:10px!important;padding:9px 0!important;border-bottom:1px solid #edf2ef!important;}
-.activity-item:last-child{border-bottom:0!important;}.activity-dot{width:28px!important;height:28px!important;border-radius:10px!important;background:#ddf4e8!important;color:#13805e!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:700!important;flex:none!important;}.activity-dot.yellow{background:#fff0c9!important;color:#b57900!important}.activity-dot.red{background:#ffe0dc!important;color:#c84e46!important}.activity-dot.blue{background:#e1edff!important;color:#2266c4!important}.activity-main{flex:1;min-width:0}.activity-title{font-weight:600;color:#20384a;font-size:12px}.activity-sub{font-size:10.5px;color:#16835f}.activity-time{font-size:10px;color:#8996a1;white-space:nowrap}
-.donut-wrap{display:flex;align-items:center;gap:15px;}.donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(#48b982 0deg 270deg,#f2bb38 270deg 330deg,#ed655b 330deg 360deg);position:relative;display:grid;place-items:center;flex:none}.donut:after{content:'';width:72px;height:72px;border-radius:50%;background:#fff;position:absolute}.donut-center{position:relative;z-index:1;text-align:center;font-family:var(--font-display);font-size:24px;color:#17384a}.donut-center small{display:block;font-family:var(--font-body);font-size:10px;color:#7d8c97}.legend{display:flex;flex-direction:column;gap:8px;flex:1}.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#536676}.legend-left{display:flex;align-items:center;gap:7px}.legend-dot{width:9px;height:9px;border-radius:50%;}.lg-green{background:#48b982}.lg-yellow{background:#f2bb38}.lg-red{background:#ed655b}.lg-blue{background:#6ca2e9}
-.month-chart{height:150px;display:flex;align-items:flex-end;gap:13px;padding:15px 5px 0;border-bottom:1px solid #e8efeb}.month-bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.month-bar{width:100%;max-width:28px;background:linear-gradient(180deg,#65c99e,#2c936d);border-radius:7px 7px 2px 2px;min-height:10px;box-shadow:0 4px 9px rgba(45,147,109,.13)}.month-label{font-size:10px;color:#768895}.month-val{font-size:9px;color:#5c7180}.alert-strip{display:flex;align-items:center;gap:10px;border:1px solid #d8ebe1;background:#f5fbf7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#2a4b3d}.alert-strip.yellow{background:#fffaf0;border-color:#f3dfaa}.alert-strip.blue{background:#f2f7ff;border-color:#d8e6fa}
-.creator-footer{margin:22px 0 0!important;text-align:center!important;padding:16px 0 2px!important;border-top:1px solid #d9ebe3!important;color:#7a8b95!important;font-size:11px!important;}.creator-footer strong{color:#164c3b!important;}
-@media(max-width:1100px){#tab-resumen .dashboard-grid{grid-template-columns:repeat(2,1fr)!important}.quick-card-grid{grid-template-columns:repeat(2,1fr)!important}#tab-resumen .premium-summary-grid{grid-template-columns:1fr!important}.premium-search{min-width:260px}}
-
-html,body{overflow-x:hidden!important;overflow-y:auto!important;min-height:100%!important;background:#edf8f2!important;}
-body{font-size:14px!important;}
-.app-shell{min-height:100vh!important;}
-.sidebar{width:256px!important;background:linear-gradient(180deg,#124d3d 0%,#0f6049 55%,#0d4b3b 100%)!important;}
-.main{margin-left:256px!important;padding:18px 28px 55px!important;background:linear-gradient(135deg,#effaf5 0%,#f7fbf8 100%)!important;min-height:100vh!important;}
-.brand{padding:18px 18px 16px!important;}
-.brand-mark{width:42px!important;height:42px!important;border-radius:13px!important;background:#dff6e9!important;color:#147052!important;box-shadow:0 5px 15px rgba(0,0,0,.08);}
-.nav{padding:16px 9px!important;}
-.nav-item{border-radius:12px!important;padding:11px 13px!important;color:#effcf6!important;transition:.18s ease!important;}
-.nav-item:hover{background:rgba(223,246,233,.13)!important;transform:translateX(2px);}
-.nav-item.active{background:#ddf4e8!important;color:#0c4d3c!important;border-left-color:#f0c34d!important;box-shadow:0 5px 16px rgba(0,0,0,.08);}
-.nav-badge{background:rgba(255,255,255,.13)!important;}
-.nav-item.active .nav-badge{background:#42b982!important;color:#fff!important;}
-.sidebar-footer{padding:14px 14px 18px!important;display:none!important;}
-.sidebar-footer.summary-visible{display:block!important;}
-.storage-pill{color:#bfe0d1!important;}
-.storage-pill:after{content:'Farmacias de Similares Chile';display:block;color:#e4f5ed;font-size:10.5px;margin-top:22px;position:absolute;left:15px;bottom:12px;}
-.topbar{align-items:center!important;margin-bottom:18px!important;padding:2px 0!important;}
-.topbar h1{font-size:0!important;color:#102b3f!important;line-height:1.1;}
-.topbar h1:after{content:'Hola, Sebastián 👋';font-size:29px;font-family:var(--font-display);font-weight:700;}
-.topbar p{font-size:14px!important;color:#607287!important;}
-.topbar-actions{gap:10px!important;}
-.user-chip{background:#fff!important;border:1px solid #d8ebe1!important;box-shadow:0 4px 12px rgba(28,90,68,.06)!important;padding:8px 12px!important;}
-.btn-ghost{background:#fff!important;border-color:#d8ebe1!important;}
-.premium-search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #cfe3da;border-radius:11px;padding:9px 13px;min-width:360px;box-shadow:0 3px 12px rgba(32,91,72,.05);}
-.premium-search input{border:0;outline:0;width:100%;font-size:13.5px;background:transparent;color:#19384a;}
-.premium-search span{font-size:18px;color:#507064;}
-/* Summary */
-#tab-resumen.active{display:block!important;}
-#tab-resumen .dashboard-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important;}
-#tab-resumen .stat-card{position:relative;min-height:126px!important;background:#fff!important;border:1px solid #dceee6!important;border-radius:15px!important;padding:18px!important;box-shadow:0 8px 22px rgba(39,116,84,.07)!important;overflow:hidden;transition:.18s ease!important;}
-#tab-resumen .stat-card:before{content:'';position:absolute;right:-28px;top:-35px;width:90px;height:90px;border-radius:50%;background:#e8f7ef;}
-#tab-resumen .stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(39,116,84,.12)!important;}
-#tab-resumen .stat-card .small{position:relative;text-transform:none;color:#5e7180;font-size:11px;letter-spacing:.02em;}
-#tab-resumen .stat-card .big{position:relative;font-family:var(--font-display);font-size:31px!important;color:#122c3d!important;margin:4px 0!important;}
-#tab-resumen .stat-card:nth-child(2) .big{color:#16835f!important;}
-#tab-resumen .stat-card:nth-child(3) .big{color:#c98700!important;}
-#tab-resumen .stat-card:nth-child(4) .big{color:#d5544b!important;}
-#tab-resumen .stat-card:nth-child(5) .big{color:#178c68!important;}
-#tab-resumen .stat-card .hint{position:relative;color:#7a8995!important;font-size:12px!important;}
-#dashVacaciones{display:block;}
-.kpi-board{background:linear-gradient(90deg,#185c47,#237456)!important;border-radius:15px!important;box-shadow:0 10px 24px rgba(22,89,68,.13)!important;margin-bottom:18px!important;}
-.kpi-cell{padding:15px 20px!important;}
-.kpi-value{font-size:25px!important;color:#fff!important;}
-.kpi-value.amber,.kpi-value.gold{color:#f5cf6b!important;}.kpi-value.teal{color:#b6eed6!important;}.kpi-value.terracotta{color:#ffb3aa!important;}
-#tab-resumen .premium-summary-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.72fr);gap:18px;align-items:start;}
-#tab-resumen .premium-left{display:flex;flex-direction:column;gap:18px;min-width:0;}
-#tab-resumen .premium-right{display:flex;flex-direction:column;gap:14px;min-width:0;}
-.premium-panel{background:#fff;border:1px solid #dceee6;border-radius:15px;box-shadow:0 7px 20px rgba(39,116,84,.065);padding:18px;}
-.premium-panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.premium-panel-title h3{font-family:var(--font-body);font-size:15px;color:#172c3d;}
-.premium-panel-title a{font-size:12px;color:#16835f;text-decoration:underline;cursor:pointer;}
-.quick-card-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px!important;margin:0!important;}
-.quick-card{background:#fff!important;border:1px solid #dceee6!important;border-radius:13px!important;box-shadow:0 5px 16px rgba(39,116,84,.055)!important;cursor:pointer!important;transition:.18s ease!important;padding:13px!important;}
-.quick-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(39,116,84,.11)!important;}
-.quick-icon{width:35px!important;height:35px!important;border-radius:11px!important;display:flex;align-items:center;justify-content:center;font-size:18px!important;}
-.quick-card.green .quick-icon{background:#ddf4e8!important;}.quick-card.yellow .quick-icon{background:#fff0c9!important;}.quick-card.red .quick-icon{background:#ffe0dc!important;}.quick-card.purple .quick-icon{background:#eee5ff!important;}
-.quick-title{font-weight:700!important;color:#19384a!important;font-size:12px!important;}.quick-sub{font-size:10.5px!important;color:#7a8995!important;}
-.activity-item{display:flex!important;align-items:center!important;gap:10px!important;padding:9px 0!important;border-bottom:1px solid #edf2ef!important;}
-.activity-item:last-child{border-bottom:0!important;}.activity-dot{width:28px!important;height:28px!important;border-radius:10px!important;background:#ddf4e8!important;color:#13805e!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:700!important;flex:none!important;}.activity-dot.yellow{background:#fff0c9!important;color:#b57900!important}.activity-dot.red{background:#ffe0dc!important;color:#c84e46!important}.activity-dot.blue{background:#e1edff!important;color:#2266c4!important}.activity-main{flex:1;min-width:0}.activity-title{font-weight:600;color:#20384a;font-size:12px}.activity-sub{font-size:10.5px;color:#16835f}.activity-time{font-size:10px;color:#8996a1;white-space:nowrap}
-.donut-wrap{display:flex;align-items:center;gap:15px;}.donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(#48b982 0deg 270deg,#f2bb38 270deg 330deg,#ed655b 330deg 360deg);position:relative;display:grid;place-items:center;flex:none}.donut:after{content:'';width:72px;height:72px;border-radius:50%;background:#fff;position:absolute}.donut-center{position:relative;z-index:1;text-align:center;font-family:var(--font-display);font-size:24px;color:#17384a}.donut-center small{display:block;font-family:var(--font-body);font-size:10px;color:#7d8c97}.legend{display:flex;flex-direction:column;gap:8px;flex:1}.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#536676}.legend-left{display:flex;align-items:center;gap:7px}.legend-dot{width:9px;height:9px;border-radius:50%;}.lg-green{background:#48b982}.lg-yellow{background:#f2bb38}.lg-red{background:#ed655b}.lg-blue{background:#6ca2e9}
-.month-chart{height:150px;display:flex;align-items:flex-end;gap:13px;padding:15px 5px 0;border-bottom:1px solid #e8efeb}.month-bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.month-bar{width:100%;max-width:28px;background:linear-gradient(180deg,#65c99e,#2c936d);border-radius:7px 7px 2px 2px;min-height:10px;box-shadow:0 4px 9px rgba(45,147,109,.13)}.month-label{font-size:10px;color:#768895}.month-val{font-size:9px;color:#5c7180}.alert-strip{display:flex;align-items:center;gap:10px;border:1px solid #d8ebe1;background:#f5fbf7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#2a4b3d}.alert-strip.yellow{background:#fffaf0;border-color:#f3dfaa}.alert-strip.blue{background:#f2f7ff;border-color:#d8e6fa}
-.creator-footer{margin:22px 0 0!important;text-align:center!important;padding:16px 0 2px!important;border-top:1px solid #d9ebe3!important;color:#7a8b95!important;font-size:11px!important;}.creator-footer strong{color:#164c3b!important;}
-@media(max-width:1100px){#tab-resumen .dashboard-grid{grid-template-columns:repeat(2,1fr)!important}.quick-card-grid{grid-template-columns:repeat(2,1fr)!important}#tab-resumen .premium-summary-grid{grid-template-columns:1fr!important}.premium-search{min-width:260px}}
-
-
-/* PIE CENTRALIZADO: exclusivo del módulo Resumen */
-.summary-central-footer{margin-top:24px;padding:14px 18px 12px;border-top:1px solid #d7ebe1;color:#6d8179;text-align:center;background:linear-gradient(180deg,#f7fcf9 0%,#eef8f3 100%);border-radius:12px;}
-.summary-central-footer .storage-pill{display:inline-flex;align-items:center;justify-content:center;color:#5e756c;font-size:11.5px;}
-.summary-central-footer .storage-dot{background:#58a982;box-shadow:0 0 0 3px rgba(88,169,130,.14);}
-.summary-central-company{margin-top:7px;color:#71857d;font-size:10px;line-height:1.45;}
-.summary-central-company strong{color:#3f6658;}
-.sidebar-footer{display:none!important;}
 </style>
-
-<style id="ui-premium-enhancement">
-:root{
-  --green-950:#0f3f33; --green-900:#145746; --green-800:#1d6a53; --green-700:#2f8a6a;
-  --green-100:#e7f7ef; --green-50:#f4fbf7; --mint:#d9f3e7; --mint-2:#c9ebdc;
-  --yellow:#e7ad3e; --yellow-soft:#fff3d7; --red:#db625b; --red-soft:#ffe5e2;
-  --blue:#4d86d8; --blue-soft:#e6efff; --purple:#8b67c4; --purple-soft:#eee7fb;
-  --ui-shadow:0 12px 32px rgba(20,87,70,.09);
-}
-body{background:linear-gradient(135deg,#f4fbf7 0%,#edf7f3 45%,#f7fbf9 100%)!important;color:#18332c!important;overflow-y:auto!important;overflow-x:hidden!important;}
-.sidebar{width:258px!important;background:linear-gradient(180deg,#104b3c 0%,#0c3e32 100%)!important;box-shadow:10px 0 35px rgba(11,64,50,.12)!important;}
-.main{margin-left:258px!important;padding:28px 34px 60px!important;}
-.brand{padding:20px 18px!important;border-bottom:1px solid rgba(255,255,255,.12)!important;}
-.brand-mark{width:44px!important;height:44px!important;border-radius:13px!important;background:#dff6e9!important;color:#1c7559!important;font-size:25px!important;box-shadow:0 8px 18px rgba(0,0,0,.12)!important;}
-.brand-title{font-size:19px!important;letter-spacing:.08em!important;}
-.nav{padding:14px 10px!important;gap:4px!important;}
-.nav-item{padding:11px 12px!important;border-radius:11px!important;color:#dcefe8!important;transition:all .18s ease!important;}
-.nav-item:hover{background:rgba(214,247,233,.12)!important;transform:translateX(2px)!important;}
-.nav-item.active{background:#dff5e9!important;color:#114d3d!important;border-left:0!important;box-shadow:0 7px 20px rgba(0,0,0,.08)!important;}
-.nav-item.active .nav-badge{background:#3db27e!important;color:white!important;}
-.nav-badge{background:rgba(255,255,255,.13)!important;border-radius:999px!important;}
-.topbar{align-items:center!important;margin-bottom:22px!important;padding:0 4px!important;}
-.topbar h1{font-size:32px!important;color:#123b31!important;}
-.topbar-actions{align-items:center!important;}
-.user-chip{background:#fff!important;border-color:#cfe5da!important;box-shadow:0 5px 18px rgba(20,87,70,.07)!important;}
-.btn{border-radius:11px!important;padding:10px 15px!important;transition:all .18s ease!important;}
-.btn-primary{background:#155b48!important;border-color:#155b48!important;}
-.btn-primary:hover{background:#0f4b3b!important;transform:translateY(-2px)!important;box-shadow:0 9px 20px rgba(21,91,72,.18)!important;}
-.btn-amber{background:#f2c55b!important;border-color:#e1ad3f!important;}
-.btn-teal{background:#3aa879!important;border-color:#2b8d65!important;}
-.card,.stat-card,.table-wrap,.adv-section,.kpi-board{border:1px solid #d9ebe2!important;border-radius:18px!important;box-shadow:var(--ui-shadow)!important;background:rgba(255,255,255,.94)!important;}
-.stat-card{padding:19px 20px!important;position:relative;overflow:hidden!important;}
-.stat-card:after{content:"";position:absolute;right:-25px;top:-35px;width:100px;height:100px;border-radius:50%;background:rgba(92,194,145,.09);}
-.stat-card .big{font-size:32px!important;color:#0e493a!important;position:relative;z-index:1;}
-.kpi-board{overflow:hidden!important;background:linear-gradient(90deg,#155b48,#1d6a53)!important;border-color:#155b48!important;}
-.kpi-cell{padding:17px 18px!important;border-color:rgba(255,255,255,.15)!important;}
-.kpi-value{color:#fff!important;}
-.kpi-value.amber{color:#f7cf72!important}.kpi-value.gold{color:#f3cc68!important}.kpi-value.teal{color:#9de2c2!important}.kpi-value.terracotta{color:#ffaaa2!important}
-.tab-panel{min-height:calc(100vh - 130px)!important;}
-.section-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 16px;padding:20px 22px;border:1px solid #d6ebe1;border-radius:18px;background:linear-gradient(135deg,#ffffff 0%,#eefaf4 100%);box-shadow:var(--ui-shadow);}
-.section-hero-left{display:flex;align-items:center;gap:14px;min-width:0;}
-.section-hero-icon{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#dcf4e8;color:#1d7b5c;box-shadow:inset 0 0 0 1px #c8e9d9;}
-.section-hero h2{font-family:var(--font-display);font-size:25px;color:#123f33;margin:0;}
-.section-hero p{margin:3px 0 0;color:#647a72;font-size:12.5px;}
-.section-hero-badge{padding:7px 11px;border-radius:999px;background:#e2f5eb;color:#1b7457;font-size:11px;font-weight:800;white-space:nowrap;}
-.section-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;}
-.section-metric{padding:15px 17px;background:#fff;border:1px solid #dcebe4;border-radius:15px;box-shadow:0 7px 22px rgba(20,87,70,.06);transition:transform .18s ease,box-shadow .18s ease;}
-.section-metric:hover{transform:translateY(-3px);box-shadow:0 13px 28px rgba(20,87,70,.10);}
-.section-metric .sm-label{text-transform:uppercase;font-size:9.5px;letter-spacing:.08em;color:#789088;font-weight:800;}
-.section-metric .sm-value{font:700 27px var(--font-mono);color:#123f33;margin-top:3px;}
-.section-metric.green .sm-value{color:#21815f}.section-metric.yellow .sm-value{color:#c18a17}.section-metric.red .sm-value{color:#c94f49}.section-metric.blue .sm-value{color:#447bc4}.section-metric.purple .sm-value{color:#7855ae}
-.toolbar{padding:14px!important;background:#f7fcf9!important;border:1px solid #dcece5!important;border-radius:15px!important;margin-bottom:12px!important;box-shadow:0 5px 15px rgba(20,87,70,.04)!important;}
-.toolbar .input,.toolbar select,.filter-row select,.history-filter select{border-color:#cfe2d9!important;border-radius:10px!important;background:#fff!important;}
-.table-wrap{overflow:hidden!important;}
-table thead th{background:linear-gradient(90deg,#e9f7f0,#f2faf6)!important;color:#294a40!important;border-bottom:1px solid #d7e9e1!important;}
-table tbody tr{transition:background .15s ease,transform .15s ease!important;}
-table tbody tr:hover{background:#f4fbf7!important;}
-table tbody td{border-bottom:1px solid #edf2ef!important;}
-.tickets-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;}
-.ticket{border-radius:16px!important;border:1px solid #dcebe4!important;box-shadow:0 8px 22px rgba(20,87,70,.07)!important;transition:transform .18s ease,box-shadow .18s ease!important;background:#fff!important;}
-.ticket:hover{transform:translateY(-3px)!important;box-shadow:0 15px 30px rgba(20,87,70,.11)!important;}
-.ticket-aprobado{background:linear-gradient(135deg,#fafffc,#effaf4)!important;border-top:4px solid #42a977!important;}
-.ticket-espera{background:linear-gradient(135deg,#fffef9,#fff7e3)!important;border-top:4px solid #e2ae3d!important;}
-.ticket-rechazado{background:linear-gradient(135deg,#fffafa,#fff0ee)!important;border-top:4px solid #d95f57!important;}
-.ticket-pendiente{background:linear-gradient(135deg,#fbfdff,#edf4ff)!important;border-top:4px solid #5b8bd4!important;}
-.pill-teal{background:#d9f3e7!important;color:#176b4e!important}.pill-amber{background:#fff0cb!important;color:#996b0f!important}.pill-terracotta{background:#ffe1de!important;color:#b63f38!important}.pill-slate{background:#e7efff!important;color:#3567af!important}
-.tras-interactive-summary{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:12px!important;margin-bottom:14px!important;}
-.tras-summary-card{border:1px solid #dcebe4!important;background:#fff!important;border-radius:15px!important;padding:15px!important;box-shadow:0 7px 22px rgba(20,87,70,.06)!important;cursor:pointer!important;transition:.18s!important;}
-.tras-summary-card:hover{transform:translateY(-3px)!important;box-shadow:0 13px 26px rgba(20,87,70,.10)!important;}
-.tras-interactive-toolbar{display:flex!important;gap:10px!important;align-items:center!important;background:#f7fcf9!important;border:1px solid #dcece5!important;border-radius:15px!important;padding:12px!important;margin-bottom:14px!important;}
-.tras-interactive-toolbar input{flex:1;border:1px solid #cfe2d9;border-radius:10px;padding:10px 12px;background:#fff;}
-.tras-interactive-toolbar select{border:1px solid #cfe2d9;border-radius:10px;padding:10px 12px;background:#fff;}
-.tras-filter-count{font-size:12px;font-weight:700;color:#54736a;white-space:nowrap;}
-.calendar-grid{border-radius:16px!important;border-color:#d7e9e1!important;box-shadow:var(--ui-shadow)!important;}
-.cal-weekday{background:#eaf7f1!important;color:#3c5e53!important;}
-.cal-day{transition:background .15s ease!important;}.cal-day:hover{background:#f4fbf7!important;}
-.adv-kpi,.adv-section{border-radius:16px!important;box-shadow:var(--ui-shadow)!important;border-color:#d8ebe2!important;}
-.adv-kpi:before{background:#2e8b69!important}.adv-kpi.amber:before{background:#e4ad3d!important}.adv-kpi.teal:before{background:#3aa879!important}.adv-kpi.purple:before{background:#8a67c2!important}.adv-kpi.red:before{background:#d85e56!important}
-.adv-section-head{background:linear-gradient(90deg,#f5fbf8,#fff)!important;border-bottom-color:#e1eee8!important;}
-.adv-table th{background:#eaf7f1!important;border-bottom-color:#d8e9e1!important;}
-.backup-note{background:#eff9f4!important;border-color:#d5e9df!important;}
-.quick-card-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px;}
-.quick-card{border:1px solid #d9ebe2;background:#fff;border-radius:15px;padding:14px 15px;display:flex;gap:11px;align-items:center;box-shadow:0 7px 20px rgba(20,87,70,.06);cursor:pointer;transition:.18s;}
-.quick-card:hover{transform:translateY(-3px);box-shadow:0 13px 28px rgba(20,87,70,.10);}
-.quick-icon{width:38px;height:38px;border-radius:11px;background:#e3f6eb;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;}.quick-card.yellow .quick-icon{background:#fff0cb}.quick-card.red .quick-icon{background:#ffe3e0}.quick-card.blue .quick-icon{background:#e5efff}.quick-card.purple .quick-icon{background:#eee7fb}
-.quick-title{font-weight:800;font-size:12px;color:#20483d}.quick-sub{font-size:10.5px;color:#738880;margin-top:2px;}
-.activity-panel{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px;}
-.activity-box{background:#fff;border:1px solid #d9ebe2;border-radius:16px;padding:16px;box-shadow:var(--ui-shadow);}
-.activity-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf2ef;}.activity-item:last-child{border-bottom:0}.activity-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e0f5ea;color:#1d7a5a;font-size:13px}.activity-dot.yellow{background:#fff0cb;color:#a36f0e}.activity-dot.red{background:#ffe1de;color:#b64038}.activity-dot.blue{background:#e6efff;color:#3d70ba}
-.activity-main{flex:1}.activity-title{font-weight:700;font-size:12px}.activity-sub{font-size:10.5px;color:#7b8d87}.activity-time{font-size:10px;color:#9aa8a3;white-space:nowrap;}
-@media(max-width:1100px){.section-metrics{grid-template-columns:repeat(2,1fr)}.quick-card-grid{grid-template-columns:repeat(2,1fr)}.tras-interactive-summary{grid-template-columns:repeat(3,1fr)}.tickets-grid{grid-template-columns:1fr}.activity-panel{grid-template-columns:1fr}}
-@media(max-width:720px){.sidebar{width:220px!important}.main{margin-left:220px!important;padding:20px!important}.section-metrics{grid-template-columns:1fr}.quick-card-grid{grid-template-columns:1fr}.tras-interactive-summary{grid-template-columns:1fr 1fr}.tras-interactive-toolbar{flex-direction:column;align-items:stretch}}
-</style>
-
-
-<style id="dashboard-only-summary-fix">
-/* El dashboard completo existe exclusivamente en Resumen */
-.tab-panel:not(#tab-resumen) #dashboardAlerts,
-.tab-panel:not(#tab-resumen) #dashboardEvents,
-.tab-panel:not(#tab-resumen) #branchDistribution,
-.tab-panel:not(#tab-resumen) #premiumRecentTransfers,
-.tab-panel:not(#tab-resumen) #dashboardLegend,
-.tab-panel:not(#tab-resumen) #donutTotal,
-.tab-panel:not(#tab-resumen) #monthChart {
-  display:none !important;
-}
-</style>
-
-
-<style id="dashboard-summary-only-final">
-/* Todo el dashboard pertenece exclusivamente al módulo Resumen */
-#tab-resumen:not(.active) {
-  display: none !important;
-}
-#tab-resumen:not(.active) .dashboard-grid,
-#tab-resumen:not(.active) .kpi-board,
-#tab-resumen:not(.active) .premium-summary-grid,
-#tab-resumen:not(.active) .quick-card-grid,
-#tab-resumen:not(.active) .summary-central-footer {
-  display: none !important;
-}
-</style>
-
-
-<style id="panel-final-layout">
-/* Login: centrado horizontal y arriba */
-.login-screen{
-  position:fixed !important;
-  inset:0 !important;
-  display:flex !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding:28px 20px 40px !important;
-  box-sizing:border-box !important;
-  overflow:auto !important;
-}
-.login-card{margin:0 auto !important;}
-
-/* Formularios/modales: centrados horizontalmente y arriba */
-.modal-overlay{
-  position:fixed !important;
-  inset:0 !important;
-  display:flex !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding:55px 20px 25px !important;
-  box-sizing:border-box !important;
-  overflow-y:auto !important;
-  z-index:10000 !important;
-}
-.modal{
-  width:min(600px,100%) !important;
-  max-width:600px !important;
-  margin:0 auto !important;
-  max-height:calc(100vh - 80px) !important;
-}
-.modal-wide{width:min(700px,100%) !important;max-width:700px !important;}
-.modal-body{max-height:calc(100vh - 190px) !important;overflow-y:auto !important;}
-.modal-footer{justify-content:center !important;}
-
-/* Layout: todo el ancho disponible, sin bloques gigantes */
-html,body{
-  width:100% !important;
-  margin:0 !important;
-  padding:0 !important;
-  overflow-x:hidden !important;
-}
-.app-shell{width:100% !important;min-height:100vh !important;}
-.sidebar{width:256px !important;}
-.main{
-  width:calc(100% - 256px) !important;
-  margin-left:256px !important;
-  padding:18px 20px 32px !important;
-  box-sizing:border-box !important;
-  min-width:0 !important;
-}
-.main > .topbar,.main > .tab-panel{
-  width:100% !important;
-  max-width:none !important;
-  margin-left:0 !important;
-  margin-right:0 !important;
-}
-.tab-panel{min-height:auto !important;}
-.table-wrap,.toolbar,.filter-row,.section-hero,.section-metrics,
-.dashboard-grid,.kpi-board,.premium-summary-grid,.tickets-grid,
-.quick-card-grid,.grid-2{
-  width:100% !important;
-  max-width:none !important;
-}
-</style>
-
 </head>
 <body>
 
@@ -635,7 +378,7 @@ html,body{
       <input id="loginPassword" type="password" class="input" autocomplete="current-password" placeholder="Contraseña">
       <label class="checkbox-label"><input type="checkbox" id="loginRemember"> Mantener sesión en este navegador</label>
       <button id="btnLogin" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Ingresar</button>
-      <div class="login-help">Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>.</div>
+      <div class="login-help">Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.</div>
     </div>
   </div>
 </div>
@@ -697,21 +440,18 @@ html,body{
         Respaldo
       </button>
     </nav>
-    <!-- El pie de datos centralizados se muestra únicamente dentro de Resumen -->
+    <div class="sidebar-footer">
+      <div class="storage-pill"><span class="storage-dot"></span><span>Datos en este navegador</span></div>
+    </div>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div class="topbar-brandline">
-        <div class="topbar-logo">◈</div>
-        <div>
-          <h1 id="pageTitle">Resumen general</h1>
-          <p class="muted" id="pageSubtitle">Panel de Traslados · Gestión de Sucursales</p>
-        </div>
+      <div>
+        <h1 id="pageTitle">Resumen general</h1>
+        <p class="muted" id="pageSubtitle">Visión global del personal y los traslados activos</p>
       </div>
-      <div class="topbar-center-search premium-search"><span>⌕</span><input id="globalSearch" placeholder="Buscar colaborador, RUT o sucursal..."><span style="font-size:10px;background:#f1f5f3;border-radius:6px;padding:3px 6px;color:#71827d">⌘ K</span></div>
       <div class="topbar-actions">
-        <span class="top-notify">♧<b>3</b></span>
         <span id="currentUserChip" class="user-chip hidden"></span>
         <button id="btnLogout" class="btn btn-ghost hidden">Cerrar sesión</button>
       </div>
@@ -720,11 +460,10 @@ html,body{
     <!-- ===================== RESUMEN ===================== -->
     <section id="tab-resumen" class="tab-panel active">
       <div class="dashboard-grid">
-        <div class="stat-card"><div class="small">Total de traslados</div><div class="big" id="dashTrasTotal">0</div><div class="hint">Todos los traslados</div></div>
-        <div class="stat-card"><div class="small">Aprobados</div><div class="big" id="dashAprobados">0</div><div class="hint">Traslados finalizados</div></div>
-        <div class="stat-card"><div class="small">En observación</div><div class="big" id="dashEspera">0</div><div class="hint">En revisión</div></div>
-        <div class="stat-card"><div class="small">Rechazados</div><div class="big" id="dashRechazados">0</div><div class="hint">No aprobados</div></div>
-        <div class="stat-card"><div class="small">Este mes</div><div class="big" id="dashMes">0</div><div class="hint">Traslados creados</div></div>
+        <div class="stat-card"><div class="small">Personal activo</div><div class="big" id="dashActivos">0</div><div class="hint">Colaboradores disponibles</div></div>
+        <div class="stat-card"><div class="small">Traslados activos</div><div class="big" id="dashTrasActivos">0</div><div class="hint">Con cambio vigente hoy</div></div>
+        <div class="stat-card"><div class="small">Movimientos próximos</div><div class="big" id="dashProximos">0</div><div class="hint">Próximos 7 días</div></div>
+        <div class="stat-card"><div class="small">Ausencias vigentes</div><div class="big" id="dashAusencias">0</div><div class="hint">Vacaciones + licencias</div></div>
       </div>
       <div class="kpi-board">
         <div class="kpi-cell"><span class="kpi-label">Colaboradores</span><span class="kpi-value" id="kpiColaboradores">0</span></div>
@@ -734,29 +473,11 @@ html,body{
         <div class="kpi-cell"><span class="kpi-label">De vacaciones</span><span class="kpi-value teal" id="kpiVacaciones">0</span></div>
         <div class="kpi-cell"><span class="kpi-label">Con licencia</span><span class="kpi-value terracotta" id="kpiLicencias">0</span></div>
       </div>
-      <div class="premium-summary-grid">
-        <div class="premium-left">
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Alertas operativas</h3><a>Ver todas</a></div><div id="dashboardAlerts" class="alert-list"></div></div>
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Próximos movimientos</h3><a>Calendario</a></div><div id="dashboardEvents" class="event-list"></div></div>
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Distribución por sucursal</h3><span class="muted">Personal actualmente asignado</span></div><div id="branchDistribution"></div></div>
-        </div>
-        <div class="premium-right">
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Actividad reciente</h3><a>Ver todas</a></div><div id="premiumRecentTransfers"></div></div>
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Distribución por estado</h3><select id="dashboardStateFilter" class="select" style="width:auto;padding:5px 8px"><option>Todos los traslados</option></select></div><div class="donut-wrap"><div class="donut"><div class="donut-center" id="donutTotal">0<small>Total</small></div></div><div class="legend" id="dashboardLegend"></div></div></div>
-          <div class="premium-panel"><div class="premium-panel-title"><h3>Traslados por mes</h3><select class="select" style="width:auto;padding:5px 8px"><option>Últimos 6 meses</option></select></div><div class="month-chart" id="monthChart"></div></div>
-        </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">Alertas operativas</div><p class="muted">Situaciones que requieren atención.</p><div id="dashboardAlerts" class="alert-list"></div></div>
+        <div class="card"><div class="card-title">Próximos movimientos</div><p class="muted">Cambios programados y vencimientos.</p><div id="dashboardEvents" class="event-list"></div></div>
       </div>
-      <div style="margin-top:18px"><div class="quick-card-grid">
-        <div class="quick-card green" data-go-tab="colaboradores"><div class="quick-icon">👥</div><div><div class="quick-title">Gestionar Colaboradores</div><div class="quick-sub">Abrir módulo</div></div></div>
-        <div class="quick-card green" data-go-tab="sucursales"><div class="quick-icon">🏢</div><div><div class="quick-title">Administrar Sucursales</div><div class="quick-sub">Abrir módulo</div></div></div>
-        <div class="quick-card yellow" data-go-tab="vacaciones"><div class="quick-icon">🌿</div><div><div class="quick-title">Control de Vacaciones</div><div class="quick-sub">Abrir módulo</div></div></div>
-        <div class="quick-card red" data-go-tab="licencias"><div class="quick-icon">🩺</div><div><div class="quick-title">Gestionar Licencias médicas</div><div class="quick-sub">Abrir módulo</div></div></div>
-        <div class="quick-card purple" data-go-tab="reportes"><div class="quick-icon">📊</div><div><div class="quick-title">Generar Reportes</div><div class="quick-sub">Abrir módulo</div></div></div>
-      </div></div>
-      <div class="summary-central-footer">
-        <div class="storage-pill"><span class="storage-dot"></span><span>Datos centralizados</span></div>
-        <div class="summary-central-company">Farmacias de Similares Chile<br><strong>Sistema creado por Sebastián Coloma</strong></div>
-      </div>
+      <div class="card"><div class="card-title">Distribución por sucursal</div><p class="muted">Personal actualmente asignado.</p><div id="branchDistribution"></div></div>
     </section>
 
     <!-- ===================== COLABORADORES ===================== -->
@@ -1227,27 +948,16 @@ function showLogin(error){
   var screen = document.getElementById('loginScreen');
   if(!screen) return;
   screen.classList.remove('hidden');
-  screen.style.removeProperty('display');
-  screen.removeAttribute('aria-hidden');
   document.getElementById('loginUsername').focus();
   var err = document.getElementById('loginError');
   if(error){ err.textContent = error; err.classList.add('show'); } else { err.classList.remove('show'); }
 }
 function hideLogin(){
-  var screen = document.getElementById('loginScreen');
-  if(screen){
-    screen.classList.add('hidden');
-    screen.style.setProperty('display','none','important');
-    screen.setAttribute('aria-hidden','true');
-  }
+  document.getElementById('loginScreen').classList.add('hidden');
 }
 function updateSessionUI(){
   var chip = document.getElementById('currentUserChip');
   var logout = document.getElementById('btnLogout');
-  var welcome = document.querySelector('.topbar-brandline h1');
-  if(welcome){ var nm=currentUser ? (currentUser.nombre||currentUser.username||'Usuario') : 'Usuario'; var first=String(nm).trim().split(/\s+/)[0]||'Usuario'; welcome.textContent='Hola, '+first+' 👋'; }
-  var global=document.getElementById('globalSearch'); if(global&&!global.__wired){global.__wired=true;global.addEventListener('keydown',function(e){if(e.key==='Enter'&&typeof switchTab==='function'){var q=global.value.trim();if(q){switchTab('colaboradores');var sc=document.getElementById('searchColab');if(sc){sc.value=q;sc.dispatchEvent(new Event('input'));}}}});}
-
   var navUsers = document.getElementById('navUsuarios');
   if(currentUser){
     chip.classList.remove('hidden');
@@ -2211,10 +1921,7 @@ function renderDashboardDetails(){
   var hoy=hoyISO(),activos=state.colaboradores.filter(function(c){return normalizeSearch(c.estado||'Activo')==='activo';}).length;
   var trasAct=state.traslados.filter(function(t){return t.estado==='aprobado'&&(t.fechaInicio||'')<=hoy&&(t.indefinido||!t.fechaTermino||t.fechaTermino>=hoy);}).length;
   var eventos=getUpcomingEvents(7);var aus=state.vacaciones.filter(function(v){return isAusenciaVigente(v);}).length+state.licencias.filter(function(v){return isAusenciaVigente(v);}).length;
-  var totalTras=state.traslados.length, aprob=state.traslados.filter(function(t){return t.estado==='aprobado';}).length, espera=state.traslados.filter(function(t){return t.estado==='espera';}).length, rech=state.traslados.filter(function(t){return t.estado==='rechazado';}).length;
-  var now=new Date(), ym=now.getFullYear()+'-'+pad2(now.getMonth()+1), mes=state.traslados.filter(function(t){return String(t.fechaInicio||t.createdAt||'').indexOf(ym)===0;}).length;
-  var setText=function(id,v){var x=document.getElementById(id);if(x)x.textContent=v;};
-  setText('dashActivos',activos);setText('dashTrasActivos',trasAct);setText('dashProximos',eventos.length);setText('dashAusencias',aus);setText('dashTrasTotal',totalTras);setText('dashAprobados',aprob);setText('dashEspera',espera);setText('dashRechazados',rech);setText('dashMes',mes);
+  document.getElementById('dashActivos').textContent=activos;document.getElementById('dashTrasActivos').textContent=trasAct;document.getElementById('dashProximos').textContent=eventos.length;document.getElementById('dashAusencias').textContent=aus;
   var alerts=document.getElementById('dashboardAlerts');alerts.innerHTML='';var alertsArr=[];
   var pend=state.traslados.filter(function(t){return t.estado==='pendiente';}).length;if(pend)alertsArr.push(['amber','Hay '+pend+' traslado(s) pendientes de aprobación.']);
   var starts=eventos.filter(function(e){return e.title.indexOf('Inicio')===0;}).length;if(starts)alertsArr.push(['teal',starts+' movimiento(s) comienzan dentro de los próximos 7 días.']);
@@ -2223,9 +1930,6 @@ function renderDashboardDetails(){
   alertsArr.forEach(function(a){alerts.appendChild(el('div',{class:'alert-item',children:[el('span',{class:'alert-dot '+a[0]}),el('div',{text:a[1]})]}));});
   var ev=document.getElementById('dashboardEvents');ev.innerHTML='';eventos.slice(0,8).forEach(function(x){ev.appendChild(el('div',{class:'event-item',children:[el('div',{class:'event-date',text:formatDateDisplay(x.date)}),el('div',{class:'event-main',children:[el('div',{class:'event-title',text:x.title}),el('div',{class:'event-sub',text:x.sub})]})]}));});if(!eventos.length)ev.appendChild(el('div',{class:'muted',text:'No hay movimientos próximos.'}));
   var dist=document.getElementById('branchDistribution');dist.innerHTML='';var rows=state.sucursales.map(function(s){return {s:s,n:countPersonalForSucursal(s.nombre)};}).filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;});var max=rows.length?rows[0].n:1;rows.slice(0,15).forEach(function(x){var row=el('div',{class:'branch-row'});var main=el('div',{class:'branch-main'});main.appendChild(el('div',{class:'branch-name',text:x.s.nombre}));var bar=el('div',{class:'branch-bar'});bar.appendChild(el('div',{style:'width:'+Math.max(4,(x.n/max)*100)+'%'}));main.appendChild(bar);row.appendChild(main);row.appendChild(el('div',{class:'branch-count',text:String(x.n)}));dist.appendChild(row);});if(!rows.length)dist.appendChild(el('div',{class:'muted',text:'No hay personal asignado a sucursales.'}));
-  var ra=document.getElementById('premiumRecentTransfers'); if(ra){var recent=state.traslados.slice().sort(function(a,b){return String(b.fechaInicio||b.createdAt||'').localeCompare(String(a.fechaInicio||a.createdAt||''));}).slice(0,5);ra.innerHTML=recent.length?recent.map(function(t){var k=String(t.estado||'pendiente').toLowerCase(),cl=k==='rechazado'?'red':k==='espera'?'yellow':k==='pendiente'?'blue':'';return '<div class="activity-item"><div class="activity-dot '+cl+'">'+(k==='aprobado'?'✓':k==='rechazado'?'×':k==='espera'?'◷':'•')+'</div><div class="activity-main"><div class="activity-title">'+escapeHtml(t.nombre||t.colaboradorNombre||t.rut||'Sin nombre')+'</div><div class="activity-sub">'+escapeHtml(t.estado||'Pendiente')+'</div></div><div class="activity-time">'+escapeHtml(t.fechaInicio||'')+'</div></div>';}).join(''):'<div class="muted">No hay actividad reciente.</div>'; }
-  var lg=document.getElementById('dashboardLegend'),dt=document.getElementById('donutTotal'); if(lg){lg.innerHTML='<div class="legend-row"><span class="legend-left"><i class="legend-dot lg-green"></i>Aprobados</span><strong>'+aprob+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-yellow"></i>En observación</span><strong>'+espera+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-red"></i>Rechazados</span><strong>'+rech+'</strong></div><div class="legend-row"><span class="legend-left"><i class="legend-dot lg-blue"></i>Pendientes</span><strong>'+state.traslados.filter(function(t){return t.estado==='pendiente';}).length+'</strong></div>'; } if(dt)dt.innerHTML=totalTras+'<small>Total</small>';
-  var mc=document.getElementById('monthChart'); if(mc){var vals=[],labels=[],d0=new Date();for(var mi=5;mi>=0;mi--){var d=new Date(d0.getFullYear(),d0.getMonth()-mi,1),key=d.getFullYear()+'-'+pad2(d.getMonth()+1);labels.push(new Intl.DateTimeFormat('es-CL',{month:'short'}).format(d).replace('.',''));vals.push(state.traslados.filter(function(t){return String(t.fechaInicio||t.createdAt||'').indexOf(key)===0;}).length);}var mx=Math.max.apply(null,vals.concat([1]));mc.innerHTML=vals.map(function(v,i){return '<div class="month-bar-wrap"><span class="month-val">'+v+'</span><div class="month-bar" style="height:'+Math.max(10,(v/mx)*105)+'px"></div><span class="month-label">'+labels[i]+'</span></div>';}).join('');}
 }
 
 var calendarCursor=new Date();calendarCursor.setDate(1);
@@ -2272,7 +1976,7 @@ function switchTab(tabName){
   for(var j=0;j<panels.length;j++){
     var p=panels[j], active=p.id==='tab-'+tabName;
     p.classList.toggle('active',active);
-    p.style.setProperty('display', active ? 'block' : 'none', 'important');
+    p.style.display=active?'block':'none';
     p.hidden=!active;
   }
 
@@ -2295,14 +1999,8 @@ function switchTab(tabName){
 
   if(titles[tabName]){
     var pt=document.getElementById('pageTitle'), ps=document.getElementById('pageSubtitle');
-    if(pt){
-      pt.textContent=titles[tabName][0];
-      if(tabName==='resumen' && currentUser){
-        var nm=String(currentUser.nombre||currentUser.username||'Usuario').trim().split(/\s+/)[0]||'Usuario';
-        pt.textContent='Hola, '+nm+' 👋';
-      }
-    }
-    if(ps)ps.textContent=tabName==='resumen'?'Panel de Traslados · Gestión de Sucursales':titles[tabName][1];
+    if(pt)pt.textContent=titles[tabName][0];
+    if(ps)ps.textContent=titles[tabName][1];
   }
 
   if(tabName==='resumen')renderResumen();
@@ -2324,7 +2022,7 @@ function switchTab(tabName){
     for(var k=0;k<all.length;k++){
       var a=all[k].id==='tab-'+tabName;
       all[k].classList.toggle('active',a);
-      all[k].style.setProperty('display', a ? 'block' : 'none', 'important');
+      all[k].style.display=a?'block':'none';
       all[k].hidden=!a;
     }
   });
@@ -2356,15 +2054,7 @@ function init(){
     wireFileInput(document.getElementById('uploadSucInput'), 'sucursales');
     wireFileInput(document.getElementById('uploadVacInput'), 'vacaciones');
     wireFileInput(document.getElementById('uploadLicInput'), 'licencias');
-    var _panelLoginButton = document.getElementById('btnLogin');
-    if(_panelLoginButton && !_panelLoginButton.__panelLoginBound){
-      _panelLoginButton.__panelLoginBound = true;
-      _panelLoginButton.addEventListener('click', function(e){
-        e.preventDefault();
-        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-        loginUser();
-      });
-    }
+    document.getElementById('btnLogin').addEventListener('click', loginUser);
     document.getElementById('loginPassword').addEventListener('keydown', function(e){ if(e.key==='Enter') loginUser(); });
     document.getElementById('loginUsername').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('loginPassword').focus(); });
     document.getElementById('btnLogout').addEventListener('click', logout);
@@ -2440,549 +2130,7 @@ function compareDates(){var a=document.getElementById('cmpFrom').value,b=documen
 function renderReplacements(){var S=currentState(),hoy=hoyISO(),abs=S.colaboradores.filter(function(c){return statusFor(c,hoy).key==='vacaciones'||statusFor(c,hoy).key==='licencia';}),available=S.colaboradores.filter(function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'&&statusFor(c,hoy).key==='trabajando';});var html=abs.length?'<table class="adv-table"><thead><tr><th>Ausente</th><th>Sucursal</th><th>Motivo</th><th>Disponibles</th></tr></thead><tbody>'+abs.map(function(c){var av=available.filter(function(x){return normalizeSearch(x.sucursalActual)!==normalizeSearch(c.sucursalActual);}).slice(0,5);return '<tr><td><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+'</div></td><td>'+h(c.sucursalActual||'—')+'</td><td><span class="badge-warn">'+h(statusFor(c).label)+'</span></td><td>'+ (av.length?av.map(function(x){return '<span class="badge-good" style="margin:2px">'+h(x.nombre)+'</span>';}).join(''):'<span class="badge-bad">Sin sugerencias</span>')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty-adv">No hay ausencias vigentes. No se requieren reemplazos.</div>';document.getElementById('advReplacements').innerHTML=html;}
 function csv(name,headers,rows){var all=[headers].concat(rows),txt=all.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\n');var blob=new Blob(['\\ufeff'+txt],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},500);}
 function renderReportes(){var m=document.getElementById('closeMonth');if(!m.value)m.value=hoyISO().slice(0,7);renderCloseHistory();}
-function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table>\n
-<script id="panel-central-integration">
-
-
-/* ====== SINCRONIZACION CENTRAL PANEL-TRASLADOS ====== */
-var CENTRAL_API = 'https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';
-var CENTRAL_TOKEN = null;
-var CENTRAL_USER_KEY = 'panelCentralUser';
-var CENTRAL_TOKEN_KEY = 'panelCentralToken';
-
-function centralStorageGet(key){
-  try { return localStorage.getItem(key) || sessionStorage.getItem(key) || ''; } catch(e){ return ''; }
-}
-function centralStorageSet(key, value, remember){
-  try {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-    (remember ? localStorage : sessionStorage).setItem(key, value);
-  } catch(e) {}
-}
-function centralStorageClear(){
-  try { localStorage.removeItem(CENTRAL_TOKEN_KEY); localStorage.removeItem(CENTRAL_USER_KEY); sessionStorage.removeItem(CENTRAL_TOKEN_KEY); sessionStorage.removeItem(CENTRAL_USER_KEY); } catch(e) {}
-}
-function centralTokenPayload(token){
-  try {
-    var p = token.split('.')[1];
-    var b = p.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(p.length/4)*4,'=');
-    return JSON.parse(atob(b));
-  } catch(e){ return null; }
-}
-function centralTokenValid(token){
-  var p = centralTokenPayload(token);
-  return !!(p && p.exp && p.exp > Date.now());
-}
-function centralHeaders(extra){
-  var h = { 'Content-Type':'application/json' };
-  if(CENTRAL_TOKEN) h.Authorization = 'Bearer ' + CENTRAL_TOKEN;
-  if(extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
-  return h;
-}
-function centralRequest(path, options){
-  options = options || {};
-  var target = CENTRAL_API + (path || '');
-  var requestOptions = {
-    method: options.method || 'GET',
-    headers: centralHeaders(options.headers),
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  };
-
-  function parseResponse(r){
-    return r.text().then(function(raw){
-      var data = {};
-      try { data = raw ? JSON.parse(raw) : {}; }
-      catch(e) { data = { error: raw || ('HTTP ' + r.status) }; }
-
-      if(!r.ok){
-        var err = new Error(
-          data.error ||
-          data.message ||
-          ('HTTP ' + r.status + ' al conectar con el servidor')
-        );
-        err.status = r.status;
-        err.data = data;
-        throw err;
-      }
-      return data;
-    });
-  }
-
-  return fetch(target, requestOptions).then(parseResponse);
-}
-function centralStoreName(storeName){ return storeName; }
-
-var _localDbGetAll = dbGetAll;
-var _localDbPut = dbPut;
-var _localDbBulkPut = dbBulkPut;
-var _localDbClear = dbClear;
-
-function centralLoadState(){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return Promise.reject(new Error('NO_CENTRAL_SESSION'));
-  return centralRequest('/state').then(function(result){
-    var s = result.state || {};
-    state.colaboradores = s.colaboradores || [];
-    state.sucursales = s.sucursales || [];
-    state.traslados = s.traslados || [];
-    state.licencias = s.licencias || [];
-    state.vacaciones = s.vacaciones || [];
-    state.usuarios = s.usuarios || [];
-    state.auditoria = s.auditoria || [];
-    if(result.user && currentUser) currentUser = Object.assign({}, currentUser, result.user);
-    return sincronizarTrasladosConColaboradores();
-  });
-}
-
-/* Desde que existe sesión central, las lecturas salen de PostgreSQL. */
-dbGetAll = function(storeName){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbGetAll(storeName);
-  return centralRequest('/state').then(function(result){
-    var rows = (result.state || {})[centralStoreName(storeName)] || [];
-    return rows;
-  });
-};
-
-dbPut = function(storeName, obj){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbPut(storeName, obj);
-  return centralRequest('', { method:'POST', body:{ action:'upsert', table:centralStoreName(storeName), record:obj } }).then(function(){ return obj; });
-};
-
-dbBulkPut = function(storeName, arr){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbBulkPut(storeName, arr);
-  if(!arr || !arr.length) return Promise.resolve();
-  return centralRequest('', { method:'POST', body:{ action:'bulkUpsert', table:centralStoreName(storeName), records:arr } }).then(function(){ return arr; });
-};
-
-dbClear = function(storeName){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbClear(storeName);
-  return centralRequest('', { method:'POST', body:{ action:'clear', table:centralStoreName(storeName) } }).then(function(){ return true; });
-};
-
-/* Recarga central: reemplaza por completo el estado que usa la interfaz. */
-reloadStateFromDB = function(){
-  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
-    return _localDbGetAll(STORES.COLAB).then(function(colab){
-      return Promise.all([
-        Promise.resolve(colab), _localDbGetAll(STORES.SUC), _localDbGetAll(STORES.TRAS), _localDbGetAll(STORES.LIC), _localDbGetAll(STORES.VAC), _localDbGetAll(STORES.USERS), _localDbGetAll(STORES.AUDIT)
-      ]).then(function(results){
-        state.colaboradores=results[0]; state.sucursales=results[1]; state.traslados=results[2]; state.licencias=results[3]; state.vacaciones=results[4]; state.usuarios=results[5]; state.auditoria=results[6]||[];
-        return sincronizarTrasladosConColaboradores();
-      });
-    });
-  }
-  return centralLoadState().catch(function(err){
-    if(err && err.status === 401){
-      CENTRAL_TOKEN = null;
-      centralStorageClear();
-      currentUser = null;
-      showLogin('La sesión expiró. Inicie sesión nuevamente.');
-    }
-    throw err;
-  });
-};
-
-/* Login centralizado contra PostgreSQL/Supabase. */
-loginUser = function(){
-  var usernameEl = document.getElementById('loginUsername');
-  var passwordEl = document.getElementById('loginPassword');
-  var rememberEl = document.getElementById('loginRemember');
-  var btn = document.getElementById('btnLogin');
-
-  var username = usernameEl ? usernameEl.value.trim() : '';
-  var password = passwordEl ? passwordEl.value : '';
-  var remember = !!(rememberEl && rememberEl.checked);
-
-  if(!username || !password){
-    showLogin('Ingrese usuario y contraseña.');
-    return false;
-  }
-
-  if(btn) btn.disabled = true;
-
-  var body = { username: username, password: password };
-
-  function doLogin(){
-    return centralRequest('/login', {
-      method:'POST',
-      body:body
-    }).catch(function(err){
-      /*
-       * Compatibilidad definitiva: si una versión antigua de la Edge Function
-       * no reconoce /login, prueba la raíz una sola vez.
-       */
-      if(err && (err.status === 404 || err.status === 405)){
-        return centralRequest('', {
-          method:'POST',
-          body:body
-        });
-      }
-      throw err;
-    });
-  }
-
-  doLogin().then(function(result){
-    if(!result || !result.token || !result.user){
-      throw new Error('El servidor respondió sin una sesión válida.');
-    }
-
-    CENTRAL_TOKEN = result.token;
-    currentUser = result.user;
-
-    centralStorageSet(
-      CENTRAL_TOKEN_KEY,
-      CENTRAL_TOKEN,
-      remember
-    );
-    centralStorageSet(
-      CENTRAL_USER_KEY,
-      JSON.stringify(currentUser),
-      remember
-    );
-
-    return centralLoadState();
-  }).then(function(){
-    hideLogin();
-    updateSessionUI();
-    rerenderAll();
-
-    if(typeof bootAdv === 'function'){
-      try { bootAdv(); } catch(e) { console.warn('bootAdv:', e); }
-    }
-
-    switchTab('resumen');
-
-    showToast(
-      'Bienvenido, ' +
-      (currentUser.nombre || currentUser.username) +
-      '.',
-      'success'
-    );
-  }).catch(function(err){
-    console.error('LOGIN CENTRAL DEFINITIVO:', err);
-
-    CENTRAL_TOKEN = null;
-    currentUser = null;
-    centralStorageClear();
-
-    var msg = 'No fue posible iniciar sesión.';
-    if(err && err.message){
-      msg = err.message;
-    }
-
-    showLogin(msg);
-  }).finally(function(){
-    if(btn) btn.disabled = false;
-  });
-
-  return false;
-};
-
-restoreSession = function(){
-  var token = centralStorageGet(CENTRAL_TOKEN_KEY);
-  var rawUser = centralStorageGet(CENTRAL_USER_KEY);
-  if(!token || !centralTokenValid(token) || !rawUser){
-    CENTRAL_TOKEN = null;
-    return false;
-  }
-  try {
-    CENTRAL_TOKEN = token;
-    currentUser = JSON.parse(rawUser);
-    if(!currentUser || !currentUser.username){ throw new Error('bad session'); }
-    hideLogin();
-    updateSessionUI();
-    return true;
-  } catch(e){
-    CENTRAL_TOKEN = null;
-    centralStorageClear();
-    currentUser = null;
-    return false;
-  }
-};
-
-logout = function(){
-  currentUser = null;
-  CENTRAL_TOKEN = null;
-  centralStorageClear();
-  updateSessionUI();
-  var u=document.getElementById('loginUsername'); var p=document.getElementById('loginPassword');
-  if(u) u.value=''; if(p) p.value='';
-  showLogin();
-};
-
-/* Eliminaciones directas para no borrar y reconstruir tablas completas. */
-deleteColaborador = function(rut){
-  if(!confirm('¿Eliminar este colaborador?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', id:rut}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
-};
-deleteSucursal = function(codigo){
-  if(!confirm('¿Eliminar esta sucursal?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', id:codigo}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
-};
-eliminarTraslado = function(id){
-  if(!confirm('¿Eliminar este traslado?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', id:id}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
-};
-
-/* El respaldo conserva su exportación local, pero la restauración queda centralizada. */
-var _localImportBackup = importBackup;
-importBackup = function(file){
-  var reader = new FileReader();
-  reader.onload = function(){
-    try {
-      var d = JSON.parse(reader.result);
-      if(!d || !Array.isArray(d.colaboradores) || !Array.isArray(d.sucursales)) throw new Error('Formato inválido');
-      if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) throw new Error('Debe iniciar sesión nuevamente.');
-      Promise.all([
-        centralRequest('',{method:'POST',body:{action:'clear',table:'colaboradores'}}),
-        centralRequest('',{method:'POST',body:{action:'clear',table:'sucursales'}}),
-        centralRequest('',{method:'POST',body:{action:'clear',table:'traslados'}}),
-        centralRequest('',{method:'POST',body:{action:'clear',table:'vacaciones'}}),
-        centralRequest('',{method:'POST',body:{action:'clear',table:'licencias'}}),
-        centralRequest('',{method:'POST',body:{action:'clear',table:'auditoria'}})
-      ]).then(function(){
-        return Promise.all([
-          dbBulkPut(STORES.COLAB,d.colaboradores), dbBulkPut(STORES.SUC,d.sucursales), dbBulkPut(STORES.TRAS,d.traslados||[]), dbBulkPut(STORES.VAC,d.vacaciones||[]), dbBulkPut(STORES.LIC,d.licencias||[]), dbBulkPut(STORES.AUDIT,d.auditoria||[])
-        ]);
-      }).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Respaldo restaurado correctamente.','success');}).catch(function(err){console.error(err);showToast(err.message||'No fue posible restaurar el respaldo.','error');});
-    } catch(e){ showToast(e.message||'El archivo no tiene un respaldo válido.','error'); }
-  };
-  reader.readAsText(file);
-};
-
-
-/* ====== TEMA VERDE PASTEL + EXPERIENCIA INTERACTIVA ====== */
-(function(){
-  var style=document.createElement('style');
-  style.id='panelPastelGreenTheme';
-  style.textContent=`
-    :root{
-      --ink:#164437 !important;
-      --ink-2:#205B48 !important;
-      --ink-3:#2D705A !important;
-      --paper:#F2F8F4 !important;
-      --surface:#FFFFFF !important;
-      --amber:#D6A23A !important;
-      --amber-dark:#9A6B12 !important;
-      --amber-soft:#FFF1CC !important;
-      --teal:#58A982 !important;
-      --teal-dark:#277454 !important;
-      --teal-soft:#DDF3E7 !important;
-      --terracotta:#D7655B !important;
-      --terracotta-dark:#A83D35 !important;
-      --terracotta-soft:#FBE2DF !important;
-      --gold:#D6A23A !important;
-      --gold-soft:#FFF1CC !important;
-      --purple:#7893B5 !important;
-      --purple-dark:#526E91 !important;
-      --purple-soft:#E8EEF7 !important;
-      --slate:#596D66 !important;
-      --slate-light:#8A9C95 !important;
-      --border:#DDEBE3 !important;
-      --border-strong:#C7DDD1 !important;
-      --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
-      --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
-    }
-
-    /* ===== LOGIN VERDE PASTEL ===== */
-    .login-screen{
-      position:fixed !important; inset:0 !important;
-      background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
-      display:flex !important; align-items:center !important; justify-content:center !important;
-      padding:20px !important; z-index:1000 !important;
-    }
-    .login-card{
-      width:100% !important; max-width:430px !important;
-      background:#fff !important; border-radius:20px !important;
-      box-shadow:0 24px 80px rgba(18,67,51,.28) !important;
-      overflow:hidden !important; border:1px solid #DDEBE3 !important;
-    }
-    .login-head{
-      padding:28px 30px 20px !important;
-      background:linear-gradient(180deg,#F8FCF9,#fff) !important;
-      border-bottom:1px solid #DDEBE3 !important;
-    }
-    .login-mark{
-      background:#D6A23A !important; color:#164437 !important;
-      box-shadow:0 5px 14px rgba(214,162,58,.20) !important;
-    }
-    .login-title,.login-card h1,.login-card h2,.login-card h3{
-      color:#164437 !important;
-    }
-    .login-sub,.login-help{
-      color:#71857D !important;
-    }
-    .login-body{padding:26px 30px 30px !important;}
-    .login-card label{color:#596D66 !important;font-weight:700 !important;}
-    .login-card input{
-      border:1px solid #C7DDD1 !important;
-      background:#fff !important;
-      color:#164437 !important;
-      border-radius:9px !important;
-    }
-    .login-card input:focus{
-      border-color:#58A982 !important;
-      box-shadow:0 0 0 3px rgba(88,169,130,.15) !important;
-      outline:none !important;
-    }
-    .login-card input::placeholder{color:#9AA9A3 !important;}
-    .login-error{
-      background:#FBE2DF !important;
-      color:#A83D35 !important;
-      border-color:#E8B8AF !important;
-    }
-    .login-card .btn-primary,
-    #btnLogin{
-      background:#277454 !important;
-      border-color:#277454 !important;
-      color:#fff !important;
-      border-radius:9px !important;
-      transition:transform .18s ease,box-shadow .18s ease,background .18s ease !important;
-    }
-    .login-card .btn-primary:hover,
-    #btnLogin:hover{
-      background:#1F6247 !important;
-      transform:translateY(-1px) !important;
-      box-shadow:0 8px 18px rgba(39,116,84,.18) !important;
-    }
-    .login-card .btn-primary:disabled,
-    #btnLogin:disabled{opacity:.65 !important;cursor:wait !important;}
-    .login-card a{color:#277454 !important;}
-
-    body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
-    .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
-    .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
-    .nav-badge{background:rgba(255,255,255,.15) !important;}
-    .btn-primary{background:#277454 !important;border-color:#277454 !important;}
-    .btn-primary:hover{background:#1F6247 !important;transform:translateY(-1px);}
-    .card,.table-wrap,.ticket{border-color:#DDEBE3 !important;box-shadow:0 4px 16px rgba(31,84,63,.07) !important;}
-    .kpi-board{background:linear-gradient(135deg,#174A3B,#2D705A) !important;}
-    .kpi-value.teal{color:#B9F0D0 !important;}
-    .toolbar .input,.toolbar select,.input,select,textarea{border-color:#C7DDD1 !important;}
-    .toolbar .input:focus,.input:focus,select:focus,textarea:focus{border-color:#58A982 !important;box-shadow:0 0 0 3px rgba(88,169,130,.14) !important;}
-    .tickets-grid{grid-template-columns:repeat(auto-fill,minmax(360px,1fr)) !important;gap:16px !important;}
-    .ticket{border-top-width:5px !important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important;}
-    .ticket:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(31,84,63,.12) !important;}
-    .ticket-aprobado{border-top-color:#58A982 !important;background:linear-gradient(180deg,#FFFFFF,#F7FCF9) !important;}
-    .ticket-espera{border-top-color:#D6A23A !important;background:linear-gradient(180deg,#FFFFFF,#FFFDF7) !important;}
-    .ticket-rechazado{border-top-color:#D7655B !important;background:linear-gradient(180deg,#FFFFFF,#FFF9F8) !important;}
-    .ticket-pendiente{border-top-color:#7893B5 !important;background:linear-gradient(180deg,#FFFFFF,#F9FBFD) !important;}
-    .ticket-aprobado .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
-    .ticket-espera .pill-amber{background:#FFF1CC !important;color:#9A6B12 !important;}
-    .ticket-rechazado .pill-terracotta{background:#FBE2DF !important;color:#A83D35 !important;}
-    .ticket-pendiente .pill-slate{background:#E8EEF7 !important;color:#526E91 !important;}
-    .route-arrow{color:#58A982 !important;}
-    .icon-btn{border-color:#DDEBE3 !important;background:#F4F9F6 !important;}
-    .icon-btn:hover{background:#DDF3E7 !important;color:#277454 !important;}
-    .row-vacacion{background:#F0FAF4 !important;}
-    .row-ausente{background:#F0F5FB !important;}
-    .status-stack .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
-    .tras-interactive-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px;}
-    .tras-summary-card{background:#fff;border:1px solid #DDEBE3;border-radius:14px;padding:14px 16px;box-shadow:0 4px 14px rgba(31,84,63,.06);cursor:pointer;transition:.18s ease;position:relative;overflow:hidden;}
-    .tras-summary-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(31,84,63,.10);}
-    .tras-summary-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#71857D;font-weight:700;}
-    .tras-summary-card .num{font-size:28px;font-weight:800;line-height:1.1;margin-top:5px;color:#164437;}
-    .tras-summary-card.aprobado{border-left:5px solid #58A982;}
-    .tras-summary-card.espera{border-left:5px solid #D6A23A;}
-    .tras-summary-card.rechazado{border-left:5px solid #D7655B;}
-    .tras-summary-card.pendiente{border-left:5px solid #7893B5;}
-    .tras-interactive-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 16px;background:rgba(255,255,255,.78);padding:10px;border:1px solid #DDEBE3;border-radius:13px;backdrop-filter:blur(8px);}
-    .tras-interactive-toolbar input,.tras-interactive-toolbar select{height:40px;border:1px solid #C7DDD1;border-radius:9px;background:#fff;padding:0 12px;color:#164437;}
-    .tras-interactive-toolbar input{flex:1;min-width:240px;}
-    .tras-interactive-toolbar select{min-width:190px;}
-    .tras-filter-count{font-size:12px;color:#71857D;font-weight:600;margin-left:auto;}
-    @media(max-width:850px){.tras-interactive-summary{grid-template-columns:repeat(2,1fr)}.tras-filter-count{width:100%;margin-left:0}.tickets-grid{grid-template-columns:1fr !important;}}
-  `;
-  document.head.appendChild(style);
-})();
-
-(function(){
-  /* Usuarios nuevos recuperan inmediatamente TODA la base central al entrar. */
-  var _centralRestoreSession = restoreSession;
-  restoreSession = function(){
-    var ok=_centralRestoreSession();
-    if(ok && CENTRAL_TOKEN && centralTokenValid(CENTRAL_TOKEN)){
-      centralLoadState().then(function(){
-        updateSessionUI();
-        rerenderAll();
-        if(typeof bootAdv==='function')bootAdv();
-      }).catch(function(err){console.error('Carga central inicial:',err);});
-    }
-    return ok;
-  };
-
-  /* Vista interactiva de traslados: filtros + resumen por estado. */
-  var _renderTrasladosBase=renderTraslados;
-  renderTraslados=function(){
-    _renderTrasladosBase();
-    var tab=document.getElementById('tab-traslados');
-    var grid=document.getElementById('trasladosGrid');
-    if(!tab || !grid) return;
-
-    var list=state.traslados||[];
-    var counts={total:list.length,pendiente:0,espera:0,aprobado:0,rechazado:0};
-    list.forEach(function(t){if(counts[t.estado]!==undefined)counts[t.estado]++;});
-
-    var summary=tab.querySelector('.tras-interactive-summary');
-    if(!summary){
-      summary=document.createElement('div');
-      summary.className='tras-interactive-summary';
-      grid.parentNode.insertBefore(summary,grid);
-    }
-    summary.innerHTML='';
-    [
-      ['total','Total','tras-summary-card'],
-      ['aprobado','Aprobados','tras-summary-card aprobado'],
-      ['espera','En observación','tras-summary-card espera'],
-      ['rechazado','Rechazados','tras-summary-card rechazado']
-    ].forEach(function(item){
-      var c=document.createElement('div');c.className=item[2];c.setAttribute('data-status-filter',item[0]);
-      c.innerHTML='<div class="label">'+item[1]+'</div><div class="num">'+counts[item[0]]+'</div>';
-      c.addEventListener('click',function(){
-        var sel=document.getElementById('trasStatusFilter');
-        if(sel){sel.value=item[0]==='total'?'':item[0];sel.dispatchEvent(new Event('change'));}
-      });
-      summary.appendChild(c);
-    });
-
-    var bar=tab.querySelector('.tras-interactive-toolbar');
-    if(!bar){
-      bar=document.createElement('div');
-      bar.className='tras-interactive-toolbar';
-      var input=document.createElement('input');
-      input.id='trasSearch';input.placeholder='Buscar colaborador, RUT, origen o destino...';
-      var select=document.createElement('select');select.id='trasStatusFilter';
-      select.innerHTML='<option value="">Todos los estados</option><option value="pendiente">Pendientes</option><option value="espera">En observación</option><option value="aprobado">Aprobados</option><option value="rechazado">Rechazados</option>';
-      var count=document.createElement('span');count.className='tras-filter-count';count.id='trasFilterCount';
-      bar.appendChild(input);bar.appendChild(select);bar.appendChild(count);
-      grid.parentNode.insertBefore(bar,grid);
-      function apply(){
-        var q=(input.value||'').toLowerCase().trim(), st=select.value||'';
-        var cards=grid.children, visible=0;
-        for(var i=0;i<cards.length;i++){
-          var card=cards[i], okText=!q || (card.textContent||'').toLowerCase().indexOf(q)!==-1;
-          var okStatus=!st || card.classList.contains('ticket-'+st);
-          card.style.display=(okText&&okStatus)?'':'none';
-          if(okText&&okStatus)visible++;
-        }
-        count.textContent='Mostrando '+visible+' de '+list.length+' traslados';
-      }
-      input.addEventListener('input',apply);select.addEventListener('change',apply);
-      bar.__apply=apply;
-    }
-    var badge=document.getElementById('navBadgeTras');
-    if(badge)badge.textContent=String(list.length);
-    if(bar.__apply)bar.__apply();
-  };
-})();
-
-
-
-
-
-</script>
-
-</body></html>');w.document.close();w.print();};}
+function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table></body></html>');w.document.close();w.print();};}
 function renderCloseHistory(){var out=document.getElementById('closeHistory');var arr=Object.keys(adv.closures).sort().reverse();out.innerHTML=arr.length?'<div class="adv-list">'+arr.map(function(k){var c=adv.closures[k];return '<div class="adv-item"><div class="adv-item-title">'+h(k)+'</div><div class="adv-item-sub">'+c.colaboradores+' colaboradores · '+c.sucursales+' sucursales · '+c.vacaciones+' vacaciones · '+c.licencias+' licencias · '+c.traslados+' traslados</div></div>';}).join('')+'</div>':'<div class="empty-adv">Todavía no hay cierres mensuales guardados.</div>';}
 function renderConfiguracion(){document.getElementById('cfgEmpresa').value=adv.settings.empresa||'';document.getElementById('cfgAlertDays').value=adv.settings.alertDays||7;var S=currentState(),out=document.getElementById('cfgBranches');out.innerHTML=S.sucursales.map(function(s){return '<div class="coverage-row"><div><strong>'+h(s.nombre)+'</strong><div class="muted">'+h(s.codigo||'')+'</div></div><div>Objetivo</div><input type="number" min="0" data-obj-suc="'+h(s.nombre)+'" value="'+h(adv.settings.objetivos[s.nombre]||'')+'" placeholder="0"><div></div><button class="btn btn-sm btn-primary" data-save-obj="'+h(s.nombre)+'">Guardar</button></div>';}).join('')||'<div class="empty-adv">No hay sucursales.</div>';out.querySelectorAll('[data-save-obj]').forEach(function(b){b.onclick=function(){var n=b.getAttribute('data-save-obj'),inp=out.querySelector('[data-obj-suc="'+CSS.escape(n)+'"]');adv.settings.objetivos[n]=Number(inp.value||0);saveAdv();renderConfiguracion();renderControl();showToast('Dotación objetivo actualizada.','success');};});}
 function openNotes(rut){var S=currentState(),c=S.colaboradores.find(function(x){return cleanRut(x.rut)===cleanRut(rut);});if(!c){showToast('No se encontró el colaborador.','error');return;}var key=cleanRut(rut),notes=adv.notes[key]||[],files=adv.files[key]||[];var html='<div class="adv-section"><div class="adv-section-body"><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+' · '+h(c.cargo||'')+' · '+h(c.sucursalActual||'Sin sucursal')+'</div></div></div><label class="field-label">Nueva nota</label><textarea id="advNewNote" class="textarea" placeholder="Escribe una nota interna..."></textarea><div style="margin-top:15px"><strong>Notas</strong><div id="advNotesList" style="margin-top:8px">'+(notes.length?notes.slice().reverse().map(function(n){return '<div class="note-box"><div>'+h(n.text)+'</div><small>'+h(n.by||'sistema')+' · '+h(fmtDate(n.date.slice(0,10)))+'</small></div>';}).join(''):'<div class="muted">Sin notas.</div>')+'</div></div><div style="margin-top:18px"><strong>Adjuntos</strong><input id="advFileInput" type="file" multiple style="display:block;margin:8px 0"><div>'+(files.length?files.map(function(f,i){return '<div class="file-chip"><a href="'+f.data+'" download="'+h(f.name)+'">'+h(f.name)+'</a><button class="btn btn-sm btn-danger" data-del-file="'+i+'">Eliminar</button></div>';}).join(''):'<div class="muted">Sin archivos adjuntos.</div>')+'</div></div>';openAdvModal('Ficha documental — '+c.nombre,html,function(){var t=document.getElementById('advNewNote').value.trim();if(t){adv.notes[key]=adv.notes[key]||[];adv.notes[key].push({text:t,by:(window.currentUser&&currentUser.nombre)||'sistema',date:new Date().toISOString()});}var inp=document.getElementById('advFileInput'),fs=inp.files;var pending=[];for(var i=0;i<fs.length;i++){if(fs[i].size>1024*1024){showToast('Archivo '+fs[i].name+' supera 1 MB.','error');continue;} (function(f){pending.push(new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve({name:f.name,type:f.type,data:r.result,date:new Date().toISOString()});};r.onerror=reject;r.readAsDataURL(f);}));})(fs[i]);}if(pending.length){Promise.all(pending).then(function(a){adv.files[key]=(adv.files[key]||[]).concat(a);saveAdv();});}else saveAdv();return true;});var mr=document.getElementById('modalRoot');mr.querySelectorAll('[data-del-file]').forEach(function(b){b.onclick=function(){var idx=Number(b.getAttribute('data-del-file'));if(adv.files[key]){adv.files[key].splice(idx,1);saveAdv();openNotes(key);}};});}
@@ -3003,119 +2151,5 @@ setInterval(function(){if(window.currentUser&&document.getElementById('tab-contr
 })();
 </script>
 
-
-<script id="ui-premium-behavior-main">
-
-(function(){
-  'use strict';
-  function qs(s,c){return (c||document).querySelector(s)}
-  function qsa(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))}
-  function num(id){var e=qs('#'+id);return e?e.textContent.trim():'0'}
-  function S(){try{return typeof currentState==='function'?currentState():state||{colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}catch(e){return {colaboradores:[],sucursales:[],traslados:[],vacaciones:[],licencias:[],usuarios:[],auditoria:[]}}}
-  function activeCount(arr,fn){return (arr||[]).filter(fn||function(){return true}).length}
-  var defs={
-    colaboradores:{icon:'👥',title:'Colaboradores',sub:'Gestión completa del personal, estado y situación actual.',metrics:function(s){return [['Total',s.colaboradores.length,'green'],['Activos',activeCount(s.colaboradores,function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'}),'green'],['Vacaciones',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='vacaciones'}),'yellow'],['Licencia médica',activeCount(s.colaboradores,function(c){return typeof statusFor==='function'&&statusFor(c).key==='licencia'}),'red']]}},
-    sucursales:{icon:'🏢',title:'Sucursales',sub:'Directorio, cobertura, encargados y dotación por sucursal.',metrics:function(s){var total=s.colaboradores.length;return [['Sucursales',s.sucursales.length,'green'],['Personal',total,'green'],['Con licencia',activeCount(s.licencias,function(x){return true}),'red'],['Vacaciones',activeCount(s.vacaciones,function(x){return true}),'yellow']]}},
-    vacaciones:{icon:'🌿',title:'Vacaciones',sub:'Solicitudes, periodos, días y seguimiento de ausencias.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.vacaciones,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)}),prox=activeCount(s.vacaciones,function(x){return x.fechaInicio>=hoy&&x.fechaInicio<=((typeof addDays==='function'?addDays(hoy,7):hoy))});return [['Solicitudes',s.vacaciones.length,'green'],['Vigentes',vig,'yellow'],['Próximas 7 días',prox,'blue'],['Días registrados',s.vacaciones.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple']]}},
-    licencias:{icon:'🩺',title:'Licencias médicas',sub:'Control de licencias, vigencia, duración y trazabilidad.',metrics:function(s){var hoy=typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10),vig=activeCount(s.licencias,function(x){return x.fechaInicio<=hoy&&(!x.fechaTermino||x.fechaTermino>=hoy)});return [['Registros',s.licencias.length,'red'],['Vigentes',vig,'red'],['Días registrados',s.licencias.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||0)},0),'purple'],['RUT únicos',Object.keys(s.licencias.reduce(function(a,x){a[String(x.rut||'')]=1;return a},{})).filter(Boolean).length,'blue']]}},
-    usuarios:{icon:'🔐',title:'Usuarios',sub:'Accesos, roles, sucursal asignada y permisos del sistema.',metrics:function(s){return [['Usuarios',s.usuarios.length,'green'],['Activos',activeCount(s.usuarios,function(u){return u.activo!==false}),'green'],['Super Admin',activeCount(s.usuarios,function(u){return String(u.role||'').toLowerCase()==='superadmin'}),'purple'],['Con sucursal',activeCount(s.usuarios,function(u){return u.sucursal&&u.sucursal!=='Todas'}),'blue']]}},
-    calendario:{icon:'📅',title:'Calendario',sub:'Vista visual de vacaciones, licencias y traslados por fecha.',metrics:function(s){return [['Vacaciones',s.vacaciones.length,'yellow'],['Licencias',s.licencias.length,'red'],['Traslados',s.traslados.length,'green'],['Eventos',s.vacaciones.length+s.licencias.length+s.traslados.length,'purple']]}},
-    historial:{icon:'🕘',title:'Historial',sub:'Trazabilidad de acciones, cambios y movimientos realizados.',metrics:function(s){var a=s.auditoria||[];return [['Eventos',a.length,'green'],['Traslados',activeCount(a,function(x){return String(x.tipo||x.type).toLowerCase().indexOf('tras')>=0}),'green'],['Ausencias',activeCount(a,function(x){var t=String(x.tipo||x.type).toLowerCase();return t.indexOf('vac')>=0||t.indexOf('lic')>=0}),'yellow'],['Usuarios',activeCount(a,function(x){return String(x.tipo||x.type).toLowerCase().indexOf('usu')>=0}),'purple']]}},
-    respaldo:{icon:'🛡️',title:'Respaldo',sub:'Exportación y restauración de información para continuidad operativa.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Traslados',s.traslados.length,'blue'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow']]}},
-    control:{icon:'🎯',title:'Control',sub:'Indicadores, calidad de datos, búsqueda global y cobertura.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow'],['Traslados',s.traslados.length,'blue']]}},
-    planificacion:{icon:'🧭',title:'Planificación',sub:'Simulación, comparación de fechas y sugerencias de reemplazo.',metrics:function(s){return [['Personal',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Vacaciones',s.vacaciones.length,'yellow'],['Licencias',s.licencias.length,'red']]}},
-    reportes:{icon:'📊',title:'Reportes',sub:'Exportaciones operativas y cierres mensuales.',metrics:function(s){return [['Colaboradores',s.colaboradores.length,'green'],['Sucursales',s.sucursales.length,'green'],['Traslados',s.traslados.length,'blue'],['Ausencias',s.vacaciones.length+s.licencias.length,'yellow']]}},
-    configuracion:{icon:'⚙️',title:'Configuración',sub:'Parámetros operativos, objetivos por sucursal y fichas documentales.',metrics:function(s){return [['Sucursales',s.sucursales.length,'green'],['Usuarios',s.usuarios.length,'purple'],['Colaboradores',s.colaboradores.length,'green'],['Alertas','Activas','yellow']]}}
-  };
-  function ensureHero(tab){
-    if(!tab||tab.id==='tab-resumen'||tab.querySelector('.section-hero'))return;
-    var key=tab.id.replace('tab-',''),d=defs[key];if(!d)return;
-    var hero=document.createElement('div');hero.className='section-hero';hero.innerHTML='<div class="section-hero-left"><div class="section-hero-icon">'+d.icon+'</div><div><h2>'+d.title+'</h2><p>'+d.sub+'</p></div></div><span class="section-hero-badge">Panel operativo</span>';
-    tab.insertBefore(hero,tab.firstChild);
-    var metrics=document.createElement('div');metrics.className='section-metrics';tab.insertBefore(metrics,hero.nextSibling);
-    renderMetrics(tab);
-  }
-  function renderMetrics(tab){var key=tab.id.replace('tab-',''),d=defs[key],box=tab.querySelector('.section-metrics');if(!d||!box)return;var s=S(),m=d.metrics(s);box.innerHTML=m.map(function(x){return '<div class="section-metric '+x[2]+'"><div class="sm-label">'+x[0]+'</div><div class="sm-value">'+x[1]+'</div></div>'}).join('');}
-  function addQuickCards(){var tab=qs('#tab-resumen');if(!tab||tab.querySelector('.quick-card-grid'))return;var grid=document.createElement('div');grid.className='quick-card-grid';var items=[['colaboradores','👥','Gestionar','Colaboradores','green'],['sucursales','🏢','Administrar','Sucursales','green'],['vacaciones','🌿','Control de','Vacaciones','yellow'],['licencias','🩺','Gestionar','Licencias médicas','red'],['reportes','📊','Generar','Reportes','purple']];grid.innerHTML=items.map(function(x){return '<div class="quick-card '+x[4]+'" data-go-tab="'+x[0]+'"><div class="quick-icon">'+x[1]+'</div><div><div class="quick-title">'+x[2]+' '+x[3]+'</div><div class="quick-sub">Abrir módulo</div></div></div>'}).join('');tab.appendChild(grid);qsa('[data-go-tab]',grid).forEach(function(b){b.onclick=function(){if(typeof switchTab==='function')switchTab(b.getAttribute('data-go-tab'));}});}
-  function addTransferActivity(){}
-  function renderTransferActivity(){var s=S(),out=qs('#premiumRecentTransfers'),stateOut=qs('#premiumTransferState');if(!out||!stateOut)return;var arr=(s.traslados||[]).slice().sort(function(a,b){return String(b.fechaInicio||b.createdAt||'').localeCompare(String(a.fechaInicio||a.createdAt||''))}).slice(0,6);out.innerHTML=arr.length?arr.map(function(t){var st=String(t.estado||'pendiente').toLowerCase(),cls=st==='aprobado'?'':' '+(st==='rechazado'?'red':st==='espera'?'yellow':'blue');return '<div class="activity-item"><div class="activity-dot'+cls+'">'+(st==='aprobado'?'✓':st==='rechazado'?'×':st==='espera'?'◷':'•')+'</div><div class="activity-main"><div class="activity-title">'+(t.nombre||t.rut||'Sin nombre')+'</div><div class="activity-sub">'+(t.origen||'—')+' → '+(t.destino||'—')+'</div></div><div class="activity-time">'+(t.fechaInicio||'')+'</div></div>'}).join(''):'<div class="muted">No hay traslados registrados.</div>';
-    var c={pendiente:0,espera:0,aprobado:0,rechazado:0};(s.traslados||[]).forEach(function(t){var k=String(t.estado||'pendiente').toLowerCase();if(c[k]===undefined)c[k]=0;c[k]++});stateOut.innerHTML='<div class="activity-item"><div class="activity-dot blue">•</div><div class="activity-main"><div class="activity-title">Pendientes</div><div class="activity-sub">En espera de resolución</div></div><strong>'+c.pendiente+'</strong></div><div class="activity-item"><div class="activity-dot yellow">◷</div><div class="activity-main"><div class="activity-title">En observación</div><div class="activity-sub">Revisión requerida</div></div><strong>'+c.espera+'</strong></div><div class="activity-item"><div class="activity-dot">✓</div><div class="activity-main"><div class="activity-title">Aprobados</div><div class="activity-sub">Traslados finalizados</div></div><strong>'+c.aprobado+'</strong></div><div class="activity-item"><div class="activity-dot red">×</div><div class="activity-main"><div class="activity-title">Rechazados</div><div class="activity-sub">No aprobados</div></div><strong>'+c.rechazado+'</strong></div>';
-  }
-  function enhance(){qsa('.tab-panel').forEach(ensureHero);addQuickCards();qsa('.tab-panel').forEach(renderMetrics);renderTransferActivity();}
-  var tries=0;function boot(){enhance();tries++;if(tries<8)setTimeout(boot,500);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-  setInterval(function(){enhance();},5000);
-})();
-
-</script>
-<script id="central-login-bridge">
-(function(){
-  'use strict';
-  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';
-  var busy=false;
-  function id(x){return document.getElementById(x);}
-  function msg(text){
-    var e=id('loginError');
-    if(e){e.textContent=text||'';e.classList.toggle('show',!!text);e.style.display=text?'block':'none';}
-  }
-  function save(key,val,remember){
-    try{localStorage.removeItem(key);sessionStorage.removeItem(key);(remember?localStorage:sessionStorage).setItem(key,val);}catch(e){}
-  }
-  function clear(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}
-  function parse(r){return r.text().then(function(t){var d={};try{d=t?JSON.parse(t):{};}catch(e){d={error:t};}if(!r.ok)throw new Error(d.error||d.message||('HTTP '+r.status));return d;});}
-  function doLogin(ev){
-    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}
-    if(busy)return false;
-    var u=id('loginUsername'),p=id('loginPassword'),remember=!!(id('loginRemember')&&id('loginRemember').checked),b=id('btnLogin');
-    var username=u?String(u.value||'').trim():'',password=p?String(p.value||''):'';
-    if(!username||!password){msg('Ingrese usuario y contraseña.');return false;}
-    busy=true;msg('');
-    if(b){b.disabled=false;b.textContent='Ingresando...';b.style.pointerEvents='none';}
-    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})
-      .then(parse)
-      .then(function(r){
-        if(!r.token||!r.user)throw new Error('El servidor no entregó una sesión válida.');
-        window.CENTRAL_TOKEN=r.token;
-        window.currentUser=r.user;
-        save('panelCentralToken',r.token,remember);
-        save('panelCentralUser',JSON.stringify(r.user),remember);
-        if(typeof window.centralLoadState==='function')return window.centralLoadState();
-        return fetch(API+'/state',{headers:{Authorization:'Bearer '+r.token}}).then(parse).then(function(x){
-          var s=x.state||{}; if(window.state){Object.keys(s).forEach(function(k){window.state[k]=s[k]||[];});}
-        });
-      })
-      .then(function(){
-        var screen=id('loginScreen');
-        if(screen){screen.classList.add('hidden');screen.style.display='none';}
-        if(typeof window.updateSessionUI==='function')window.updateSessionUI();
-        if(typeof window.rerenderAll==='function')window.rerenderAll();
-        if(typeof window.switchTab==='function')window.switchTab('resumen');
-        if(typeof window.showToast==='function')window.showToast('Bienvenido, '+(window.currentUser.nombre||window.currentUser.username)+'.','success');
-      })
-      .catch(function(e){
-        console.error('LOGIN CENTRAL',e);
-        window.CENTRAL_TOKEN=null;window.currentUser=null;clear();
-        msg(e&&e.message?e.message:'No fue posible iniciar sesión.');
-      })
-      .finally(function(){busy=false;if(b){b.disabled=false;b.style.pointerEvents='auto';b.textContent='Ingresar';}});
-    return false;
-  }
-  function bind(){
-    var b=id('btnLogin');
-    if(!b)return false;
-    b.type='button';b.disabled=false;
-    if(!b.__centralBridge){
-      b.__centralBridge=true;
-      b.addEventListener('click',doLogin,true);
-    }
-    var p=id('loginPassword');
-    if(p&&!p.__centralBridge){p.__centralBridge=true;p.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin(e);},true);}
-    return true;
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});
-  else bind();
-  var n=0,t=setInterval(function(){if(bind()||++n>40)clearInterval(t);},250);
-})();
-</script>
 </body>
 </html>
