@@ -397,9 +397,11 @@ importBackup = function(file){
     .login-screen{
       position:fixed !important; inset:0 !important;
       background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
-      display:flex !important; align-items:center !important; justify-content:center !important;
-      padding:20px !important; z-index:1000 !important;
+      display:flex !important; align-items:flex-start !important; justify-content:center !important;
+      padding:28px 20px 40px !important; box-sizing:border-box !important;
+      z-index:1000 !important;
     }
+    .login-card{margin:0 auto !important;}
     .login-card{
       width:100% !important; max-width:430px !important;
       background:#fff !important; border-radius:20px !important;
