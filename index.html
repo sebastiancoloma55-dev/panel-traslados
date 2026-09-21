@@ -1816,53 +1816,47 @@ function selectColaborador(selected){
   var wrap=document.createElement('div');
   wrap.className='tras-colab-search';
 
-  var search=el('input',{class:'input',attrs:{id:'trasFormBuscar',type:'text',placeholder:'Buscar por RUT o nombre...',autocomplete:'off'}});
+  var search=el('input',{class:'input',attrs:{id:'trasFormBuscar',type:'text',placeholder:'Escriba el RUT o nombre para filtrar...',autocomplete:'off'}});
   var rut=el('input',{attrs:{id:'trasFormRut',type:'hidden',value:selected||''}});
   var sel=document.createElement('select');
   sel.className='input';
   sel.id='trasFormColaboradorLista';
+  sel.size=8;
   sel.style.marginTop='8px';
-  sel.appendChild(el('option',{text:'Seleccione un colaborador',attrs:{value:''}}));
+  sel.style.minHeight='190px';
 
   var colaboradores=state.colaboradores.slice().sort(function(a,b){
     return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
   });
 
   function cargar(q){
-    q=normalizeSearch(q||'');
+    var texto=String(q||'').trim();
+    var nq=normalizeSearch(texto);
+    var nr=cleanRut(texto);
     sel.innerHTML='';
+
     var encontrados=colaboradores.filter(function(c){
-      if(!q)return true;
-      return normalizeSearch(c.rut).indexOf(q)!==-1 || normalizeSearch(c.nombre).indexOf(q)!==-1;
+      if(!texto)return true;
+      var rutC=cleanRut(c.rut);
+      var nombreC=normalizeSearch(c.nombre);
+      return (nr && rutC.indexOf(nr)!==-1) || (!nr && nombreC.indexOf(nq)!==-1) || nombreC.indexOf(nq)!==-1;
     });
+
     if(!encontrados.length){
       sel.appendChild(el('option',{text:'No se encontraron colaboradores',attrs:{value:''}}));
       return;
     }
-    sel.appendChild(el('option',{text:encontrados.length===1?'Seleccione el colaborador encontrado':'Seleccione un colaborador',attrs:{value:''}}));
+
     encontrados.forEach(function(c){
       var o=el('option',{text:formatRut(c.rut)+' · '+c.nombre,attrs:{value:c.rut}});
       if(selected&&cleanRut(c.rut)===cleanRut(selected))o.selected=true;
       sel.appendChild(o);
     });
-    if(encontrados.length===1){
-      rut.value=encontrados[0].rut;
-      search.value=encontrados[0].nombre+' · '+formatRut(encontrados[0].rut);
-      sel.value=encontrados[0].rut;
-    }
   }
 
   search.addEventListener('input',function(){
     rut.value='';
     cargar(search.value);
-    var q=normalizeSearch(search.value);
-    var exact=colaboradores.find(function(c){
-      return cleanRut(c.rut)===cleanRut(search.value) || normalizeSearch(c.nombre)===q;
-    });
-    if(exact){
-      rut.value=exact.rut;
-      sel.value=exact.rut;
-    }
   });
 
   sel.addEventListener('change',function(){
