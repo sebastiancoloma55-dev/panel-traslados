@@ -91,22 +91,34 @@ function centralHeaders(extra){
 }
 function centralRequest(path, options){
   options = options || {};
-  return fetch(CENTRAL_API + path, {
+  var target = CENTRAL_API + (path || '');
+  var requestOptions = {
     method: options.method || 'GET',
     headers: centralHeaders(options.headers),
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  }).then(function(r){
-    return r.text().then(function(text){
+  };
+
+  function parseResponse(r){
+    return r.text().then(function(raw){
       var data = {};
-      try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { error:text || 'Respuesta inválida' }; }
+      try { data = raw ? JSON.parse(raw) : {}; }
+      catch(e) { data = { error: raw || ('HTTP ' + r.status) }; }
+
       if(!r.ok){
-        var err = new Error(data.error || ('HTTP ' + r.status));
+        var err = new Error(
+          data.error ||
+          data.message ||
+          ('HTTP ' + r.status + ' al conectar con el servidor')
+        );
         err.status = r.status;
+        err.data = data;
         throw err;
       }
       return data;
     });
-  });
+  }
+
+  return fetch(target, requestOptions).then(parseResponse);
 }
 function centralStoreName(storeName){ return storeName; }
 
@@ -126,11 +138,10 @@ function centralLoadState(){
     state.vacaciones = s.vacaciones || [];
     state.usuarios = s.usuarios || [];
     state.auditoria = s.auditoria || [];
+    /* Fuente única para todos los indicadores visuales. */
+    window.__panelState = state;
     if(result.user && currentUser) currentUser = Object.assign({}, currentUser, result.user);
-    /* La carga del estado central no debe bloquear el acceso si la sincronización secundaria falla. */
-    return sincronizarTrasladosConColaboradores().catch(function(err){
-      console.warn('Sincronización de traslados omitida:', err);
-    });
+    return sincronizarTrasladosConColaboradores();
   });
 }
 
@@ -167,6 +178,7 @@ reloadStateFromDB = function(){
         Promise.resolve(colab), _localDbGetAll(STORES.SUC), _localDbGetAll(STORES.TRAS), _localDbGetAll(STORES.LIC), _localDbGetAll(STORES.VAC), _localDbGetAll(STORES.USERS), _localDbGetAll(STORES.AUDIT)
       ]).then(function(results){
         state.colaboradores=results[0]; state.sucursales=results[1]; state.traslados=results[2]; state.licencias=results[3]; state.vacaciones=results[4]; state.usuarios=results[5]; state.auditoria=results[6]||[];
+        window.__panelState = state;
         return sincronizarTrasladosConColaboradores();
       });
     });
@@ -184,53 +196,98 @@ reloadStateFromDB = function(){
 
 /* Login centralizado contra PostgreSQL/Supabase. */
 loginUser = function(){
-  var username = document.getElementById('loginUsername').value.trim();
-  var password = document.getElementById('loginPassword').value;
-  var remember = document.getElementById('loginRemember').checked;
-  if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
+  var usernameEl = document.getElementById('loginUsername');
+  var passwordEl = document.getElementById('loginPassword');
+  var rememberEl = document.getElementById('loginRemember');
   var btn = document.getElementById('btnLogin');
+
+  var username = usernameEl ? usernameEl.value.trim() : '';
+  var password = passwordEl ? passwordEl.value : '';
+  var remember = !!(rememberEl && rememberEl.checked);
+
+  if(!username || !password){
+    showLogin('Ingrese usuario y contraseña.');
+    return false;
+  }
+
   if(btn) btn.disabled = true;
-  centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
-    if(!result || !result.token || !result.user) throw new Error('El servidor no entregó una sesión válida.');
+
+  var body = { username: username, password: password };
+
+  function doLogin(){
+    return centralRequest('/login', {
+      method:'POST',
+      body:body
+    }).catch(function(err){
+      /*
+       * Compatibilidad definitiva: si una versión antigua de la Edge Function
+       * no reconoce /login, prueba la raíz una sola vez.
+       */
+      if(err && (err.status === 404 || err.status === 405)){
+        return centralRequest('', {
+          method:'POST',
+          body:body
+        });
+      }
+      throw err;
+    });
+  }
+
+  doLogin().then(function(result){
+    if(!result || !result.token || !result.user){
+      throw new Error('El servidor respondió sin una sesión válida.');
+    }
+
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
-    centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
-    centralStorageSet(CENTRAL_USER_KEY, JSON.stringify(currentUser), remember);
 
-    /* LOGIN OK: ocultar la pantalla inmediatamente y no volver a mostrarla
-       por errores secundarios de renderizado o sincronización. */
-    var screen = document.getElementById('loginScreen');
-    if(screen){ screen.classList.add('hidden'); screen.style.setProperty('display','none','important'); }
-    updateSessionUI();
+    centralStorageSet(
+      CENTRAL_TOKEN_KEY,
+      CENTRAL_TOKEN,
+      remember
+    );
+    centralStorageSet(
+      CENTRAL_USER_KEY,
+      JSON.stringify(currentUser),
+      remember
+    );
 
-    return centralLoadState().catch(function(err){
-      console.warn('Carga central posterior al login:', err);
-      /* Un error de carga no invalida el login. Solo un 401 indica sesión inválida. */
-      if(err && err.status === 401){
-        CENTRAL_TOKEN = null;
-        centralStorageClear();
-        currentUser = null;
-        throw err;
-      }
-      return null;
-    });
+    return centralLoadState();
   }).then(function(){
-    /* El panel debe mostrarse aunque alguna mejora visual falle. */
-    try{ rerenderAll(); }catch(e){ console.error('Error renderizando panel:', e); }
-    try{ if(typeof bootAdv === 'function') bootAdv(); }catch(e){ console.error('Error bootAdv:', e); }
-    try{ switchTab('resumen'); }catch(e){ console.error('Error cambiando pestaña:', e); }
-    try{ showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success'); }catch(e){}
-  }).catch(function(err){
-    console.error('Login central:', err);
-    if(err && err.status === 401){
-      showLogin('La sesión no es válida. Inicie sesión nuevamente.');
-    } else {
-      /* Si login ya devolvió 200, NO volver a abrir el formulario por un error secundario. */
-      var screen = document.getElementById('loginScreen');
-      if(currentUser && screen){ screen.classList.add('hidden'); screen.style.setProperty('display','none','important'); }
-      else showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
+    hideLogin();
+    updateSessionUI();
+    rerenderAll();
+
+    if(typeof bootAdv === 'function'){
+      try { bootAdv(); } catch(e) { console.warn('bootAdv:', e); }
     }
-  }).finally(function(){ if(btn) btn.disabled = false; });
+
+    switchTab('resumen');
+
+    showToast(
+      'Bienvenido, ' +
+      (currentUser.nombre || currentUser.username) +
+      '.',
+      'success'
+    );
+  }).catch(function(err){
+    console.error('LOGIN CENTRAL DEFINITIVO:', err);
+
+    CENTRAL_TOKEN = null;
+    currentUser = null;
+    centralStorageClear();
+
+    var msg = 'No fue posible iniciar sesión.';
+    if(err && err.message){
+      msg = err.message;
+    }
+
+    showLogin(msg);
+  }).finally(function(){
+    if(btn) btn.disabled = false;
+  });
+
+  return false;
 };
 
 restoreSession = function(){
@@ -268,15 +325,15 @@ logout = function(){
 /* Eliminaciones directas para no borrar y reconstruir tablas completas. */
 deleteColaborador = function(rut){
   if(!confirm('¿Eliminar este colaborador?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', record:{rut:rut}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', id:rut}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
 };
 deleteSucursal = function(codigo){
   if(!confirm('¿Eliminar esta sucursal?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', record:{codigo:codigo}}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', id:codigo}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
 };
 eliminarTraslado = function(id){
   if(!confirm('¿Eliminar este traslado?')) return;
-  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', record:{id:id}}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
+  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', id:id}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
 };
 
 /* El respaldo conserva su exportación local, pero la restauración queda centralizada. */
@@ -338,6 +395,72 @@ importBackup = function(file){
       --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
       --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
     }
+
+    /* ===== LOGIN VERDE PASTEL ===== */
+    .login-screen{
+      position:fixed !important; inset:0 !important;
+      background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
+      display:flex !important; align-items:center !important; justify-content:center !important;
+      padding:20px !important; z-index:1000 !important;
+    }
+    .login-card{
+      width:100% !important; max-width:430px !important;
+      background:#fff !important; border-radius:20px !important;
+      box-shadow:0 24px 80px rgba(18,67,51,.28) !important;
+      overflow:hidden !important; border:1px solid #DDEBE3 !important;
+    }
+    .login-head{
+      padding:28px 30px 20px !important;
+      background:linear-gradient(180deg,#F8FCF9,#fff) !important;
+      border-bottom:1px solid #DDEBE3 !important;
+    }
+    .login-mark{
+      background:#D6A23A !important; color:#164437 !important;
+      box-shadow:0 5px 14px rgba(214,162,58,.20) !important;
+    }
+    .login-title,.login-card h1,.login-card h2,.login-card h3{
+      color:#164437 !important;
+    }
+    .login-sub,.login-help{
+      color:#71857D !important;
+    }
+    .login-body{padding:26px 30px 30px !important;}
+    .login-card label{color:#596D66 !important;font-weight:700 !important;}
+    .login-card input{
+      border:1px solid #C7DDD1 !important;
+      background:#fff !important;
+      color:#164437 !important;
+      border-radius:9px !important;
+    }
+    .login-card input:focus{
+      border-color:#58A982 !important;
+      box-shadow:0 0 0 3px rgba(88,169,130,.15) !important;
+      outline:none !important;
+    }
+    .login-card input::placeholder{color:#9AA9A3 !important;}
+    .login-error{
+      background:#FBE2DF !important;
+      color:#A83D35 !important;
+      border-color:#E8B8AF !important;
+    }
+    .login-card .btn-primary,
+    #btnLogin{
+      background:#277454 !important;
+      border-color:#277454 !important;
+      color:#fff !important;
+      border-radius:9px !important;
+      transition:transform .18s ease,box-shadow .18s ease,background .18s ease !important;
+    }
+    .login-card .btn-primary:hover,
+    #btnLogin:hover{
+      background:#1F6247 !important;
+      transform:translateY(-1px) !important;
+      box-shadow:0 8px 18px rgba(39,116,84,.18) !important;
+    }
+    .login-card .btn-primary:disabled,
+    #btnLogin:disabled{opacity:.65 !important;cursor:wait !important;}
+    .login-card a{color:#277454 !important;}
+
     body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
     .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
     .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
@@ -465,6 +588,43 @@ importBackup = function(file){
   };
 })();
 
+
+/* ====== LOGIN ROBUSTO / SIN RECARGA ====== */
+(function(){
+  function bindLogin(){
+    var btn = document.getElementById('btnLogin');
+    var form = btn ? btn.closest('form') : null;
+
+    if(btn && !btn.__centralBound){
+      btn.type = 'button';
+      btn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        return loginUser();
+      }, true);
+      btn.__centralBound = true;
+    }
+
+    if(form && !form.__centralBound){
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        return loginUser();
+      }, true);
+      form.__centralBound = true;
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bindLogin, {once:true});
+  } else {
+    bindLogin();
+  }
+
+  setTimeout(bindLogin, 250);
+  setTimeout(bindLogin, 1000);
+})();
+
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
 
 """
@@ -475,15 +635,170 @@ if marker not in html_content:
     st.stop()
 
 html_content = html_content.replace(marker, central_sync + "\n" + marker, 1)
-html_content = html_content.replace("</head>", "<style>/* Posición login */ .login-screen{align-items:flex-start!important;justify-content:center!important;padding-top:28px!important;box-sizing:border-box!important;} .login-card{margin-top:0!important;} </style></head>", 1)
+html_content = html_content.replace("
+<script id="central-metrics-final-bridge">
+(function(){
+  'use strict';
 
+  function pad(n){return String(n).padStart(2,'0');}
+  function isoToday(){
+    var d=new Date();
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  }
+  function parseDate(v){
+    if(!v)return null;
+    if(v instanceof Date && !isNaN(v.getTime()))return v;
+    var s=String(v).trim();
+    var m=/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.exec(s);
+    if(m)return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
+    m=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/.exec(s);
+    if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+    return null;
+  }
+  function rut(x){
+    return String(x==null?'':x).toUpperCase().replace(/[^0-9K]/g,'');
+  }
+  function rowIni(x){return x.fechaInicio||x.inicio||x.fecha_inicio||'';}
+  function rowFin(x){return x.fechaTermino||x.termino||x.fecha_termino||'';}
+  function vigente(x){
+    var h=parseDate(isoToday()), i=parseDate(rowIni(x)), f=parseDate(rowFin(x));
+    return !!i && i<=h && (!f || f>=h);
+  }
+  function uniqueCurrent(arr){
+    var seen={},n=0;
+    (arr||[]).forEach(function(x){
+      var r=rut(x.rut||x.RUT);
+      if(r && vigente(x) && !seen[r]){seen[r]=1;n++;}
+    });
+    return n;
+  }
+  function uniqueAll(arr){
+    var seen={},n=0;
+    (arr||[]).forEach(function(x){
+      var r=rut(x.rut||x.RUT);
+      if(r&&!seen[r]){seen[r]=1;n++;}
+    });
+    return n;
+  }
+  function sumDays(arr){
+    return (arr||[]).reduce(function(a,x){
+      return a+Number(x.numeroDias||x.dias||x.numero_dias||0);
+    },0);
+  }
+  function snapshot(){
+    var s=window.__panelState||window.state;
+    if(s && (
+      (s.colaboradores&&s.colaboradores.length) ||
+      (s.sucursales&&s.sucursales.length) ||
+      (s.vacaciones&&s.vacaciones.length) ||
+      (s.licencias&&s.licencias.length) ||
+      (s.traslados&&s.traslados.length)
+    )) return s;
+
+    /* Fallback de seguridad: toma los totales que ya muestra la navegación. */
+    function badge(id){
+      var e=document.getElementById(id);
+      return e?Number(String(e.textContent||'').replace(/\D/g,''))||0:0;
+    }
+    return {
+      colaboradores:Array.from({length:badge('navBadgeColab')}),
+      sucursales:Array.from({length:badge('navBadgeSuc')}),
+      vacaciones:Array.from({length:badge('navBadgeVac')}),
+      licencias:Array.from({length:badge('navBadgeLic')}),
+      traslados:[]
+    };
+  }
+  function set(id,v){
+    var e=document.getElementById(id);
+    if(e)e.textContent=String(v);
+  }
+  function render(){
+    var s=snapshot();
+    var col=s.colaboradores||[], suc=s.sucursales||[], vac=s.vacaciones||[], lic=s.licencias||[];
+    var active=col.filter(function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo';}).length;
+
+    var vacCurrent=uniqueCurrent(vac);
+    var licCurrent=uniqueCurrent(lic);
+
+    /* Colaboradores */
+    set('metric-colab-total',col.length);
+    set('metric-colab-activos',active);
+    set('metric-colab-vacaciones',vacCurrent);
+    set('metric-colab-licencias',licCurrent);
+
+    /* Sucursales */
+    set('metric-suc-total',suc.length);
+    set('metric-suc-personal',col.length);
+    set('metric-suc-licencias',licCurrent);
+    set('metric-suc-vacaciones',vacCurrent);
+
+    /* Vacaciones */
+    var h=parseDate(isoToday()), h7=new Date(h.getTime()+7*86400000);
+    var vacNext=vac.filter(function(x){
+      var i=parseDate(rowIni(x)); return i&&i>=h&&i<=h7;
+    }).length;
+    set('metric-vac-total',vac.length);
+    set('metric-vac-vigentes',vac.filter(vigente).length);
+    set('metric-vac-proximas',vacNext);
+    set('metric-vac-dias',sumDays(vac));
+
+    /* Licencias */
+    set('metric-lic-total',lic.length);
+    set('metric-lic-vigentes',lic.filter(vigente).length);
+    set('metric-lic-dias',sumDays(lic));
+    set('metric-lic-ruts',uniqueAll(lic));
+  }
+  function ensureIds(){
+    /* Vincula los cuatro paneles directamente a los textos que crea la mejora visual. */
+    var boxes=document.querySelectorAll('.section-metrics');
+    for(var i=0;i<boxes.length;i++){
+      var box=boxes[i], labels=box.querySelectorAll('.sm-label'), vals=box.querySelectorAll('.sm-value');
+      if(!labels.length||!vals.length)continue;
+      var title=(box.parentElement&&box.parentElement.id)||'';
+      for(var j=0;j<labels.length&&j<vals.length;j++){
+        var l=String(labels[j].textContent||'').trim().toLowerCase();
+        if(title==='tab-colaboradores'){
+          if(l==='total'){vals[j].id='metric-colab-total';}
+          else if(l==='activos'){vals[j].id='metric-colab-activos';}
+          else if(l==='vacaciones'){vals[j].id='metric-colab-vacaciones';}
+          else if(l==='licencia médica'||l==='licencia medica'){vals[j].id='metric-colab-licencias';}
+        } else if(title==='tab-sucursales'){
+          if(l==='sucursales'){vals[j].id='metric-suc-total';}
+          else if(l==='personal'){vals[j].id='metric-suc-personal';}
+          else if(l==='con licencia'){vals[j].id='metric-suc-licencias';}
+          else if(l==='vacaciones'){vals[j].id='metric-suc-vacaciones';}
+        } else if(title==='tab-vacaciones'){
+          if(l==='solicitudes'){vals[j].id='metric-vac-total';}
+          else if(l==='vigentes'){vals[j].id='metric-vac-vigentes';}
+          else if(l.indexOf('próximas')===0||l.indexOf('proximas')===0){vals[j].id='metric-vac-proximas';}
+          else if(l==='días registrados'||l==='dias registrados'){vals[j].id='metric-vac-dias';}
+        } else if(title==='tab-licencias'){
+          if(l==='registros'){vals[j].id='metric-lic-total';}
+          else if(l==='vigentes'){vals[j].id='metric-lic-vigentes';}
+          else if(l==='días registrados'||l==='dias registrados'){vals[j].id='metric-lic-dias';}
+          else if(l==='rut únicos'||l==='rut unicos'){vals[j].id='metric-lic-ruts';}
+        }
+      }
+    }
+  }
+  function run(){ensureIds();render();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);
+  else run();
+  setInterval(run,1000);
+})();
+</script>
+
+</body>", "\n<script>\n(function(){\n  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';\n  var busy=false, bound=false;\n  function err(msg){var x=document.getElementById('loginError');if(x){x.textContent=msg||'No fue posible iniciar sesión.';x.classList.add('show');x.style.display='block';}}\n  function clearErr(){var x=document.getElementById('loginError');if(x){x.textContent='';x.classList.remove('show');x.style.display='none';}}\n  function clearSession(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}\n  function save(k,v,r){try{localStorage.removeItem(k);sessionStorage.removeItem(k);(r?localStorage:sessionStorage).setItem(k,v);}catch(e){}}\n  function login(ev){\n    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}\n    if(busy)return false;\n    var u=document.getElementById('loginUsername'),p=document.getElementById('loginPassword'),r=document.getElementById('loginRemember'),b=document.getElementById('btnLogin');\n    var username=u?String(u.value||'').trim():'',password=p?String(p.value||''):'',remember=!!(r&&r.checked);\n    if(!username||!password){err('Ingrese usuario y contraseña.');return false;}\n    busy=true;clearErr();if(b){b.disabled=true;b.textContent='Ingresando...';}\n    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})\n    .then(function(res){return res.text().then(function(raw){var d={};try{d=raw?JSON.parse(raw):{};}catch(e){d={error:raw};}if(!res.ok)throw new Error(d.error||d.message||('HTTP '+res.status));return d;});})\n    .then(function(d){\n      if(!d.token||!d.user)throw new Error('El servidor no entregó una sesión válida.');\n      window.CENTRAL_TOKEN=d.token;window.currentUser=d.user;save('panelCentralToken',d.token,remember);save('panelCentralUser',JSON.stringify(d.user),remember);\n      if(typeof window.centralLoadState==='function')return window.centralLoadState();\n      return fetch(API+'/state',{headers:{'Content-Type':'application/json','Authorization':'Bearer '+d.token}}).then(function(res){return res.json().then(function(x){if(!res.ok)throw new Error(x.error||'No se pudo cargar el estado.');return x;});});\n    })\n    .then(function(){\n      if(typeof window.hideLogin==='function')window.hideLogin();\n      if(typeof window.updateSessionUI==='function')window.updateSessionUI();\n      if(typeof window.rerenderAll==='function')window.rerenderAll();\n      if(typeof window.switchTab==='function')window.switchTab('resumen');\n      if(typeof window.showToast==='function'){var u=window.currentUser||{};window.showToast('Bienvenido, '+String(u.nombre||u.username||'Usuario')+'.','success');}\n    })\n    .catch(function(e){console.error('LOGIN FORZADO',e);window.CENTRAL_TOKEN=null;window.currentUser=null;clearSession();err(e&&e.message?e.message:'No fue posible iniciar sesión.');})\n    .finally(function(){busy=false;var b=document.getElementById('btnLogin');if(b){b.disabled=false;b.textContent='Ingresar';}});\n    return false;\n  }\n  function bind(){\n    var b=document.getElementById('btnLogin');if(!b)return false;\n    if(!bound){\n      document.addEventListener('click',function(e){var t=e.target,btn=t&&t.closest?t.closest('#btnLogin'):null;if(btn)login(e);},true);\n      b.type='button';b.onclick=login;\n      var form=b.closest?b.closest('form'):null;if(form)form.addEventListener('submit',login,true);\n      bound=true;\n    }\n    return true;\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();\n  var n=0,t=setInterval(function(){if(bind()||++n>=40)clearInterval(t);},250);\n})();\n</script>\n" + "</body>", 1)
 html_content = html_content.replace(
     "Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.",
     "Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>."
 )
 
+# Un solo desplazamiento: el documento de Streamlit se encarga del scroll; el iframe no crea otro.
+html_content = html_content.replace("</head>", "<style>html,body{overflow:visible!important;overflow-x:hidden!important;} .app-shell{min-height:auto!important;} </style></head>", 1)
+
 st.components.v1.html(
     html_content,
-    height=900,
-    scrolling=True,
+    height=5200,
+    scrolling=False,
 )
