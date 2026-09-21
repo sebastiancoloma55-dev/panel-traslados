@@ -391,34 +391,18 @@ async function upsertRecord(
   }
 
   /*
-   * USUARIOS: tratamiento especial.
-   *
-   * La tabla puede tener restricciones UNIQUE sobre username y columnas
-   * timestamp para created_at / last_login. El frontend puede enviar
-   * lastLogin como cadena vacía cuando se crea un usuario nuevo; PostgreSQL
-   * no acepta "" como timestamp, por lo que se transforma a NULL.
-   *
-   * También hacemos la búsqueda por username antes de guardar para evitar
-   * depender de que el id del frontend coincida con el esquema de Supabase.
+   * USUARIOS:
+   * Esta instalación no tiene una columna usuarios.id.
+   * Por eso username es la clave lógica para crear y editar usuarios.
    */
   if (table === "usuarios") {
     const dbRecord = convertToDb(record);
 
+    // La interfaz puede enviar id, pero la tabla no lo utiliza.
+    delete dbRecord.id;
+
     if (dbRecord.username !== undefined && dbRecord.username !== null) {
       dbRecord.username = String(dbRecord.username).trim().toLowerCase();
-    }
-
-    if (dbRecord.last_login === "" || dbRecord.last_login === undefined) {
-      dbRecord.last_login = null;
-    }
-
-    if (dbRecord.created_at === "") {
-      dbRecord.created_at = null;
-    }
-
-    // Si no viene created_at, PostgreSQL puede usar el valor por defecto.
-    if (dbRecord.created_at === null) {
-      delete dbRecord.created_at;
     }
 
     if (!dbRecord.username) {
@@ -429,41 +413,62 @@ async function upsertRecord(
       throw new Error("La contraseña es obligatoria");
     }
 
+    // PostgreSQL timestamp no acepta una cadena vacía.
+    if (dbRecord.last_login === "" || dbRecord.last_login === undefined) {
+      dbRecord.last_login = null;
+    }
+
+    if (dbRecord.created_at === "") {
+      dbRecord.created_at = null;
+    }
+
     try {
+      // Buscar por username, nunca por usuarios.id.
       const { data: existing, error: findError } = await supabase
         .from("usuarios")
-        .select("id")
+        .select("*")
         .eq("username", dbRecord.username)
         .limit(1);
 
       if (findError) {
-        throw new Error(`Error buscando usuario: ${findError.message}`);
+        throw new Error(
+          `Error buscando usuario: ${findError.message || "Error desconocido"}`
+        );
       }
 
-      let query;
+      if (existing && existing.length > 0) {
+        // Al editar no modificar la fecha original de creación.
+        delete dbRecord.created_at;
 
-      if (existing && existing.length > 0 && existing[0].id !== null && existing[0].id !== undefined) {
-        query = supabase
+        const { data, error } = await supabase
           .from("usuarios")
           .update(dbRecord)
-          .eq("id", existing[0].id)
+          .eq("username", dbRecord.username)
           .select();
-      } else if (dbRecord.id !== undefined && dbRecord.id !== null && dbRecord.id !== "") {
-        query = supabase
-          .from("usuarios")
-          .upsert(dbRecord)
-          .select();
-      } else {
-        query = supabase
-          .from("usuarios")
-          .insert(dbRecord)
-          .select();
+
+        if (error) {
+          throw new Error(
+            `Error actualizando usuario: ${error.message || "Error desconocido"}`
+          );
+        }
+
+        return convertFromDb(data || []);
       }
 
-      const { data, error } = await query;
+      // Usuario nuevo.
+      if (dbRecord.created_at === null || dbRecord.created_at === undefined) {
+        dbRecord.created_at = new Date().toISOString();
+      }
+
+      const { data, error } = await supabase
+        .from("usuarios")
+        .insert(dbRecord)
+        .select();
 
       if (error) {
-        throw new Error(`Error guardando usuario: ${error.message}`);
+        throw new Error(
+          `Error creando usuario: ${error.message || "Error desconocido"}`
+        );
       }
 
       return convertFromDb(data || []);
@@ -475,6 +480,7 @@ async function upsertRecord(
     }
   }
 
+  // Resto de las tablas: conservar comportamiento original.
   const dbRecord = convertToDb(record);
 
   const { data, error } = await supabase
@@ -488,6 +494,7 @@ async function upsertRecord(
 
   return convertFromDb(data || []);
 }
+
 
 async function bulkUpsert(
   table: string,
