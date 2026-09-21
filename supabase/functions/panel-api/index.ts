@@ -231,16 +231,38 @@ function getToken(req: Request): string | null {
   return auth.substring(7);
 }
 
-async function requireAuth(
-  req: Request
-) {
+async function requireAuth(req: Request) {
   const token = getToken(req);
 
   if (!token) {
     return null;
   }
 
-  return await verifyToken(token);
+  const payload = await verifyToken(token);
+
+  if (!payload || !payload.sessionId) {
+    return null;
+  }
+
+  const { data: session, error } = await supabase
+    .from("sesiones")
+    .select("*")
+    .eq("session_id", payload.sessionId)
+    .is("revoked_at", null)
+    .maybeSingle();
+
+  if (error || !session) {
+    return null;
+  }
+
+  await supabase
+    .from("sesiones")
+    .update({
+      last_activity_at: new Date().toISOString(),
+    })
+    .eq("session_id", payload.sessionId);
+
+  return payload;
 }
 
 async function hashPassword(
@@ -256,6 +278,10 @@ async function hashPassword(
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function generateSessionId(): string {
+  return crypto.randomUUID();
 }
 
 async function login(
@@ -297,14 +323,31 @@ async function login(
     );
   }
 
+  const sessionId = generateSessionId();
+
   const payload = {
     username: user.username,
     role: user.role,
     sucursal: user.sucursal,
+    sessionId,
     exp: Date.now() + 12 * 60 * 60 * 1000,
   };
 
   const token = await signToken(payload);
+
+  const { error: sessionError } = await supabase
+    .from("sesiones")
+    .insert({
+      session_id: sessionId,
+      username: user.username,
+      role: user.role,
+      sucursal: user.sucursal ?? null,
+    });
+
+  if (sessionError) {
+    console.error("Error creando sesión:", sessionError);
+    throw new Error("No fue posible crear la sesión");
+  }
 
   const safeUser = { ...user };
 
@@ -860,7 +903,7 @@ Deno.serve(async (req: Request) => {
     return response(req, {
       ok: true,
       service: "panel-api",
-      version: "2026-09-21-usuarios-login-timestamp",
+      version: "2026-09-21-session-management-v1",
     });
   }
 
@@ -955,6 +998,44 @@ Deno.serve(async (req: Request) => {
     }
 
     // =========================
+    // SESIONES ACTIVAS
+    // =========================
+
+    if (
+      req.method === "GET" &&
+      path.endsWith("/sessions")
+    ) {
+      if (auth.role !== "superadmin") {
+        return response(
+          req,
+          {
+            error: "Se requiere Super Admin",
+          },
+          403
+        );
+      }
+
+      const { data, error } = await supabase
+        .from("sesiones")
+        .select(
+          "id, session_id, username, role, sucursal, created_at, last_activity_at, revoked_at"
+        )
+        .is("revoked_at", null)
+        .order("last_activity_at", {
+          ascending: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      return response(req, {
+        success: true,
+        sessions: data || [],
+      });
+    }
+
+    // =========================
     // STATE
     // =========================
 
@@ -983,6 +1064,104 @@ Deno.serve(async (req: Request) => {
 
       const body =
         await req.json();
+
+      // =========================
+      // REVOCAR SESIÓN
+      // =========================
+
+      if (body.action === "revokeSession") {
+        if (auth.role !== "superadmin") {
+          return response(
+            req,
+            {
+              error: "Se requiere Super Admin",
+            },
+            403
+          );
+        }
+
+        const sessionId = String(body.sessionId || "").trim();
+
+        if (!sessionId) {
+          return response(
+            req,
+            {
+              error: "sessionId requerido",
+            },
+            400
+          );
+        }
+
+        const { data: targetSession, error: findError } =
+          await supabase
+            .from("sesiones")
+            .select("*")
+            .eq("session_id", sessionId)
+            .maybeSingle();
+
+        if (findError) {
+          throw findError;
+        }
+
+        if (!targetSession) {
+          return response(
+            req,
+            {
+              error: "Sesión no encontrada",
+            },
+            404
+          );
+        }
+
+        const { error: revokeError } = await supabase
+          .from("sesiones")
+          .update({
+            revoked_at: new Date().toISOString(),
+          })
+          .eq("session_id", sessionId);
+
+        if (revokeError) {
+          throw revokeError;
+        }
+
+        return response(req, {
+          success: true,
+          message: "Sesión cerrada correctamente",
+        });
+      }
+
+      // =========================
+      // CERRAR TODAS LAS SESIONES
+      // =========================
+
+      if (body.action === "revokeAllSessions") {
+        if (auth.role !== "superadmin") {
+          return response(
+            req,
+            {
+              error: "Se requiere Super Admin",
+            },
+            403
+          );
+        }
+
+        const { error: revokeAllError } = await supabase
+          .from("sesiones")
+          .update({
+            revoked_at: new Date().toISOString(),
+          })
+          .is("revoked_at", null)
+          .neq("session_id", auth.sessionId);
+
+        if (revokeAllError) {
+          throw revokeAllError;
+        }
+
+        return response(req, {
+          success: true,
+          message: "Todas las demás sesiones fueron cerradas",
+        });
+      }
 
       // ---------- UPSERT ----------
 
