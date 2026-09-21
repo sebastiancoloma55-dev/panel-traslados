@@ -138,8 +138,6 @@ function centralLoadState(){
     state.vacaciones = s.vacaciones || [];
     state.usuarios = s.usuarios || [];
     state.auditoria = s.auditoria || [];
-    /* Fuente única para todos los indicadores visuales. */
-    window.__panelState = state;
     if(result.user && currentUser) currentUser = Object.assign({}, currentUser, result.user);
     return sincronizarTrasladosConColaboradores();
   });
@@ -178,7 +176,6 @@ reloadStateFromDB = function(){
         Promise.resolve(colab), _localDbGetAll(STORES.SUC), _localDbGetAll(STORES.TRAS), _localDbGetAll(STORES.LIC), _localDbGetAll(STORES.VAC), _localDbGetAll(STORES.USERS), _localDbGetAll(STORES.AUDIT)
       ]).then(function(results){
         state.colaboradores=results[0]; state.sucursales=results[1]; state.traslados=results[2]; state.licencias=results[3]; state.vacaciones=results[4]; state.usuarios=results[5]; state.auditoria=results[6]||[];
-        window.__panelState = state;
         return sincronizarTrasladosConColaboradores();
       });
     });
@@ -635,160 +632,7 @@ if marker not in html_content:
     st.stop()
 
 html_content = html_content.replace(marker, central_sync + "\n" + marker, 1)
-html_content = html_content.replace("
-<script id="central-metrics-final-bridge">
-(function(){
-  'use strict';
-
-  function pad(n){return String(n).padStart(2,'0');}
-  function isoToday(){
-    var d=new Date();
-    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-  }
-  function parseDate(v){
-    if(!v)return null;
-    if(v instanceof Date && !isNaN(v.getTime()))return v;
-    var s=String(v).trim();
-    var m=/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.exec(s);
-    if(m)return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
-    m=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/.exec(s);
-    if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
-    return null;
-  }
-  function rut(x){
-    return String(x==null?'':x).toUpperCase().replace(/[^0-9K]/g,'');
-  }
-  function rowIni(x){return x.fechaInicio||x.inicio||x.fecha_inicio||'';}
-  function rowFin(x){return x.fechaTermino||x.termino||x.fecha_termino||'';}
-  function vigente(x){
-    var h=parseDate(isoToday()), i=parseDate(rowIni(x)), f=parseDate(rowFin(x));
-    return !!i && i<=h && (!f || f>=h);
-  }
-  function uniqueCurrent(arr){
-    var seen={},n=0;
-    (arr||[]).forEach(function(x){
-      var r=rut(x.rut||x.RUT);
-      if(r && vigente(x) && !seen[r]){seen[r]=1;n++;}
-    });
-    return n;
-  }
-  function uniqueAll(arr){
-    var seen={},n=0;
-    (arr||[]).forEach(function(x){
-      var r=rut(x.rut||x.RUT);
-      if(r&&!seen[r]){seen[r]=1;n++;}
-    });
-    return n;
-  }
-  function sumDays(arr){
-    return (arr||[]).reduce(function(a,x){
-      return a+Number(x.numeroDias||x.dias||x.numero_dias||0);
-    },0);
-  }
-  function snapshot(){
-    var s=window.__panelState||window.state;
-    if(s && (
-      (s.colaboradores&&s.colaboradores.length) ||
-      (s.sucursales&&s.sucursales.length) ||
-      (s.vacaciones&&s.vacaciones.length) ||
-      (s.licencias&&s.licencias.length) ||
-      (s.traslados&&s.traslados.length)
-    )) return s;
-
-    /* Fallback de seguridad: toma los totales que ya muestra la navegación. */
-    function badge(id){
-      var e=document.getElementById(id);
-      return e?Number(String(e.textContent||'').replace(/\D/g,''))||0:0;
-    }
-    return {
-      colaboradores:Array.from({length:badge('navBadgeColab')}),
-      sucursales:Array.from({length:badge('navBadgeSuc')}),
-      vacaciones:Array.from({length:badge('navBadgeVac')}),
-      licencias:Array.from({length:badge('navBadgeLic')}),
-      traslados:[]
-    };
-  }
-  function set(id,v){
-    var e=document.getElementById(id);
-    if(e)e.textContent=String(v);
-  }
-  function render(){
-    var s=snapshot();
-    var col=s.colaboradores||[], suc=s.sucursales||[], vac=s.vacaciones||[], lic=s.licencias||[];
-    var active=col.filter(function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo';}).length;
-
-    var vacCurrent=uniqueCurrent(vac);
-    var licCurrent=uniqueCurrent(lic);
-
-    /* Colaboradores */
-    set('metric-colab-total',col.length);
-    set('metric-colab-activos',active);
-    set('metric-colab-vacaciones',vacCurrent);
-    set('metric-colab-licencias',licCurrent);
-
-    /* Sucursales */
-    set('metric-suc-total',suc.length);
-    set('metric-suc-personal',col.length);
-    set('metric-suc-licencias',licCurrent);
-    set('metric-suc-vacaciones',vacCurrent);
-
-    /* Vacaciones */
-    var h=parseDate(isoToday()), h7=new Date(h.getTime()+7*86400000);
-    var vacNext=vac.filter(function(x){
-      var i=parseDate(rowIni(x)); return i&&i>=h&&i<=h7;
-    }).length;
-    set('metric-vac-total',vac.length);
-    set('metric-vac-vigentes',vac.filter(vigente).length);
-    set('metric-vac-proximas',vacNext);
-    set('metric-vac-dias',sumDays(vac));
-
-    /* Licencias */
-    set('metric-lic-total',lic.length);
-    set('metric-lic-vigentes',lic.filter(vigente).length);
-    set('metric-lic-dias',sumDays(lic));
-    set('metric-lic-ruts',uniqueAll(lic));
-  }
-  function ensureIds(){
-    /* Vincula los cuatro paneles directamente a los textos que crea la mejora visual. */
-    var boxes=document.querySelectorAll('.section-metrics');
-    for(var i=0;i<boxes.length;i++){
-      var box=boxes[i], labels=box.querySelectorAll('.sm-label'), vals=box.querySelectorAll('.sm-value');
-      if(!labels.length||!vals.length)continue;
-      var title=(box.parentElement&&box.parentElement.id)||'';
-      for(var j=0;j<labels.length&&j<vals.length;j++){
-        var l=String(labels[j].textContent||'').trim().toLowerCase();
-        if(title==='tab-colaboradores'){
-          if(l==='total'){vals[j].id='metric-colab-total';}
-          else if(l==='activos'){vals[j].id='metric-colab-activos';}
-          else if(l==='vacaciones'){vals[j].id='metric-colab-vacaciones';}
-          else if(l==='licencia médica'||l==='licencia medica'){vals[j].id='metric-colab-licencias';}
-        } else if(title==='tab-sucursales'){
-          if(l==='sucursales'){vals[j].id='metric-suc-total';}
-          else if(l==='personal'){vals[j].id='metric-suc-personal';}
-          else if(l==='con licencia'){vals[j].id='metric-suc-licencias';}
-          else if(l==='vacaciones'){vals[j].id='metric-suc-vacaciones';}
-        } else if(title==='tab-vacaciones'){
-          if(l==='solicitudes'){vals[j].id='metric-vac-total';}
-          else if(l==='vigentes'){vals[j].id='metric-vac-vigentes';}
-          else if(l.indexOf('próximas')===0||l.indexOf('proximas')===0){vals[j].id='metric-vac-proximas';}
-          else if(l==='días registrados'||l==='dias registrados'){vals[j].id='metric-vac-dias';}
-        } else if(title==='tab-licencias'){
-          if(l==='registros'){vals[j].id='metric-lic-total';}
-          else if(l==='vigentes'){vals[j].id='metric-lic-vigentes';}
-          else if(l==='días registrados'||l==='dias registrados'){vals[j].id='metric-lic-dias';}
-          else if(l==='rut únicos'||l==='rut unicos'){vals[j].id='metric-lic-ruts';}
-        }
-      }
-    }
-  }
-  function run(){ensureIds();render();}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);
-  else run();
-  setInterval(run,1000);
-})();
-</script>
-
-</body>", "\n<script>\n(function(){\n  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';\n  var busy=false, bound=false;\n  function err(msg){var x=document.getElementById('loginError');if(x){x.textContent=msg||'No fue posible iniciar sesión.';x.classList.add('show');x.style.display='block';}}\n  function clearErr(){var x=document.getElementById('loginError');if(x){x.textContent='';x.classList.remove('show');x.style.display='none';}}\n  function clearSession(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}\n  function save(k,v,r){try{localStorage.removeItem(k);sessionStorage.removeItem(k);(r?localStorage:sessionStorage).setItem(k,v);}catch(e){}}\n  function login(ev){\n    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}\n    if(busy)return false;\n    var u=document.getElementById('loginUsername'),p=document.getElementById('loginPassword'),r=document.getElementById('loginRemember'),b=document.getElementById('btnLogin');\n    var username=u?String(u.value||'').trim():'',password=p?String(p.value||''):'',remember=!!(r&&r.checked);\n    if(!username||!password){err('Ingrese usuario y contraseña.');return false;}\n    busy=true;clearErr();if(b){b.disabled=true;b.textContent='Ingresando...';}\n    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})\n    .then(function(res){return res.text().then(function(raw){var d={};try{d=raw?JSON.parse(raw):{};}catch(e){d={error:raw};}if(!res.ok)throw new Error(d.error||d.message||('HTTP '+res.status));return d;});})\n    .then(function(d){\n      if(!d.token||!d.user)throw new Error('El servidor no entregó una sesión válida.');\n      window.CENTRAL_TOKEN=d.token;window.currentUser=d.user;save('panelCentralToken',d.token,remember);save('panelCentralUser',JSON.stringify(d.user),remember);\n      if(typeof window.centralLoadState==='function')return window.centralLoadState();\n      return fetch(API+'/state',{headers:{'Content-Type':'application/json','Authorization':'Bearer '+d.token}}).then(function(res){return res.json().then(function(x){if(!res.ok)throw new Error(x.error||'No se pudo cargar el estado.');return x;});});\n    })\n    .then(function(){\n      if(typeof window.hideLogin==='function')window.hideLogin();\n      if(typeof window.updateSessionUI==='function')window.updateSessionUI();\n      if(typeof window.rerenderAll==='function')window.rerenderAll();\n      if(typeof window.switchTab==='function')window.switchTab('resumen');\n      if(typeof window.showToast==='function'){var u=window.currentUser||{};window.showToast('Bienvenido, '+String(u.nombre||u.username||'Usuario')+'.','success');}\n    })\n    .catch(function(e){console.error('LOGIN FORZADO',e);window.CENTRAL_TOKEN=null;window.currentUser=null;clearSession();err(e&&e.message?e.message:'No fue posible iniciar sesión.');})\n    .finally(function(){busy=false;var b=document.getElementById('btnLogin');if(b){b.disabled=false;b.textContent='Ingresar';}});\n    return false;\n  }\n  function bind(){\n    var b=document.getElementById('btnLogin');if(!b)return false;\n    if(!bound){\n      document.addEventListener('click',function(e){var t=e.target,btn=t&&t.closest?t.closest('#btnLogin'):null;if(btn)login(e);},true);\n      b.type='button';b.onclick=login;\n      var form=b.closest?b.closest('form'):null;if(form)form.addEventListener('submit',login,true);\n      bound=true;\n    }\n    return true;\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();\n  var n=0,t=setInterval(function(){if(bind()||++n>=40)clearInterval(t);},250);\n})();\n</script>\n" + "</body>", 1)
+html_content = html_content.replace("</body>", "\n<script>\n(function(){\n  var API='https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';\n  var busy=false, bound=false;\n  function err(msg){var x=document.getElementById('loginError');if(x){x.textContent=msg||'No fue posible iniciar sesión.';x.classList.add('show');x.style.display='block';}}\n  function clearErr(){var x=document.getElementById('loginError');if(x){x.textContent='';x.classList.remove('show');x.style.display='none';}}\n  function clearSession(){try{localStorage.removeItem('panelCentralToken');localStorage.removeItem('panelCentralUser');sessionStorage.removeItem('panelCentralToken');sessionStorage.removeItem('panelCentralUser');}catch(e){}}\n  function save(k,v,r){try{localStorage.removeItem(k);sessionStorage.removeItem(k);(r?localStorage:sessionStorage).setItem(k,v);}catch(e){}}\n  function login(ev){\n    if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();}\n    if(busy)return false;\n    var u=document.getElementById('loginUsername'),p=document.getElementById('loginPassword'),r=document.getElementById('loginRemember'),b=document.getElementById('btnLogin');\n    var username=u?String(u.value||'').trim():'',password=p?String(p.value||''):'',remember=!!(r&&r.checked);\n    if(!username||!password){err('Ingrese usuario y contraseña.');return false;}\n    busy=true;clearErr();if(b){b.disabled=true;b.textContent='Ingresando...';}\n    fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,password:password})})\n    .then(function(res){return res.text().then(function(raw){var d={};try{d=raw?JSON.parse(raw):{};}catch(e){d={error:raw};}if(!res.ok)throw new Error(d.error||d.message||('HTTP '+res.status));return d;});})\n    .then(function(d){\n      if(!d.token||!d.user)throw new Error('El servidor no entregó una sesión válida.');\n      window.CENTRAL_TOKEN=d.token;window.currentUser=d.user;save('panelCentralToken',d.token,remember);save('panelCentralUser',JSON.stringify(d.user),remember);\n      if(typeof window.centralLoadState==='function')return window.centralLoadState();\n      return fetch(API+'/state',{headers:{'Content-Type':'application/json','Authorization':'Bearer '+d.token}}).then(function(res){return res.json().then(function(x){if(!res.ok)throw new Error(x.error||'No se pudo cargar el estado.');return x;});});\n    })\n    .then(function(){\n      if(typeof window.hideLogin==='function')window.hideLogin();\n      if(typeof window.updateSessionUI==='function')window.updateSessionUI();\n      if(typeof window.rerenderAll==='function')window.rerenderAll();\n      if(typeof window.switchTab==='function')window.switchTab('resumen');\n      if(typeof window.showToast==='function'){var u=window.currentUser||{};window.showToast('Bienvenido, '+String(u.nombre||u.username||'Usuario')+'.','success');}\n    })\n    .catch(function(e){console.error('LOGIN FORZADO',e);window.CENTRAL_TOKEN=null;window.currentUser=null;clearSession();err(e&&e.message?e.message:'No fue posible iniciar sesión.');})\n    .finally(function(){busy=false;var b=document.getElementById('btnLogin');if(b){b.disabled=false;b.textContent='Ingresar';}});\n    return false;\n  }\n  function bind(){\n    var b=document.getElementById('btnLogin');if(!b)return false;\n    if(!bound){\n      document.addEventListener('click',function(e){var t=e.target,btn=t&&t.closest?t.closest('#btnLogin'):null;if(btn)login(e);},true);\n      b.type='button';b.onclick=login;\n      var form=b.closest?b.closest('form'):null;if(form)form.addEventListener('submit',login,true);\n      bound=true;\n    }\n    return true;\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();\n  var n=0,t=setInterval(function(){if(bind()||++n>=40)clearInterval(t);},250);\n})();\n</script>\n" + "</body>", 1)
 html_content = html_content.replace(
     "Primer acceso: usuario <strong>admin</strong> · contraseña <strong>Admin123!</strong>. Por seguridad, puede cambiarla desde <strong>Usuarios</strong>.",
     "Acceso administrado centralmente. Por seguridad, cambie la contraseña desde <strong>Usuarios</strong>."
