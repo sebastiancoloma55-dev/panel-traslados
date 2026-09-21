@@ -544,6 +544,25 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 </style>
 
 
+<style id="module-kpis-final">
+.module-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.module-head-main{display:flex;align-items:center;gap:12px}
+.module-icon{width:42px;height:42px;border-radius:12px;background:#DDF3E7;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid #C7DDD1}
+.module-title{font:700 20px var(--font-display);color:var(--ink);margin:0}
+.module-sub{font-size:12px;color:var(--slate);margin-top:3px}
+.module-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 14px}
+.module-kpi{background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 16px;box-shadow:var(--shadow-sm);min-height:72px}
+.module-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);font-weight:700}
+.module-kpi-value{font:700 25px var(--font-mono);margin-top:6px;color:var(--ink)}
+.module-kpi-value.teal{color:#277454}.module-kpi-value.amber{color:#B47A11}.module-kpi-value.red{color:#D7655B}.module-kpi-value.purple{color:#526E91}
+.module-section{background:#fff;border:1px solid var(--border);border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+#tab-resumen .module-section{margin-bottom:0}
+@media(max-width:900px){.module-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.module-kpis{grid-template-columns:1fr}}
+/* Scroll de la aplicación: siempre disponible cuando el contenido supera la ventana */
+.tab-panel{overflow:visible!important}
+html,body{overflow-y:auto!important}
+</style>
 
 </head>
 <body>
@@ -696,6 +715,9 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== COLABORADORES ===================== -->
     <section id="tab-colaboradores" class="tab-panel">
 
+<div class="module-head"><div class="module-head-main"><div class="module-icon">👥</div><div><h2 class="module-title">Colaboradores</h2><div class="module-sub">Gestión completa del personal y estado actual.</div></div></div></div>
+<div class="module-kpis">
+  <div class="module-kpi"><div class="module-kpi-label">Total</div><div class="module-kpi-value teal" id="colabKpiTotal">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Activos</div><div class="module-kpi-value teal" id="colabKpiActivos">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Vacaciones</div><div class="module-kpi-value amber" id="colabKpiVac">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Licencia médica</div><div class="module-kpi-value red" id="colabKpiLic">0</div></div>
@@ -729,6 +751,9 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== SUCURSALES ===================== -->
     <section id="tab-sucursales" class="tab-panel">
 
+<div class="module-head"><div class="module-head-main"><div class="module-icon">🏢</div><div><h2 class="module-title">Sucursales</h2><div class="module-sub">Directorio, cobertura, encargados y dotación por sucursal.</div></div></div></div>
+<div class="module-kpis">
+  <div class="module-kpi"><div class="module-kpi-label">Sucursales</div><div class="module-kpi-value teal" id="sucKpiTotal">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Personal</div><div class="module-kpi-value teal" id="sucKpiPersonal">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Con licencia</div><div class="module-kpi-value red" id="sucKpiLic">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Vacaciones</div><div class="module-kpi-value amber" id="sucKpiVac">0</div></div>
@@ -765,6 +790,9 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== VACACIONES ===================== -->
     <section id="tab-vacaciones" class="tab-panel">
 
+<div class="module-head"><div class="module-head-main"><div class="module-icon">🌿</div><div><h2 class="module-title">Vacaciones</h2><div class="module-sub">Solicitudes, períodos, días y seguimiento de ausencias.</div></div></div></div>
+<div class="module-kpis">
+  <div class="module-kpi"><div class="module-kpi-label">Solicitudes</div><div class="module-kpi-value teal" id="vacKpiTotal">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Vigentes</div><div class="module-kpi-value amber" id="vacKpiVigentes">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Próximas 7 días</div><div class="module-kpi-value purple" id="vacKpiProx">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Días registrados</div><div class="module-kpi-value purple" id="vacKpiDias">0</div></div>
@@ -788,6 +816,9 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== LICENCIAS MÉDICAS ===================== -->
     <section id="tab-licencias" class="tab-panel">
 
+<div class="module-head"><div class="module-head-main"><div class="module-icon">🩺</div><div><h2 class="module-title">Licencias médicas</h2><div class="module-sub">Control de licencias, vigencia, duración y trazabilidad.</div></div></div></div>
+<div class="module-kpis">
+  <div class="module-kpi"><div class="module-kpi-label">Registros</div><div class="module-kpi-value red" id="licKpiTotal">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Vigentes</div><div class="module-kpi-value amber" id="licKpiVigentes">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">Días registrados</div><div class="module-kpi-value purple" id="licKpiDias">0</div></div>
   <div class="module-kpi"><div class="module-kpi-label">RUT únicos</div><div class="module-kpi-value teal" id="licKpiRut">0</div></div>
@@ -2043,6 +2074,38 @@ function populateColabFilters(){
   state.sucursales.slice().sort(function(a,b){return String(a.nombre).localeCompare(String(b.nombre),'es');}).forEach(function(s){var o=el('option',{text:s.nombre,attrs:{value:s.nombre}});sel.appendChild(o);});sel.value=current;
 }
 
+function daysInRangeForKpi(items, startAfterDays){
+  var hoy=hoyISO();
+  var end=addDays(hoy,startAfterDays||0);
+  return items.filter(function(x){return x.fechaInicio && x.fechaInicio>=hoy && x.fechaInicio<=end;}).length;
+}
+function sumDias(items){
+  return items.reduce(function(acc,x){return acc + Number(x.numeroDias||x.dias||0)||0;},0);
+}
+function renderModuleKpis(){
+  var hoy=hoyISO();
+  var act=state.colaboradores.filter(function(c){return normalizeSearch(c.estado||'Activo')==='activo';}).length;
+  var vacV=state.vacaciones.filter(function(x){return isAusenciaVigente(x);});
+  var licV=state.licencias.filter(function(x){return isAusenciaVigente(x);});
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=String(v);};
+  set('colabKpiTotal',state.colaboradores.length);
+  set('colabKpiActivos',act);
+  set('colabKpiVac',vacV.length);
+  set('colabKpiLic',licV.length);
+  set('sucKpiTotal',state.sucursales.length);
+  set('sucKpiPersonal',act);
+  set('sucKpiLic',licV.length);
+  set('sucKpiVac',vacV.length);
+  set('vacKpiTotal',state.vacaciones.length);
+  set('vacKpiVigentes',vacV.length);
+  set('vacKpiProx',daysInRangeForKpi(state.vacaciones,7));
+  set('vacKpiDias',sumDias(state.vacaciones));
+  var rutSet={}; state.licencias.forEach(function(x){var r=cleanRut(x.rut);if(r)rutSet[r]=1;});
+  set('licKpiTotal',state.licencias.length);
+  set('licKpiVigentes',licV.length);
+  set('licKpiDias',sumDias(state.licencias));
+  set('licKpiRut',Object.keys(rutSet).length);
+}
 
 function renderColaboradoresTable(){
   var tbody=document.getElementById('colabTableBody');if(!tbody)return;
@@ -2295,6 +2358,7 @@ function switchTab(tabName){
 }
 
 function rerenderAll(){
+  try{renderModuleKpis();}catch(e){console.warn('KPIs módulos:',e);}
   renderResumen();
   renderColaboradoresTable();
   renderSucursalesTable();
