@@ -558,6 +558,79 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 }
 </style>
 
+
+<style id="global-content-center-final">
+/* Centrado general del contenido en TODOS los módulos */
+.main{
+  margin-left:252px !important;
+  padding:30px 24px 70px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  min-width:0 !important;
+}
+.main > .topbar,
+.main > .tab-panel,
+.main > .creator-footer{
+  width:100% !important;
+  max-width:1450px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.main > .tab-panel{
+  box-sizing:border-box !important;
+}
+.topbar{
+  justify-content:space-between !important;
+}
+.toolbar,
+.filter-row{
+  justify-content:center !important;
+}
+.filter-row{
+  width:100% !important;
+}
+.table-wrap,
+.dashboard-grid,
+.kpi-board,
+.premium-summary-grid,
+.grid-2,
+.section-hero,
+.section-metrics,
+.quick-card-grid,
+.tickets-grid{
+  width:100% !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.section-hero,
+.section-metrics{
+  box-sizing:border-box !important;
+}
+.table-wrap{
+  overflow-x:auto !important;
+}
+@media(max-width:1100px){
+  .main{
+    margin-left:252px !important;
+    padding-left:18px !important;
+    padding-right:18px !important;
+  }
+}
+@media(max-width:720px){
+  .sidebar{width:220px !important;}
+  .main{
+    margin-left:220px !important;
+    padding:20px 14px 50px !important;
+  }
+  .main > .topbar,
+  .main > .tab-panel,
+  .main > .creator-footer{
+    max-width:none !important;
+  }
+}
+</style>
+
 </head>
 <body>
 
