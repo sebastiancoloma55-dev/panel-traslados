@@ -187,7 +187,7 @@ loginUser = function(){
   if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
   var btn = document.getElementById('btnLogin');
   if(btn) btn.disabled = true;
-  centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
+  centralRequest('/login', { method:'POST', body:{ username:username, password:password } }).then(function(result){
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
     centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
