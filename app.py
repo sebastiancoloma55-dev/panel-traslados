@@ -447,24 +447,26 @@ importBackup = function(file){
 })();
 
 
-/* ====== SESIONES CENTRALES REALES ====== */
+/* ====== SESIONES CENTRALES REALES — VERSION ESTABLE ====== */
+
+/*
+ * IMPORTANTE:
+ * La sesión válida es la de Supabase (JWT + tabla public.sesiones).
+ * No usamos sessionActive/sessionId del usuario de index.html para
+ * decidir si una sesión debe cerrarse.
+ */
 
 renderSessionsTable = function(){
   var tbody=document.getElementById('sessionsTableBody');
   if(!tbody) return;
-
   tbody.innerHTML='';
 
   if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
-    tbody.appendChild(el('tr',{
-      children:[
-        el('td',{
-          attrs:{colspan:'7'},
-          class:'empty-cell',
-          text:'No hay una sesión central activa.'
-        })
-      ]
-    }));
+    tbody.appendChild(el('tr',{children:[el('td',{
+      attrs:{colspan:'7'},
+      class:'empty-cell',
+      text:'No hay una sesión central activa.'
+    })]}));
     return;
   }
 
@@ -472,48 +474,40 @@ renderSessionsTable = function(){
     var list=result.sessions||[];
 
     if(!list.length){
-      tbody.appendChild(el('tr',{
-        children:[
-          el('td',{
-            attrs:{colspan:'7'},
-            class:'empty-cell',
-            text:'No hay sesiones activas en este momento.'
-          })
-        ]
-      }));
+      tbody.appendChild(el('tr',{children:[el('td',{
+        attrs:{colspan:'7'},
+        class:'empty-cell',
+        text:'No hay sesiones activas en este momento.'
+      })]}));
       return;
     }
 
     list.forEach(function(s){
       var tr=document.createElement('tr');
+      var userInfo=(state.usuarios||[]).find(function(u){
+        return String(u.username||'').toLowerCase()===String(s.username||'').toLowerCase();
+      });
+
+      tr.appendChild(el('td',{children:[
+        el('strong',{text:s.username||'—'})
+      ]}));
 
       tr.appendChild(el('td',{
-        children:[
-          el('strong',{text:s.username||'—'})
-        ]
+        text:(userInfo&&userInfo.nombre)||s.username||'—'
       }));
 
-      var nombre='—';
-      if(currentUser && s.username===currentUser.username){
-        nombre=currentUser.nombre||currentUser.username;
-      }
-
-      tr.appendChild(el('td',{text:nombre}));
-
-      tr.appendChild(el('td',{
-        children:[
-          el('span',{
-            class:
-              'pill '+
-              (s.role==='superadmin'
-                ? 'pill-amber'
-                : s.role==='admin'
-                  ? 'pill-teal'
-                  : 'pill-slate'),
-            text:roleLabel(s.role)
-          })
-        ]
-      }));
+      tr.appendChild(el('td',{children:[
+        el('span',{
+          class:'pill '+(
+            s.role==='superadmin'
+              ? 'pill-amber'
+              : s.role==='admin'
+                ? 'pill-teal'
+                : 'pill-slate'
+          ),
+          text:roleLabel(s.role)
+        })
+      ]}));
 
       tr.appendChild(el('td',{
         class:'mono',
@@ -525,83 +519,93 @@ renderSessionsTable = function(){
         text:formatLastLogin(s.last_activity_at)
       }));
 
-      tr.appendChild(el('td',{
-        children:[
-          el('span',{
-            class:'session-online',
-            children:[
-              el('span',{class:'session-online-dot'}),
-              document.createTextNode('Conectado')
-            ]
-          })
-        ]
-      }));
+      tr.appendChild(el('td',{children:[
+        el('span',{
+          class:'session-online',
+          children:[
+            el('span',{class:'session-online-dot'}),
+            document.createTextNode('Conectado')
+          ]
+        })
+      ]}));
 
       var actions=el('td',{class:'row-actions'});
       var own=centralTokenPayload(CENTRAL_TOKEN);
 
       if(own && s.session_id===own.sessionId){
-        actions.appendChild(
-          el('span',{
-            class:'session-offline',
-            text:'Sesión actual'
-          })
-        );
+        actions.appendChild(el('span',{
+          class:'session-offline',
+          text:'Sesión actual'
+        }));
       }else{
-        actions.appendChild(
-          el('button',{
-            class:'icon-btn icon-btn-danger',
-            attrs:{title:'Cerrar sesión'},
-            text:'⏻',
-            on:{
-              click:function(){
-                forceLogoutUser(s);
-              }
+        actions.appendChild(el('button',{
+          class:'icon-btn icon-btn-danger',
+          attrs:{title:'Cerrar sesión'},
+          text:'⏻',
+          on:{
+            click:function(){
+              forceLogoutUser(s);
             }
-          })
-        );
+          }
+        }));
       }
 
       tr.appendChild(actions);
       tbody.appendChild(tr);
     });
-
   }).catch(function(err){
     console.error('Sesiones:',err);
 
-    if(err && err.status===403){
-      tbody.appendChild(el('tr',{
-        children:[
-          el('td',{
-            attrs:{colspan:'7'},
-            class:'empty-cell',
-            text:'Solo un Super Admin puede administrar sesiones.'
-          })
-        ]
-      }));
+    if(err && err.status===401){
+      handleCentralSessionExpired();
+      return;
     }
+
+    tbody.appendChild(el('tr',{children:[el('td',{
+      attrs:{colspan:'7'},
+      class:'empty-cell',
+      text:'No fue posible cargar las sesiones.'
+    })]}));
   });
 };
 
 
-forceLogoutUser = function(session){
+function handleCentralSessionExpired(){
+  CENTRAL_TOKEN=null;
+  centralStorageClear();
+  currentUser=null;
+  updateSessionUI();
 
+  var u=document.getElementById('loginUsername');
+  var p=document.getElementById('loginPassword');
+  if(u)u.value='';
+  if(p)p.value='';
+
+  showLogin('Tu sesión fue cerrada por un Super Admin.');
+}
+
+
+/*
+ * IMPORTANTE:
+ * El botón ⏻ es el único flujo que revoca una sesión desde el panel.
+ * Un usuario NO es expulsado por renderizar la pantalla, actualizar,
+ * cambiar de pestaña o hacer heartbeat.
+ */
+forceLogoutUser = function(session){
   if(!currentUser || currentUser.role!=='superadmin'){
     showToast('Se requiere Super Admin.','error');
     return;
   }
 
   if(!session || !session.session_id){
+    showToast('Sesión inválida.','error');
     return;
   }
 
   var own=centralTokenPayload(CENTRAL_TOKEN);
 
   if(own && session.session_id===own.sessionId){
-    showToast(
-      'No puedes cerrar tu propia sesión desde este listado.',
-      'error'
-    );
+    showToast('No puedes cerrar tu propia sesión desde este listado.','error');
     return;
   }
 
@@ -612,62 +616,99 @@ forceLogoutUser = function(session){
       sessionId:session.session_id
     }
   }).then(function(){
-
     renderSessionsTable();
-
     showToast(
       'Sesión de '+(session.username||'usuario')+' cerrada.',
       'success'
     );
-
   }).catch(function(err){
-
     console.error('Revocar sesión:',err);
-
     showToast(
-      err.message||'No fue posible cerrar la sesión.',
+      err && err.message
+        ? err.message
+        : 'No fue posible cerrar la sesión.',
       'error'
     );
-
   });
 };
 
 
-enforceCurrentSession = function(){
-
+/*
+ * Reemplaza la recarga anterior para que:
+ * - 401 = sesión realmente revocada/expirada -> login.
+ * - otros errores NO cierren la sesión.
+ */
+reloadStateFromDB = function(){
   if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
     return Promise.resolve(false);
   }
 
-  return centralRequest('/state').then(function(){
+  return centralLoadState().then(function(){
     return true;
   }).catch(function(err){
-
     if(err && err.status===401){
-
-      CENTRAL_TOKEN=null;
-      centralStorageClear();
-      currentUser=null;
-
-      updateSessionUI();
-
-      showLogin(
-        'Tu sesión fue cerrada por un Super Admin.'
-      );
+      handleCentralSessionExpired();
+      return false;
     }
 
+    console.error('Error recargando estado central:',err);
+
+    /*
+     * Un error temporal de red/backend NO debe cerrar la sesión.
+     * La sesión permanece en memoria y se volverá a comprobar
+     * en el siguiente ciclo.
+     */
     return false;
   });
 };
 
 
-heartbeatSession = function(){
+/*
+ * Comprueba la sesión contra el servidor.
+ * No mira sessionActive/sessionId del objeto usuario.
+ */
+enforceCurrentSession = function(){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
+    return false;
+  }
 
+  centralRequest('/state').then(function(){
+    /* Sesión válida: no hacer nada. */
+  }).catch(function(err){
+    if(err && err.status===401){
+      handleCentralSessionExpired();
+    }else{
+      console.error('Comprobación de sesión:',err);
+    }
+  });
+
+  return true;
+};
+
+
+/*
+ * Heartbeat:
+ * /state actualiza last_activity_at en Supabase mediante requireAuth().
+ * Un error de red NO cierra la sesión.
+ * Solo un HTTP 401 significa que fue revocada.
+ */
+heartbeatSession = function(){
   if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
     return;
   }
 
-  centralRequest('/state').then(function(){
+  centralRequest('/state').then(function(result){
+    if(result && result.user && currentUser){
+      currentUser=Object.assign({},currentUser,result.user);
+      try{
+        var remember=!!localStorage.getItem(CENTRAL_TOKEN_KEY);
+        centralStorageSet(
+          CENTRAL_USER_KEY,
+          JSON.stringify(currentUser),
+          remember
+        );
+      }catch(e){}
+    }
 
     if(
       document.getElementById('tab-usuarios') &&
@@ -675,17 +716,16 @@ heartbeatSession = function(){
     ){
       renderSessionsTable();
     }
-
   }).catch(function(err){
-
     if(err && err.status===401){
-      enforceCurrentSession();
+      handleCentralSessionExpired();
+    }else{
+      console.warn('Heartbeat temporalmente no disponible:',err);
     }
-
   });
 };
 
-/* ====== FIN SESIONES CENTRALES REALES ====== */
+/* ====== FIN SESIONES CENTRALES REALES — VERSION ESTABLE ====== */
 
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
 
