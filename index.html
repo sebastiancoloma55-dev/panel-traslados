@@ -2195,94 +2195,73 @@ function importBackup(file){var reader=new FileReader();reader.onload=function()
 
 function renderModuleKPIs(){
   try{
-    var colaboradores=Array.isArray(state.colaboradores)?state.colaboradores:[];
-    var sucursales=Array.isArray(state.sucursales)?state.sucursales:[];
-    var vacaciones=Array.isArray(state.vacaciones)?state.vacaciones:[];
-    var licencias=Array.isArray(state.licencias)?state.licencias:[];
-    var hoy=(typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10));
-
-    function fechaVal(x,k){
-      var v=x&&x[k];
-      return v==null?'':String(v);
-    }
-    function vigente(x){
-      var ini=fechaVal(x,'fechaInicio')||fechaVal(x,'inicio');
-      var ter=fechaVal(x,'fechaTermino')||fechaVal(x,'termino');
-      if(!ini)return false;
-      return ini<=hoy && (!ter || ter>=hoy);
-    }
-    function proximo(x){
-      var ini=fechaVal(x,'fechaInicio')||fechaVal(x,'inicio');
-      if(!ini || typeof addDays!=='function')return false;
-      return ini>=hoy && ini<=addDays(hoy,7);
-    }
-    function cleanStatus(x){
-      return String(x==null?'':x).trim().toLowerCase();
-    }
-    function set(id,v){
-      var e=document.getElementById(id);
-      if(e)e.textContent=String(v);
-    }
-
+    var S=(window.state&&typeof window.state==='object')?window.state:{};
+    var colaboradores=Array.isArray(S.colaboradores)?S.colaboradores:[];
+    var sucursales=Array.isArray(S.sucursales)?S.sucursales:[];
+    var vacaciones=Array.isArray(S.vacaciones)?S.vacaciones:[];
+    var licencias=Array.isArray(S.licencias)?S.licencias:[];
+    var hoy=typeof hoyISO==='function'?hoyISO():'';
+    var vigente=function(x){
+      try{return typeof isAusenciaVigente==='function'?isAusenciaVigente(x,hoy):false;}
+      catch(e){return false;}
+    };
     var vacV=vacaciones.filter(vigente);
     var licV=licencias.filter(vigente);
     var activos=colaboradores.filter(function(c){
-      var est=cleanStatus(c&&c.estado);
-      return est!=='' ? est==='activo' : true;
+      try{return normalizeSearch((c&&c.estado)||'Activo')==='activo';}
+      catch(e){return true;}
     }).length;
-    var diasVac=vacaciones.reduce(function(a,v){var n=Number(v&&((v.numeroDias!=null?v.numeroDias:v.dias)||0));return a+(isFinite(n)?n:0);},0);
-    var diasLic=licencias.reduce(function(a,v){var n=Number(v&&((v.numeroDias!=null?v.numeroDias:v.dias)||0));return a+(isFinite(n)?n:0);},0);
-    var rut={};
-    licencias.forEach(function(l){
-      var r=(typeof cleanRut==='function'?cleanRut(l&&l.rut):String(l&&l.rut||'')).trim();
-      if(r)rut[r]=1;
-    });
+    var set=function(id,val){
+      var el=document.getElementById(id);
+      if(el)el.textContent=String(val);
+    };
 
     set('modColabTotal',colaboradores.length);
     set('modColabActivos',activos);
     set('modColabVac',vacV.length);
     set('modColabLic',licV.length);
+
     set('modSucTotal',sucursales.length);
     set('modSucPersonal',colaboradores.length);
     set('modSucLic',licV.length);
     set('modSucVac',vacV.length);
+
     set('modVacTotal',vacaciones.length);
     set('modVacVigentes',vacV.length);
-    set('modVacProx',vacaciones.filter(proximo).length);
-    set('modVacDias',diasVac);
+    set('modVacProx',vacaciones.filter(function(v){
+      try{return !!(v&&v.fechaInicio&&hoy&&v.fechaInicio>=hoy&&v.fechaInicio<=addDays(hoy,7));}
+      catch(e){return false;}
+    }).length);
+    set('modVacDias',vacaciones.reduce(function(total,v){
+      return total+Number((v&&(v.numeroDias||v.dias))||0);
+    },0));
+
+    var rut={};
+    licencias.forEach(function(l){
+      try{
+        var r=cleanRut((l&&l.rut)||'');
+        if(r)rut[r]=1;
+      }catch(e){}
+    });
     set('modLicTotal',licencias.length);
     set('modLicVigentes',licV.length);
-    set('modLicDias',diasLic);
+    set('modLicDias',licencias.reduce(function(total,l){
+      return total+Number((l&&(l.numeroDias||l.dias))||0);
+    },0));
     set('modLicRut',Object.keys(rut).length);
-  }catch(err){
-    console.warn('KPIs módulos:',err);
+  }catch(e){
+    console.warn('KPIs módulos:',e);
   }
 }
 
 function renderResumen(){
-  try{
-    var colaboradores=Array.isArray(state.colaboradores)?state.colaboradores:[];
-    var sucursales=Array.isArray(state.sucursales)?state.sucursales:[];
-    var traslados=Array.isArray(state.traslados)?state.traslados:[];
-    var vacaciones=Array.isArray(state.vacaciones)?state.vacaciones:[];
-    var licencias=Array.isArray(state.licencias)?state.licencias:[];
-    var hoy=(typeof hoyISO==='function'?hoyISO():new Date().toISOString().slice(0,10));
-    function vigente(x){
-      var ini=String((x&&x.fechaInicio)||(x&&x.inicio)||'');
-      var ter=String((x&&x.fechaTermino)||(x&&x.termino)||'');
-      return !!ini && ini<=hoy && (!ter || ter>=hoy);
-    }
-    var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=String(v);};
-    set('kpiColaboradores',colaboradores.length);
-    set('kpiSucursales',sucursales.length);
-    set('kpiPendientes',traslados.filter(function(x){return String(x&&x.estado||'').toLowerCase()==='pendiente';}).length);
-    set('kpiEspera',traslados.filter(function(x){return String(x&&x.estado||'').toLowerCase()==='espera';}).length);
-    set('kpiVacaciones',vacaciones.filter(vigente).length);
-    set('kpiLicencias',licencias.filter(vigente).length);
-    if(typeof renderDashboardDetails==='function')renderDashboardDetails();
-  }catch(err){
-    console.warn('Resumen:',err);
-  }
+  document.getElementById('kpiColaboradores').textContent = state.colaboradores.length;
+  document.getElementById('kpiSucursales').textContent = state.sucursales.length;
+  document.getElementById('kpiPendientes').textContent = state.traslados.filter(function(t){ return t.estado === 'pendiente'; }).length;
+  document.getElementById('kpiEspera').textContent = state.traslados.filter(function(t){ return t.estado === 'espera'; }).length;
+  document.getElementById('kpiVacaciones').textContent = state.vacaciones.filter(function(v){ return isAusenciaVigente(v); }).length;
+  document.getElementById('kpiLicencias').textContent = state.licencias.filter(function(l){ return isAusenciaVigente(l); }).length;
+  renderDashboardDetails();
 }
 
 
@@ -2376,7 +2355,6 @@ function init(){
   }).then(function(){
     return reloadStateFromDB();
   }).then(function(){
-    try{renderModuleKPIs();}catch(e){console.warn('KPIs init:',e);}
     var navItems = document.querySelectorAll('.nav-item');
     for(var i=0;i<navItems.length;i++){
       navItems[i].addEventListener('click', (function(btn){ return function(){ switchTab(btn.getAttribute('data-tab')); }; })(navItems[i]));
