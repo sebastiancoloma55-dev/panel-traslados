@@ -740,7 +740,6 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
     <!-- ===================== TRASLADOS ===================== -->
     <section id="tab-traslados" class="tab-panel">
       <div class="toolbar">
-        <div class="muted">Para trasladar, ingrese directamente el RUT del colaborador en “Nuevo traslado”.</div>
         <div class="spacer"></div>
         <button class="btn btn-primary" id="btnNewTraslado">+ Nuevo traslado</button>
       </div>
@@ -1386,10 +1385,17 @@ function getLicenciasVigentesPorRut(){
 function normalizeSucursalKey(nombre){
   return normalizeSearch(nombre || '').replace(/\s+/g, ' ').trim();
 }
+function sucursalCoincide(valorColaborador, sucursal){
+  var a=normalizeSucursalKey(valorColaborador),b=normalizeSucursalKey(sucursal);
+  if(!a||!b)return false;
+  if(a===b)return true;
+  var aSin=a.replace(/^farmacia\s+/,'').trim();
+  var bSin=b.replace(/^farmacia\s+/,'').trim();
+  return aSin===bSin;
+}
 function countPersonalForSucursal(sucNombre){
-  var key = normalizeSucursalKey(sucNombre);
   var n = 0;
-  state.colaboradores.forEach(function(c){ if(normalizeSucursalKey(c.sucursalActual) === key) n++; });
+  state.colaboradores.forEach(function(c){ if(sucursalCoincide(c.sucursalActual,sucNombre)) n++; });
   return n;
 }
 function countVacacionesForSucursal(sucNombre){
@@ -1397,7 +1403,7 @@ function countVacacionesForSucursal(sucNombre){
   var key = normalizeSucursalKey(sucNombre);
   var n = 0;
   state.colaboradores.forEach(function(c){
-    if(normalizeSucursalKey(c.sucursalActual) === key && vigentes[c.rut]) n++;
+    if(sucursalCoincide(c.sucursalActual, sucNombre) && vigentes[c.rut]) n++;
   });
   return n;
 }
@@ -1406,7 +1412,7 @@ function countLicenciasForSucursal(sucNombre){
   var key = normalizeSucursalKey(sucNombre);
   var n = 0;
   state.colaboradores.forEach(function(c){
-    if(normalizeSucursalKey(c.sucursalActual) === key && vigentes[c.rut]) n++;
+    if(sucursalCoincide(c.sucursalActual, sucNombre) && vigentes[c.rut]) n++;
   });
   return n;
 }
@@ -1807,21 +1813,73 @@ function trasladoPill(estado){
   return el('span',{class:'pill '+cls,text:estadoLabel(estado||'pendiente')});
 }
 function selectColaborador(selected){
-  var wrap=el('div');
-  var input=el('input',{class:'input',attrs:{id:'trasFormRut',type:'text',placeholder:'Ingrese RUT, por ejemplo 12.345.678-9',autocomplete:'off',value:selected?formatRut(selected):''}});
-  var listId='trasColabRutList_'+Date.now();
-  input.setAttribute('list',listId);
-  var datalist=document.createElement('datalist');
-  datalist.id=listId;
-  state.colaboradores.slice().sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');}).forEach(function(c){
-    var o=document.createElement('option');
-    o.value=formatRut(c.rut);
-    o.label=(c.nombre||'')+' · '+(c.cargo||'');
-    datalist.appendChild(o);
+  var wrap=document.createElement('div');
+  wrap.className='tras-colab-search';
+
+  var search=el('input',{class:'input',attrs:{id:'trasFormBuscar',type:'text',placeholder:'Buscar por RUT o nombre...',autocomplete:'off'}});
+  var rut=el('input',{attrs:{id:'trasFormRut',type:'hidden',value:selected||''}});
+  var sel=document.createElement('select');
+  sel.className='input';
+  sel.id='trasFormColaboradorLista';
+  sel.style.marginTop='8px';
+  sel.appendChild(el('option',{text:'Seleccione un colaborador',attrs:{value:''}}));
+
+  var colaboradores=state.colaboradores.slice().sort(function(a,b){
+    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
   });
-  wrap.appendChild(input);
-  wrap.appendChild(datalist);
-  wrap.appendChild(el('small',{class:'muted',text:'Escriba el RUT directamente. El sistema buscará al colaborador y completará su sucursal de origen.'}));
+
+  function cargar(q){
+    q=normalizeSearch(q||'');
+    sel.innerHTML='';
+    var encontrados=colaboradores.filter(function(c){
+      if(!q)return true;
+      return normalizeSearch(c.rut).indexOf(q)!==-1 || normalizeSearch(c.nombre).indexOf(q)!==-1;
+    });
+    if(!encontrados.length){
+      sel.appendChild(el('option',{text:'No se encontraron colaboradores',attrs:{value:''}}));
+      return;
+    }
+    sel.appendChild(el('option',{text:encontrados.length===1?'Seleccione el colaborador encontrado':'Seleccione un colaborador',attrs:{value:''}}));
+    encontrados.forEach(function(c){
+      var o=el('option',{text:formatRut(c.rut)+' · '+c.nombre,attrs:{value:c.rut}});
+      if(selected&&cleanRut(c.rut)===cleanRut(selected))o.selected=true;
+      sel.appendChild(o);
+    });
+    if(encontrados.length===1){
+      rut.value=encontrados[0].rut;
+      search.value=encontrados[0].nombre+' · '+formatRut(encontrados[0].rut);
+      sel.value=encontrados[0].rut;
+    }
+  }
+
+  search.addEventListener('input',function(){
+    rut.value='';
+    cargar(search.value);
+    var q=normalizeSearch(search.value);
+    var exact=colaboradores.find(function(c){
+      return cleanRut(c.rut)===cleanRut(search.value) || normalizeSearch(c.nombre)===q;
+    });
+    if(exact){
+      rut.value=exact.rut;
+      sel.value=exact.rut;
+    }
+  });
+
+  sel.addEventListener('change',function(){
+    rut.value=sel.value||'';
+    var c=buscarColaboradorPorRut(rut.value);
+    if(c)search.value=c.nombre+' · '+formatRut(c.rut);
+  });
+
+  wrap.appendChild(search);
+  wrap.appendChild(rut);
+  wrap.appendChild(sel);
+  cargar('');
+
+  if(selected){
+    var c=buscarColaboradorPorRut(selected);
+    if(c)search.value=c.nombre+' · '+formatRut(c.rut);
+  }
   return wrap;
 }
 function selectSucursal(id,selected){
@@ -1865,23 +1923,15 @@ function openTrasladoModal(existing){
   body.appendChild(el('label',{class:'field-label',text:'Motivo'}));body.appendChild(motivo);
 
   indef.addEventListener('change',function(){fTermino.disabled=indef.checked;if(indef.checked)fTermino.value='';});
-  var rutInput=document.getElementById('trasFormRut');
-  function completarDesdeRut(){
-    if(existing)return;
-    var c=buscarColaboradorPorRut(rutInput.value);
-    if(c){
-      rutInput.value=formatRut(c.rut);
-      origenSel.value=c.sucursalActual||'';
-    }else if(cleanRut(rutInput.value)){
-      origenSel.value='';
-    }
+  function actualizarOrigenDesdeRut(){
+    var rutActual=document.getElementById('trasFormRut').value;
+    var c=buscarColaboradorPorRut(rutActual);
+    if(c && !existing)origenSel.value=c.sucursalActual||'';
   }
-  rutInput.addEventListener('change',completarDesdeRut);
-  rutInput.addEventListener('blur',completarDesdeRut);
-  rutInput.addEventListener('input',function(){
-    var c=buscarColaboradorPorRut(rutInput.value);
-    if(c && !existing) origenSel.value=c.sucursalActual||'';
-  });
+  var buscarTras=body.querySelector('#trasFormBuscar');
+  if(buscarTras)buscarTras.addEventListener('change',actualizarOrigenDesdeRut);
+  var listaTras=body.querySelector('#trasFormColaboradorLista');
+  if(listaTras)listaTras.addEventListener('change',actualizarOrigenDesdeRut);
 
   openModal({title:existing?'Editar traslado':'Nuevo traslado',bodyNode:body,wide:true,footerButtons:[
     {label:'Cancelar',class:'btn btn-ghost',onClick:closeModal},
@@ -2039,7 +2089,7 @@ function renderColaboradoresTable(){
   var q=normalizeSearch((document.getElementById('searchColab')||{}).value||''),fs=(document.getElementById('filterColabSucursal')||{}).value||'',fe=(document.getElementById('filterColabEstado')||{}).value||'',fi=(document.getElementById('filterColabSituacion')||{}).value||'';
   var list=state.colaboradores.filter(function(c){
     var sit=situacionColaborador(c),txt=[c.rut,c.nombre,c.cargo,c.sucursalActual,c.area,c.email].join(' ');
-    return (!q||normalizeSearch(txt).indexOf(q)!==-1)&&(!fs||normalizeSucursalKey(c.sucursalActual)===normalizeSucursalKey(fs))&&(!fe||normalizeSearch(c.estado||'Activo')===normalizeSearch(fe))&&(!fi||sit.key===fi);
+    return (!q||normalizeSearch(txt).indexOf(q)!==-1)&&(!fs||sucursalCoincide(c.sucursalActual,fs))&&(!fe||normalizeSearch(c.estado||'Activo')===normalizeSearch(fe))&&(!fi||sit.key===fi);
   });
   if(!list.length)tbody.appendChild(el('tr',{children:[el('td',{attrs:{colspan:'8'},class:'empty-cell',text:'No hay colaboradores para los filtros seleccionados.'})]}));
   list.forEach(function(c){var sit=situacionColaborador(c),tr=document.createElement('tr');if(sit.key==='vacaciones')tr.className='row-vacacion';else if(sit.key==='licencia')tr.className='row-ausente';
@@ -2092,16 +2142,16 @@ function renderSucursalesTable(){
       tr.appendChild(vacCell);
 
       var actions=el('td',{class:'row-actions'});
-      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal activo de la sucursal'},text:'👥',on:{click:function(){
-        var search=document.getElementById('searchColab');
-        var fs=document.getElementById('filterColabSucursal');
-        var fe=document.getElementById('filterColabEstado');
-        var fi=document.getElementById('filterColabSituacion');
-        if(search) search.value='';
-        if(fs) fs.value=s2.nombre;
-        if(fe) fe.value='Activo';
-        if(fi) fi.value='';
+      actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Ver personal activo de esta sucursal'},text:'👥',on:{click:function(){
         switchTab('colaboradores');
+        var filtro=document.getElementById('filterColabSucursal');
+        var estado=document.getElementById('filterColabEstado');
+        if(filtro){
+          var opciones=Array.prototype.slice.call(filtro.options||[]);
+          var op=opciones.find(function(o){return normalizeSucursalKey(o.value)===normalizeSucursalKey(s2.nombre);});
+          filtro.value=op?op.value:s2.nombre;
+        }
+        if(estado)estado.value='Activo';
         renderColaboradoresTable();
       }}}));
       actions.appendChild(el('button',{class:'icon-btn',attrs:{title:'Editar'},text:'✎',on:{click:function(){openSucursalModal(s2);}}}));
