@@ -42,12 +42,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown('\n<style id="streamlit-background-final">\nhtml,body,\n[data-testid="stApp"],\n[data-testid="stAppViewContainer"],\n[data-testid="stMain"],\n[data-testid="stMainBlockContainer"],\n.main,.main .block-container{\n  background:#eef8f2 !important;\n  margin:0 !important;\n  padding:0 !important;\n}\n[data-testid="stVerticalBlock"]{\n  gap:0 !important;\n}\niframe{\n  display:block !important;\n  width:100% !important;\n  border:0 !important;\n}\n</style>\n', unsafe_allow_html=True)
+
 index_path = Path(__file__).with_name("index.html")
 if not index_path.exists():
     st.error("No se encontró index.html junto a app.py.")
     st.stop()
 
 html_content = index_path.read_text(encoding="utf-8")
+html_content = html_content.replace("</head>", '\n<style id="iframe-fill-final">\nhtml,body{\n  background:#eef8f2 !important;\n  min-height:100vh !important;\n}\n.app-shell{\n  min-height:100vh !important;\n  background:#eef8f2 !important;\n}\n.main{\n  min-height:calc(100vh - 18px) !important;\n  background:#eef8f2 !important;\n}\n.main > .tab-panel{\n  min-height:calc(100vh - 110px) !important;\n}\n</style>\n', 1)
 
 # El login y almacenamiento central se inyectan dentro del mismo IIFE
 # del index para poder reemplazar las funciones internas sin rehacer la UI.
@@ -187,7 +190,7 @@ loginUser = function(){
   if(!username || !password){ showLogin('Ingrese usuario y contraseña.'); return; }
   var btn = document.getElementById('btnLogin');
   if(btn) btn.disabled = true;
-  centralRequest('/login', { method:'POST', body:{ username:username, password:password } }).then(function(result){
+  centralRequest('', { method:'POST', body:{ username:username, password:password } }).then(function(result){
     CENTRAL_TOKEN = result.token;
     currentUser = result.user;
     centralStorageSet(CENTRAL_TOKEN_KEY, CENTRAL_TOKEN, remember);
