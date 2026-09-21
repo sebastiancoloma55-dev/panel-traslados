@@ -2240,6 +2240,7 @@ function switchTab(tabName){
     if(ps)ps.textContent=tabName==='resumen'?'Panel de Traslados · Gestión de Sucursales':titles[tabName][1];
   }
 
+  if(typeof renderMetrics==='function'){ var metricTab=document.getElementById('tab-'+tabName); if(metricTab) renderMetrics(metricTab); }
   if(tabName==='resumen')renderResumen();
   if(tabName==='colaboradores')renderColaboradoresTable();
   if(tabName==='sucursales')renderSucursalesTable();
@@ -2267,6 +2268,7 @@ function switchTab(tabName){
 
 function rerenderAll(){
   renderResumen();
+  if(typeof qsa==='function'){ qsa('.tab-panel').forEach(function(tab){ if(typeof renderMetrics==='function') renderMetrics(tab); }); }
   renderColaboradoresTable();
   renderSucursalesTable();
   renderVacacionesTable();
