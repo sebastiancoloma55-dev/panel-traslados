@@ -336,6 +336,7 @@ async function getAllRows(table: string) {
     }
 
     const rows = data || [];
+
     all.push(...rows);
 
     if (rows.length < API_PAGE_SIZE) {
@@ -373,10 +374,11 @@ async function deleteAllRows(table: string) {
       break;
     }
 
-    const { error: deleteError } = await supabase
-      .from(table)
-      .delete()
-      .in("id", ids);
+    const { error: deleteError } =
+      await supabase
+        .from(table)
+        .delete()
+        .in("id", ids);
 
     if (deleteError) {
       throw deleteError;
@@ -397,19 +399,24 @@ async function getState() {
 
   for (const table of ALLOWED_TABLES) {
     const data = await getAllRows(table);
-    state[table] = convertFromDb(data || []);
+
+    state[table] =
+      convertFromDb(data || []);
   }
 
-  state.usuarios = state.usuarios.map(
-    (u: any) => {
-      const safe = { ...u };
+  state.usuarios =
+    state.usuarios.map(
+      (u: any) => {
+        const safe = {
+          ...u
+        };
 
-      delete safe.passwordHash;
-      delete safe.password_hash;
+        delete safe.passwordHash;
+        delete safe.password_hash;
 
-      return safe;
-    }
-  );
+        return safe;
+      }
+    );
 
   return state;
 }
@@ -423,30 +430,30 @@ async function upsertRecord(
   table: string,
   record: any
 ) {
-  if (!ALLOWED_TABLES.includes(table)) {
-    throw new Error("Tabla no permitida");
+  if (
+    !ALLOWED_TABLES.includes(table)
+  ) {
+    throw new Error(
+      "Tabla no permitida"
+    );
   }
 
-  const dbRecord = convertToDb(record);
+  const dbRecord =
+    convertToDb(record);
 
-  /*
-   * USUARIOS
-   *
-   * No usamos upsert directamente porque depende de que
-   * Supabase tenga correctamente configurado el índice/clave
-   * única de username.
-   *
-   * Primero buscamos el usuario.
-   * Si existe -> UPDATE
-   * Si no existe -> INSERT
-   */
+
+  /* =======================================================
+     USUARIOS
+     ======================================================= */
 
   if (table === "usuarios") {
-    const username = String(
-      dbRecord.username || ""
-    )
-      .trim()
-      .toLowerCase();
+
+    const username =
+      String(
+        dbRecord.username || ""
+      )
+        .trim()
+        .toLowerCase();
 
     if (!username) {
       throw new Error(
@@ -454,7 +461,47 @@ async function upsertRecord(
       );
     }
 
-    dbRecord.username = username;
+    dbRecord.username =
+      username;
+
+
+    /*
+     * CORRECCIÓN IMPORTANTE:
+     *
+     * PostgreSQL no acepta "" en columnas timestamp.
+     *
+     * El frontend puede enviar:
+     *
+     * lastLogin: ""
+     *
+     * y después convertToDb() lo convierte en:
+     *
+     * last_login: ""
+     *
+     * Eso provoca:
+     *
+     * invalid input syntax for type timestamp with time zone
+     *
+     * Lo convertimos a NULL.
+     */
+
+    if (
+      dbRecord.last_login === "" ||
+      dbRecord.last_login === undefined
+    ) {
+      dbRecord.last_login = null;
+    }
+
+    if (
+      dbRecord.created_at === ""
+    ) {
+      dbRecord.created_at = null;
+    }
+
+
+    /*
+     * Buscar usuario existente
+     */
 
     const {
       data: existing,
@@ -462,7 +509,10 @@ async function upsertRecord(
     } = await supabase
       .from("usuarios")
       .select("*")
-      .eq("username", username)
+      .eq(
+        "username",
+        username
+      )
       .limit(1);
 
     if (findError) {
@@ -476,15 +526,18 @@ async function upsertRecord(
 
     let result;
 
+
     /*
-     * USUARIO YA EXISTENTE
+     * USUARIO EXISTENTE
      */
 
     if (
       existing &&
       existing.length > 0
     ) {
-      const current = existing[0];
+
+      const current =
+        existing[0];
 
       const key =
         current.id !== undefined &&
@@ -519,14 +572,17 @@ async function upsertRecord(
         );
       }
 
-      result = data || [];
+      result =
+        data || [];
     }
+
 
     /*
      * USUARIO NUEVO
      */
 
     else {
+
       const {
         data,
         error,
@@ -544,15 +600,19 @@ async function upsertRecord(
         );
       }
 
-      result = data || [];
+      result =
+        data || [];
     }
 
-    return convertFromDb(result);
+    return convertFromDb(
+      result
+    );
   }
 
-  /*
-   * RESTO DE LAS TABLAS
-   */
+
+  /* =======================================================
+     RESTO DE TABLAS
+     ======================================================= */
 
   const {
     data,
@@ -566,7 +626,9 @@ async function upsertRecord(
     throw error;
   }
 
-  return convertFromDb(data || []);
+  return convertFromDb(
+    data || []
+  );
 }
 
 
@@ -578,26 +640,34 @@ async function bulkUpsert(
   table: string,
   records: any[]
 ) {
-  if (!ALLOWED_TABLES.includes(table)) {
+
+  if (
+    !ALLOWED_TABLES.includes(
+      table
+    )
+  ) {
     throw new Error(
       "Tabla no permitida"
     );
   }
 
-  if (!Array.isArray(records)) {
+  if (
+    !Array.isArray(records)
+  ) {
     throw new Error(
       "Los registros deben ser un arreglo"
     );
   }
 
-  if (records.length === 0) {
+  if (
+    records.length === 0
+  ) {
     return [];
   }
 
-  const TABLE_FIELDS: Record<
-    string,
-    string[]
-  > = {
+
+  const TABLE_FIELDS:
+    Record<string, string[]> = {
 
     colaboradores: [
       "id",
@@ -698,6 +768,7 @@ async function bulkUpsert(
     ],
   };
 
+
   const allowedFields =
     TABLE_FIELDS[table];
 
@@ -707,145 +778,156 @@ async function bulkUpsert(
     );
   }
 
+
   const cleanRecords =
-    records.map((record: any) => {
+    records.map(
+      (record: any) => {
 
-      if (
-        !record ||
-        typeof record !== "object"
-      ) {
-        throw new Error(
-          "Registro inválido"
-        );
-      }
-
-      const clean: any = {};
-
-      for (
-        const field of allowedFields
-      ) {
         if (
-          Object.prototype.hasOwnProperty.call(
-            record,
-            field
-          )
+          !record ||
+          typeof record !== "object"
         ) {
-          const value =
-            record[field];
+          throw new Error(
+            "Registro inválido"
+          );
+        }
+
+        const clean: any = {};
+
+        for (
+          const field
+          of allowedFields
+        ) {
 
           if (
-            value !== undefined
+            Object.prototype.hasOwnProperty.call(
+              record,
+              field
+            )
           ) {
-            clean[field] =
-              value;
+
+            const value =
+              record[field];
+
+            if (
+              value !== undefined
+            ) {
+              clean[field] =
+                value;
+            }
           }
         }
+
+
+        /*
+         * Vacaciones / Licencias
+         */
+
+        if (
+          table === "vacaciones" ||
+          table === "licencias"
+        ) {
+
+          if (
+            !clean.nombre &&
+            clean.nombreColaborador
+          ) {
+            clean.nombre =
+              clean.nombreColaborador;
+          }
+
+          if (
+            !clean.nombreColaborador &&
+            clean.nombre
+          ) {
+            clean.nombreColaborador =
+              clean.nombre;
+          }
+
+          if (
+            clean.tipo === undefined &&
+            clean.tipoAusencia !== undefined
+          ) {
+            clean.tipo =
+              clean.tipoAusencia;
+          }
+
+          if (
+            clean.tipoAusencia === undefined &&
+            clean.tipo !== undefined
+          ) {
+            clean.tipoAusencia =
+              clean.tipo;
+          }
+
+          if (
+            clean.dias === undefined &&
+            clean.numeroDias !== undefined
+          ) {
+            clean.dias =
+              clean.numeroDias;
+          }
+
+          if (
+            clean.numeroDias === undefined &&
+            clean.dias !== undefined
+          ) {
+            clean.numeroDias =
+              clean.dias;
+          }
+
+          if (
+            clean.inicio === undefined &&
+            clean.fechaInicio !== undefined
+          ) {
+            clean.inicio =
+              clean.fechaInicio;
+          }
+
+          if (
+            clean.fechaInicio === undefined &&
+            clean.inicio !== undefined
+          ) {
+            clean.fechaInicio =
+              clean.inicio;
+          }
+
+          if (
+            clean.termino === undefined &&
+            clean.fechaTermino !== undefined
+          ) {
+            clean.termino =
+              clean.fechaTermino;
+          }
+
+          if (
+            clean.fechaTermino === undefined &&
+            clean.termino !== undefined
+          ) {
+            clean.fechaTermino =
+              clean.termino;
+          }
+
+          if (
+            clean.fechaTermino === ""
+          ) {
+            clean.fechaTermino =
+              null;
+          }
+
+          if (
+            clean.termino === ""
+          ) {
+            clean.termino =
+              null;
+          }
+        }
+
+        return convertToDb(
+          clean
+        );
       }
-
-      /*
-       * VACACIONES / LICENCIAS
-       */
-
-      if (
-        table === "vacaciones" ||
-        table === "licencias"
-      ) {
-
-        if (
-          !clean.nombre &&
-          clean.nombreColaborador
-        ) {
-          clean.nombre =
-            clean.nombreColaborador;
-        }
-
-        if (
-          !clean.nombreColaborador &&
-          clean.nombre
-        ) {
-          clean.nombreColaborador =
-            clean.nombre;
-        }
-
-        if (
-          clean.tipo === undefined &&
-          clean.tipoAusencia !== undefined
-        ) {
-          clean.tipo =
-            clean.tipoAusencia;
-        }
-
-        if (
-          clean.tipoAusencia === undefined &&
-          clean.tipo !== undefined
-        ) {
-          clean.tipoAusencia =
-            clean.tipo;
-        }
-
-        if (
-          clean.dias === undefined &&
-          clean.numeroDias !== undefined
-        ) {
-          clean.dias =
-            clean.numeroDias;
-        }
-
-        if (
-          clean.numeroDias === undefined &&
-          clean.dias !== undefined
-        ) {
-          clean.numeroDias =
-            clean.dias;
-        }
-
-        if (
-          clean.inicio === undefined &&
-          clean.fechaInicio !== undefined
-        ) {
-          clean.inicio =
-            clean.fechaInicio;
-        }
-
-        if (
-          clean.fechaInicio === undefined &&
-          clean.inicio !== undefined
-        ) {
-          clean.fechaInicio =
-            clean.inicio;
-        }
-
-        if (
-          clean.termino === undefined &&
-          clean.fechaTermino !== undefined
-        ) {
-          clean.termino =
-            clean.fechaTermino;
-        }
-
-        if (
-          clean.fechaTermino === undefined &&
-          clean.termino !== undefined
-        ) {
-          clean.fechaTermino =
-            clean.termino;
-        }
-
-        if (
-          clean.fechaTermino === ""
-        ) {
-          clean.fechaTermino = null;
-        }
-
-        if (
-          clean.termino === ""
-        ) {
-          clean.termino = null;
-        }
-      }
-
-      return convertToDb(clean);
-    });
+    );
 
 
   function schemaColumnFromError(
@@ -917,7 +999,8 @@ async function bulkUpsert(
         );
       }
 
-      let removed = false;
+      let removed =
+        false;
 
       working =
         working.map(
@@ -938,7 +1021,8 @@ async function bulkUpsert(
                 badColumn
               ];
 
-              removed = true;
+              removed =
+                true;
 
               return copy;
             }
@@ -974,13 +1058,11 @@ async function bulkUpsert(
   }
 
 
-  /*
-   * Archivos grandes se guardan en bloques.
-   */
+  const CHUNK_SIZE =
+    100;
 
-  const CHUNK_SIZE = 100;
-
-  const saved: any[] = [];
+  const saved: any[] =
+    [];
 
   for (
     let i = 0;
@@ -1020,14 +1102,18 @@ async function deleteRecord(
 ) {
 
   if (
-    !ALLOWED_TABLES.includes(table)
+    !ALLOWED_TABLES.includes(
+      table
+    )
   ) {
     throw new Error(
       "Tabla no permitida"
     );
   }
 
-  if (table === "usuarios") {
+  if (
+    table === "usuarios"
+  ) {
     throw new Error(
       "No se permite eliminar usuarios desde esta función"
     );
@@ -1042,12 +1128,11 @@ async function deleteRecord(
     );
   }
 
-  const {
-    error
-  } = await supabase
-    .from(table)
-    .delete()
-    .eq("id", id);
+  const { error } =
+    await supabase
+      .from(table)
+      .delete()
+      .eq("id", id);
 
   if (error) {
     throw error;
@@ -1066,14 +1151,18 @@ async function clearTable(
 ) {
 
   if (
-    !ALLOWED_TABLES.includes(table)
+    !ALLOWED_TABLES.includes(
+      table
+    )
   ) {
     throw new Error(
       "Tabla no permitida"
     );
   }
 
-  if (table === "usuarios") {
+  if (
+    table === "usuarios"
+  ) {
     throw new Error(
       "No se permite limpiar la tabla usuarios"
     );
@@ -1092,14 +1181,17 @@ async function clearTable(
    ========================================================= */
 
 Deno.serve(
-  async (req: Request) => {
+  async (
+    req: Request
+  ) => {
 
     /*
-     * CORS / PREFLIGHT
+     * CORS
      */
 
     if (
-      req.method === "OPTIONS"
+      req.method ===
+      "OPTIONS"
     ) {
 
       return new Response(
@@ -1392,9 +1484,9 @@ Deno.serve(
         error
       );
 
+
       /*
-       * IMPORTANTE:
-       * Ahora mostramos el error REAL de Supabase.
+       * MOSTRAR ERROR REAL
        */
 
       const errorMessage =
