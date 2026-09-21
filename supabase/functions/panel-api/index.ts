@@ -813,6 +813,54 @@ Deno.serve(async (req: Request) => {
     }
 
     // =========================
+    // LOGIN COMPATIBLE EN RAÍZ
+    // =========================
+    // La versión actualmente publicada del panel puede enviar el login
+    // directamente a /panel-api en vez de /panel-api/login. Aceptamos ambos
+    // formatos para evitar el 401 "Sesión no válida o expirada".
+    if (
+      req.method === "POST" &&
+      path.endsWith("/panel-api")
+    ) {
+      try {
+        const peek = await req.clone().json();
+
+        if (peek?.username && peek?.password) {
+          try {
+            const result = await login(
+              String(peek.username),
+              String(peek.password)
+            );
+
+            return response(
+              req,
+              result,
+              200
+            );
+          } catch (error) {
+            console.error(
+              "Error login raíz:",
+              error
+            );
+
+            return response(
+              req,
+              {
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "Error de autenticación",
+              },
+              401
+            );
+          }
+        }
+      } catch {
+        // No era un JSON de login; continúa al flujo normal.
+      }
+    }
+
+    // =========================
     // AUTENTICACIÓN
     // =========================
 
