@@ -231,7 +231,9 @@ function getToken(req: Request): string | null {
   return auth.substring(7);
 }
 
-async function requireAuth(req: Request) {
+async function requireAuth(
+  req: Request
+) {
   const token = getToken(req);
 
   if (!token) {
@@ -315,309 +317,142 @@ async function login(
   };
 }
 
-const API_PAGE_SIZE = 1000;
-
-async function getAllRows(table: string) {
-  const all: any[] = [];
-  let from = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*")
-      .range(from, from + API_PAGE_SIZE - 1);
-
-    if (error) {
-      console.error(
-        `Error leyendo ${table} desde ${from}:`,
-        error
-      );
-      throw error;
-    }
-
-    const rows = data || [];
-
-    all.push(...rows);
-
-    if (rows.length < API_PAGE_SIZE) {
-      break;
-    }
-
-    from += API_PAGE_SIZE;
-  }
-
-  return all;
-}
-
-async function deleteAllRows(table: string) {
-  let deletedTotal = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("id")
-      .range(0, API_PAGE_SIZE - 1);
-
-    if (error) {
-      throw error;
-    }
-
-    const ids = (data || [])
-      .map((row: any) => row.id)
-      .filter(
-        (id: any) =>
-          id !== null &&
-          id !== undefined
-      );
-
-    if (ids.length === 0) {
-      break;
-    }
-
-    const { error: deleteError } =
-      await supabase
-        .from(table)
-        .delete()
-        .in("id", ids);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    deletedTotal += ids.length;
-
-    if (ids.length < API_PAGE_SIZE) {
-      break;
-    }
-  }
-
-  return deletedTotal;
-}
-
 async function getState() {
   const state: any = {};
 
   for (const table of ALLOWED_TABLES) {
-    const data = await getAllRows(table);
+    const { data, error } = await supabase
+      .from(table)
+      .select("*");
 
-    state[table] =
-      convertFromDb(data || []);
+    if (error) {
+      console.error(
+        `Error leyendo ${table}:`,
+        error
+      );
+
+      throw error;
+    }
+
+    state[table] = convertFromDb(
+      data || []
+    );
   }
 
-  state.usuarios =
-    state.usuarios.map(
-      (u: any) => {
-        const safe = {
-          ...u
-        };
+  state.usuarios = state.usuarios.map(
+    (u: any) => {
+      const safe = { ...u };
 
-        delete safe.passwordHash;
-        delete safe.password_hash;
+      delete safe.passwordHash;
+      delete safe.password_hash;
 
-        return safe;
-      }
-    );
+      return safe;
+    }
+  );
 
   return state;
 }
-
-
-/* =========================================================
-   UPSERT
-   ========================================================= */
 
 async function upsertRecord(
   table: string,
   record: any
 ) {
-  if (
-    !ALLOWED_TABLES.includes(table)
-  ) {
-    throw new Error(
-      "Tabla no permitida"
-    );
+  if (!ALLOWED_TABLES.includes(table)) {
+    throw new Error("Tabla no permitida");
   }
 
-  const dbRecord =
-    convertToDb(record);
+  if (!record || typeof record !== "object") {
+    throw new Error("Registro inválido");
+  }
 
-
-  /* =======================================================
-     USUARIOS
-     ======================================================= */
-
+  /*
+   * USUARIOS: tratamiento especial.
+   *
+   * La tabla puede tener restricciones UNIQUE sobre username y columnas
+   * timestamp para created_at / last_login. El frontend puede enviar
+   * lastLogin como cadena vacía cuando se crea un usuario nuevo; PostgreSQL
+   * no acepta "" como timestamp, por lo que se transforma a NULL.
+   *
+   * También hacemos la búsqueda por username antes de guardar para evitar
+   * depender de que el id del frontend coincida con el esquema de Supabase.
+   */
   if (table === "usuarios") {
+    const dbRecord = convertToDb(record);
 
-    const username =
-      String(
-        dbRecord.username || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    if (!username) {
-      throw new Error(
-        "El usuario es obligatorio"
-      );
+    if (dbRecord.username !== undefined && dbRecord.username !== null) {
+      dbRecord.username = String(dbRecord.username).trim().toLowerCase();
     }
 
-    dbRecord.username =
-      username;
-
-
-    /*
-     * CORRECCIÓN IMPORTANTE:
-     *
-     * PostgreSQL no acepta "" en columnas timestamp.
-     *
-     * El frontend puede enviar:
-     *
-     * lastLogin: ""
-     *
-     * y después convertToDb() lo convierte en:
-     *
-     * last_login: ""
-     *
-     * Eso provoca:
-     *
-     * invalid input syntax for type timestamp with time zone
-     *
-     * Lo convertimos a NULL.
-     */
-
-    if (
-      dbRecord.last_login === "" ||
-      dbRecord.last_login === undefined
-    ) {
+    if (dbRecord.last_login === "" || dbRecord.last_login === undefined) {
       dbRecord.last_login = null;
     }
 
-    if (
-      dbRecord.created_at === ""
-    ) {
+    if (dbRecord.created_at === "") {
       dbRecord.created_at = null;
     }
 
-
-    /*
-     * Buscar usuario existente
-     */
-
-    const {
-      data: existing,
-      error: findError,
-    } = await supabase
-      .from("usuarios")
-      .select("*")
-      .eq(
-        "username",
-        username
-      )
-      .limit(1);
-
-    if (findError) {
-      throw new Error(
-        `No se pudo consultar el usuario: ${
-          findError.message ||
-          "error de base de datos"
-        }`
-      );
+    // Si no viene created_at, PostgreSQL puede usar el valor por defecto.
+    if (dbRecord.created_at === null) {
+      delete dbRecord.created_at;
     }
 
-    let result;
+    if (!dbRecord.username) {
+      throw new Error("El nombre de usuario es obligatorio");
+    }
 
+    if (!dbRecord.password_hash) {
+      throw new Error("La contraseña es obligatoria");
+    }
 
-    /*
-     * USUARIO EXISTENTE
-     */
-
-    if (
-      existing &&
-      existing.length > 0
-    ) {
-
-      const current =
-        existing[0];
-
-      const key =
-        current.id !== undefined &&
-        current.id !== null
-          ? {
-              column: "id",
-              value: current.id,
-            }
-          : {
-              column: "username",
-              value: username,
-            };
-
-      const {
-        data,
-        error,
-      } = await supabase
+    try {
+      const { data: existing, error: findError } = await supabase
         .from("usuarios")
-        .update(dbRecord)
-        .eq(
-          key.column,
-          key.value
-        )
-        .select();
+        .select("id")
+        .eq("username", dbRecord.username)
+        .limit(1);
 
-      if (error) {
-        throw new Error(
-          `No se pudo actualizar el usuario: ${
-            error.message ||
-            "error de base de datos"
-          }`
-        );
+      if (findError) {
+        throw new Error(`Error buscando usuario: ${findError.message}`);
       }
 
-      result =
-        data || [];
-    }
+      let query;
 
-
-    /*
-     * USUARIO NUEVO
-     */
-
-    else {
-
-      const {
-        data,
-        error,
-      } = await supabase
-        .from("usuarios")
-        .insert(dbRecord)
-        .select();
-
-      if (error) {
-        throw new Error(
-          `No se pudo crear el usuario: ${
-            error.message ||
-            "error de base de datos"
-          }`
-        );
+      if (existing && existing.length > 0 && existing[0].id !== null && existing[0].id !== undefined) {
+        query = supabase
+          .from("usuarios")
+          .update(dbRecord)
+          .eq("id", existing[0].id)
+          .select();
+      } else if (dbRecord.id !== undefined && dbRecord.id !== null && dbRecord.id !== "") {
+        query = supabase
+          .from("usuarios")
+          .upsert(dbRecord)
+          .select();
+      } else {
+        query = supabase
+          .from("usuarios")
+          .insert(dbRecord)
+          .select();
       }
 
-      result =
-        data || [];
-    }
+      const { data, error } = await query;
 
-    return convertFromDb(
-      result
-    );
+      if (error) {
+        throw new Error(`Error guardando usuario: ${error.message}`);
+      }
+
+      return convertFromDb(data || []);
+    } catch (error) {
+      console.error("Error usuarios/upsert:", error);
+      throw error instanceof Error
+        ? error
+        : new Error(String(error));
+    }
   }
 
+  const dbRecord = convertToDb(record);
 
-  /* =======================================================
-     RESTO DE TABLAS
-     ======================================================= */
-
-  const {
-    data,
-    error,
-  } = await supabase
+  const { data, error } = await supabase
     .from(table)
     .upsert(dbRecord)
     .select();
@@ -626,49 +461,31 @@ async function upsertRecord(
     throw error;
   }
 
-  return convertFromDb(
-    data || []
-  );
+  return convertFromDb(data || []);
 }
-
-
-/* =========================================================
-   BULK UPSERT
-   ========================================================= */
 
 async function bulkUpsert(
   table: string,
   records: any[]
 ) {
-
-  if (
-    !ALLOWED_TABLES.includes(
-      table
-    )
-  ) {
-    throw new Error(
-      "Tabla no permitida"
-    );
+  if (!ALLOWED_TABLES.includes(table)) {
+    throw new Error("Tabla no permitida");
   }
 
-  if (
-    !Array.isArray(records)
-  ) {
-    throw new Error(
-      "Los registros deben ser un arreglo"
-    );
+  if (!Array.isArray(records)) {
+    throw new Error("Los registros deben ser un arreglo");
   }
 
-  if (
-    records.length === 0
-  ) {
+  if (records.length === 0) {
     return [];
   }
 
-
-  const TABLE_FIELDS:
-    Record<string, string[]> = {
-
+  /*
+   * Campos permitidos por tabla.
+   * Esto evita que un Excel de una tabla termine enviando
+   * columnas pertenecientes a otra tabla.
+   */
+  const TABLE_FIELDS: Record<string, string[]> = {
     colaboradores: [
       "id",
       "rut",
@@ -768,9 +585,7 @@ async function bulkUpsert(
     ],
   };
 
-
-  const allowedFields =
-    TABLE_FIELDS[table];
+  const allowedFields = TABLE_FIELDS[table];
 
   if (!allowedFields) {
     throw new Error(
@@ -778,199 +593,80 @@ async function bulkUpsert(
     );
   }
 
+  const cleanRecords = records.map((record: any) => {
+    if (!record || typeof record !== "object") {
+      throw new Error("Registro inválido");
+    }
 
-  const cleanRecords =
-    records.map(
-      (record: any) => {
+    const clean: any = {};
 
-        if (
-          !record ||
-          typeof record !== "object"
-        ) {
-          throw new Error(
-            "Registro inválido"
-          );
+    for (const field of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(record, field)) {
+        const value = record[field];
+
+        if (value !== undefined) {
+          clean[field] = value;
         }
-
-        const clean: any = {};
-
-        for (
-          const field
-          of allowedFields
-        ) {
-
-          if (
-            Object.prototype.hasOwnProperty.call(
-              record,
-              field
-            )
-          ) {
-
-            const value =
-              record[field];
-
-            if (
-              value !== undefined
-            ) {
-              clean[field] =
-                value;
-            }
-          }
-        }
-
-
-        /*
-         * Vacaciones / Licencias
-         */
-
-        if (
-          table === "vacaciones" ||
-          table === "licencias"
-        ) {
-
-          if (
-            !clean.nombre &&
-            clean.nombreColaborador
-          ) {
-            clean.nombre =
-              clean.nombreColaborador;
-          }
-
-          if (
-            !clean.nombreColaborador &&
-            clean.nombre
-          ) {
-            clean.nombreColaborador =
-              clean.nombre;
-          }
-
-          if (
-            clean.tipo === undefined &&
-            clean.tipoAusencia !== undefined
-          ) {
-            clean.tipo =
-              clean.tipoAusencia;
-          }
-
-          if (
-            clean.tipoAusencia === undefined &&
-            clean.tipo !== undefined
-          ) {
-            clean.tipoAusencia =
-              clean.tipo;
-          }
-
-          if (
-            clean.dias === undefined &&
-            clean.numeroDias !== undefined
-          ) {
-            clean.dias =
-              clean.numeroDias;
-          }
-
-          if (
-            clean.numeroDias === undefined &&
-            clean.dias !== undefined
-          ) {
-            clean.numeroDias =
-              clean.dias;
-          }
-
-          if (
-            clean.inicio === undefined &&
-            clean.fechaInicio !== undefined
-          ) {
-            clean.inicio =
-              clean.fechaInicio;
-          }
-
-          if (
-            clean.fechaInicio === undefined &&
-            clean.inicio !== undefined
-          ) {
-            clean.fechaInicio =
-              clean.inicio;
-          }
-
-          if (
-            clean.termino === undefined &&
-            clean.fechaTermino !== undefined
-          ) {
-            clean.termino =
-              clean.fechaTermino;
-          }
-
-          if (
-            clean.fechaTermino === undefined &&
-            clean.termino !== undefined
-          ) {
-            clean.fechaTermino =
-              clean.termino;
-          }
-
-          if (
-            clean.fechaTermino === ""
-          ) {
-            clean.fechaTermino =
-              null;
-          }
-
-          if (
-            clean.termino === ""
-          ) {
-            clean.termino =
-              null;
-          }
-        }
-
-        return convertToDb(
-          clean
-        );
       }
-    );
+    }
 
+    // Vacaciones/licencias pueden venir con nombres equivalentes según el Excel.
+    // Enviamos las variantes y el backend elimina automáticamente las columnas
+    // que no existan en la tabla real, sin perder la importación.
+    if (table === "vacaciones" || table === "licencias") {
+      if (!clean.nombre && clean.nombreColaborador) {
+        clean.nombre = clean.nombreColaborador;
+      }
+      if (!clean.nombreColaborador && clean.nombre) {
+        clean.nombreColaborador = clean.nombre;
+      }
+      if (clean.tipo === undefined && clean.tipoAusencia !== undefined) {
+        clean.tipo = clean.tipoAusencia;
+      }
+      if (clean.tipoAusencia === undefined && clean.tipo !== undefined) {
+        clean.tipoAusencia = clean.tipo;
+      }
+      if (clean.dias === undefined && clean.numeroDias !== undefined) {
+        clean.dias = clean.numeroDias;
+      }
+      if (clean.numeroDias === undefined && clean.dias !== undefined) {
+        clean.numeroDias = clean.dias;
+      }
+      if (clean.inicio === undefined && clean.fechaInicio !== undefined) {
+        clean.inicio = clean.fechaInicio;
+      }
+      if (clean.fechaInicio === undefined && clean.inicio !== undefined) {
+        clean.fechaInicio = clean.inicio;
+      }
+      if (clean.termino === undefined && clean.fechaTermino !== undefined) {
+        clean.termino = clean.fechaTermino;
+      }
+      if (clean.fechaTermino === undefined && clean.termino !== undefined) {
+        clean.fechaTermino = clean.termino;
+      }
 
-  function schemaColumnFromError(
-    error: any
-  ): string | null {
+      // Una fecha de término vacía debe ser NULL, no una cadena vacía.
+      if (clean.fechaTermino === "") clean.fechaTermino = null;
+      if (clean.termino === "") clean.termino = null;
+    }
 
-    const message =
-      String(
-        error?.message || ""
-      );
+    return convertToDb(clean);
+  });
 
-    const match =
-      message.match(
-        /Could not find the '([^']+)' column/i
-      );
-
-    return match
-      ? match[1]
-      : null;
+  function schemaColumnFromError(error: any): string | null {
+    const message = String(error?.message || "");
+    const match = message.match(/Could not find the '([^']+)' column/i);
+    return match ? match[1] : null;
   }
 
+  async function upsertChunkWithSchemaFallback(chunk: any[]) {
+    let working = chunk.map((row) => ({ ...row }));
 
-  async function upsertChunkWithSchemaFallback(
-    chunk: any[]
-  ) {
-
-    let working =
-      chunk.map(
-        row => ({
-          ...row
-        })
-      );
-
-    for (
-      let attempt = 0;
-      attempt < 25;
-      attempt++
-    ) {
-
-      const {
-        data,
-        error
-      } = await supabase
+    // PostgREST informa la columna desconocida una por una.
+    // La eliminamos y repetimos, permitiendo trabajar con el esquema real
+    // aunque existan diferencias de nombres entre versiones de la tabla.
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const { data, error } = await supabase
         .from(table)
         .upsert(working)
         .select();
@@ -979,71 +675,36 @@ async function bulkUpsert(
         return data || [];
       }
 
-      const badColumn =
-        schemaColumnFromError(
-          error
-        );
-
+      const badColumn = schemaColumnFromError(error);
       if (!badColumn) {
-
         console.error(
           `Error guardando masivamente ${table}:`,
           error
         );
-
         throw new Error(
-          `Error guardando ${table}: ${
-            error.message ||
-            "Error desconocido"
-          }`
+          `Error guardando ${table}: ${error.message || "Error desconocido"}`
         );
       }
 
-      let removed =
-        false;
-
-      working =
-        working.map(
-          (row) => {
-
-            if (
-              Object.prototype.hasOwnProperty.call(
-                row,
-                badColumn
-              )
-            ) {
-
-              const copy = {
-                ...row
-              };
-
-              delete copy[
-                badColumn
-              ];
-
-              removed =
-                true;
-
-              return copy;
-            }
-
-            return row;
-          }
-        );
+      let removed = false;
+      working = working.map((row) => {
+        if (Object.prototype.hasOwnProperty.call(row, badColumn)) {
+          const copy = { ...row };
+          delete copy[badColumn];
+          removed = true;
+          return copy;
+        }
+        return row;
+      });
 
       if (!removed) {
-
         console.error(
           `PostgREST rechazó una columna que no estaba en el payload de ${table}:`,
           badColumn,
           error
         );
-
         throw new Error(
-          `Error guardando ${table}: ${
-            error.message ||
-            "Esquema incompatible"
-          }`
+          `Error guardando ${table}: ${error.message || "Esquema incompatible"}`
         );
       }
 
@@ -1052,87 +713,46 @@ async function bulkUpsert(
       );
     }
 
-    throw new Error(
-      `No fue posible guardar ${table}: demasiadas diferencias de esquema.`
-    );
+    throw new Error(`No fue posible guardar ${table}: demasiadas diferencias de esquema.`);
   }
 
+  /* Archivos grandes se guardan en bloques. */
+  const CHUNK_SIZE = 100;
+  const saved: any[] = [];
 
-  const CHUNK_SIZE =
-    100;
-
-  const saved: any[] =
-    [];
-
-  for (
-    let i = 0;
-    i < cleanRecords.length;
-    i += CHUNK_SIZE
-  ) {
-
-    const chunk =
-      cleanRecords.slice(
-        i,
-        i + CHUNK_SIZE
-      );
-
-    const data =
-      await upsertChunkWithSchemaFallback(
-        chunk
-      );
-
-    saved.push(
-      ...data
-    );
+  for (let i = 0; i < cleanRecords.length; i += CHUNK_SIZE) {
+    const chunk = cleanRecords.slice(i, i + CHUNK_SIZE);
+    const data = await upsertChunkWithSchemaFallback(chunk);
+    saved.push(...data);
   }
 
-  return convertFromDb(
-    saved
-  );
+  return convertFromDb(saved);
 }
-
-
-/* =========================================================
-   DELETE
-   ========================================================= */
 
 async function deleteRecord(
   table: string,
   id: any
 ) {
-
-  if (
-    !ALLOWED_TABLES.includes(
-      table
-    )
-  ) {
-    throw new Error(
-      "Tabla no permitida"
-    );
+  if (!ALLOWED_TABLES.includes(table)) {
+    throw new Error("Tabla no permitida");
   }
 
-  if (
-    table === "usuarios"
-  ) {
+  if (table === "usuarios") {
     throw new Error(
       "No se permite eliminar usuarios desde esta función"
     );
   }
 
-  if (
-    id === undefined ||
-    id === null
-  ) {
+  if (id === undefined || id === null) {
     throw new Error(
       "ID requerido para eliminar"
     );
   }
 
-  const { error } =
-    await supabase
-      .from(table)
-      .delete()
-      .eq("id", id);
+  const { error } = await supabase
+    .from(table)
+    .delete()
+    .eq("id", id);
 
   if (error) {
     throw error;
@@ -1141,148 +761,134 @@ async function deleteRecord(
   return true;
 }
 
-
-/* =========================================================
-   CLEAR TABLE
-   ========================================================= */
-
 async function clearTable(
   table: string
 ) {
-
-  if (
-    !ALLOWED_TABLES.includes(
-      table
-    )
-  ) {
-    throw new Error(
-      "Tabla no permitida"
-    );
+  if (!ALLOWED_TABLES.includes(table)) {
+    throw new Error("Tabla no permitida");
   }
 
-  if (
-    table === "usuarios"
-  ) {
+  if (table === "usuarios") {
     throw new Error(
       "No se permite limpiar la tabla usuarios"
     );
   }
 
-  await deleteAllRows(
-    table
-  );
+  const { data, error } = await supabase
+    .from(table)
+    .select("id");
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    return true;
+  }
+
+  const ids = data
+    .map((row: any) => row.id)
+    .filter(
+      (id: any) =>
+        id !== null &&
+        id !== undefined
+    );
+
+  if (ids.length === 0) {
+    return true;
+  }
+
+  const { error: deleteError } =
+    await supabase
+      .from(table)
+      .delete()
+      .in("id", ids);
+
+  if (deleteError) {
+    throw deleteError;
+  }
 
   return true;
 }
 
+Deno.serve(async (req: Request) => {
 
-/* =========================================================
-   SERVER
-   ========================================================= */
+  // =========================
+  // CORS / PREFLIGHT
+  // =========================
 
-Deno.serve(
-  async (
-    req: Request
-  ) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(),
+    });
+  }
+
+  if (req.method === "GET" && new URL(req.url).pathname.endsWith("/health")) {
+    return response(req, {
+      ok: true,
+      service: "panel-api",
+      version: "2026-09-21-usuarios-login-timestamp",
+    });
+  }
+
+  try {
+    const url = new URL(req.url);
+
+    const path = url.pathname.replace(
+      /\/+$/,
+      ""
+    );
+
+    // =========================
+    // LOGIN
+    // =========================
 
     /*
-     * CORS
+     * Login tolerante a versiones del frontend:
+     * - POST /functions/v1/panel-api/login
+     * - POST /functions/v1/panel-api
+     *
+     * Se identifica por username + password y ausencia de action.
+     * Así, aunque el frontend antiguo siga llamando a la raíz, el acceso funciona.
      */
+    if (req.method === "POST") {
+      const probe = req.clone();
+      let probeBody: any = null;
 
-    if (
-      req.method ===
-      "OPTIONS"
-    ) {
+      try {
+        probeBody = await probe.json();
+      } catch {
+        probeBody = null;
+      }
 
-      return new Response(
-        null,
-        {
-          status: 204,
-          headers:
-            corsHeaders(),
-        }
-      );
-    }
+      const isLoginRequest =
+        !!probeBody &&
+        typeof probeBody === "object" &&
+        typeof probeBody.username === "string" &&
+        typeof probeBody.password === "string" &&
+        !probeBody.action;
 
-    try {
+      if (isLoginRequest) {
+        const body = probeBody;
 
-      const url =
-        new URL(req.url);
-
-      const path =
-        url.pathname.replace(
-          /\/+$/,
-          ""
-        );
-
-
-      /* =====================================================
-         LOGIN
-         ===================================================== */
-
-      if (
-        req.method === "POST" &&
-        path.endsWith("/login")
-      ) {
-
-        let body: any;
-
-        try {
-
-          body =
-            await req.json();
-
-        } catch {
-
+        if (!body.username || !body.password) {
           return response(
             req,
-            {
-              error:
-                "Solicitud JSON inválida",
-            },
-            400
-          );
-        }
-
-        if (
-          !body.username ||
-          !body.password
-        ) {
-
-          return response(
-            req,
-            {
-              error:
-                "Usuario y contraseña son obligatorios",
-            },
+            { error: "Usuario y contraseña son obligatorios" },
             400
           );
         }
 
         try {
-
-          const result =
-            await login(
-              String(
-                body.username
-              ),
-              String(
-                body.password
-              )
-            );
-
-          return response(
-            req,
-            result,
-            200
+          const result = await login(
+            String(body.username).trim(),
+            String(body.password)
           );
 
+          return response(req, result, 200);
         } catch (error) {
-
-          console.error(
-            "Error login:",
-            error
-          );
+          console.error("Error login:", error);
 
           return response(
             req,
@@ -1296,221 +902,171 @@ Deno.serve(
           );
         }
       }
+    }
 
+    // =========================
+    // AUTENTICACIÓN
+    // =========================
 
-      /* =====================================================
-         AUTENTICACIÓN
-         ===================================================== */
+    const auth =
+      await requireAuth(req);
 
-      const auth =
-        await requireAuth(
-          req
-        );
-
-      if (!auth) {
-
-        return response(
-          req,
-          {
-            error:
-              "Sesión no válida o expirada",
-          },
-          401
-        );
-      }
-
-
-      /* =====================================================
-         STATE
-         ===================================================== */
-
-      if (
-        req.method === "GET" &&
-        path.endsWith("/state")
-      ) {
-
-        const state =
-          await getState();
-
-        return response(
-          req,
-          {
-            state,
-            user: auth,
-          },
-          200
-        );
-      }
-
-
-      /* =====================================================
-         POST
-         ===================================================== */
-
-      if (
-        req.method === "POST"
-      ) {
-
-        const body =
-          await req.json();
-
-
-        /* ---------------------------------------------------
-           UPSERT
-           --------------------------------------------------- */
-
-        if (
-          body.action ===
-          "upsert"
-        ) {
-
-          const result =
-            await upsertRecord(
-              body.table,
-              body.record
-            );
-
-          return response(
-            req,
-            {
-              success: true,
-              data: result,
-            }
-          );
-        }
-
-
-        /* ---------------------------------------------------
-           BULK UPSERT
-           --------------------------------------------------- */
-
-        if (
-          body.action ===
-          "bulkUpsert"
-        ) {
-
-          const result =
-            await bulkUpsert(
-              body.table,
-              body.records ||
-                []
-            );
-
-          return response(
-            req,
-            {
-              success: true,
-              data: result,
-            }
-          );
-        }
-
-
-        /* ---------------------------------------------------
-           DELETE
-           --------------------------------------------------- */
-
-        if (
-          body.action ===
-          "delete"
-        ) {
-
-          const result =
-            await deleteRecord(
-              body.table,
-              body.id
-            );
-
-          return response(
-            req,
-            {
-              success: result,
-            }
-          );
-        }
-
-
-        /* ---------------------------------------------------
-           CLEAR
-           --------------------------------------------------- */
-
-        if (
-          body.action ===
-          "clear"
-        ) {
-
-          if (
-            auth.role !==
-            "superadmin"
-          ) {
-
-            return response(
-              req,
-              {
-                error:
-                  "Se requiere Super Admin",
-              },
-              403
-            );
-          }
-
-          await clearTable(
-            body.table
-          );
-
-          return response(
-            req,
-            {
-              success: true,
-            }
-          );
-        }
-      }
-
-
+    if (!auth) {
       return response(
         req,
         {
           error:
-            "Ruta o acción no válida",
+            "Sesión no válida o expirada",
         },
-        404
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Error interno:",
-        error
-      );
-
-
-      /*
-       * MOSTRAR ERROR REAL
-       */
-
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : String(
-              (error as any)
-                ?.message ||
-              (error as any)
-                ?.details ||
-              (error as any)
-                ?.hint ||
-              error ||
-              "Error interno del servidor"
-            );
-
-      return response(
-        req,
-        {
-          error:
-            errorMessage,
-        },
-        500
+        401
       );
     }
+
+    // =========================
+    // STATE
+    // =========================
+
+    if (
+      req.method === "GET" &&
+      path.endsWith("/state")
+    ) {
+      const state =
+        await getState();
+
+      return response(
+        req,
+        {
+          state,
+          user: auth,
+        },
+        200
+      );
+    }
+
+    // =========================
+    // POST
+    // =========================
+
+    if (req.method === "POST") {
+
+      const body =
+        await req.json();
+
+      // ---------- UPSERT ----------
+
+      if (
+        body.action === "upsert"
+      ) {
+        const result =
+          await upsertRecord(
+            body.table,
+            body.record
+          );
+
+        return response(
+          req,
+          {
+            success: true,
+            data: result,
+          }
+        );
+      }
+
+      // ---------- BULK UPSERT ----------
+
+      if (
+        body.action === "bulkUpsert"
+      ) {
+        const result =
+          await bulkUpsert(
+            body.table,
+            body.records || []
+          );
+
+        return response(
+          req,
+          {
+            success: true,
+            data: result,
+          }
+        );
+      }
+
+      // ---------- DELETE ----------
+
+      if (
+        body.action === "delete"
+      ) {
+        const result =
+          await deleteRecord(
+            body.table,
+            body.id
+          );
+
+        return response(
+          req,
+          {
+            success: result,
+          }
+        );
+      }
+
+      // ---------- CLEAR ----------
+
+      if (
+        body.action === "clear"
+      ) {
+        if (
+          auth.role !== "superadmin"
+        ) {
+          return response(
+            req,
+            {
+              error:
+                "Se requiere Super Admin",
+            },
+            403
+          );
+        }
+
+        await clearTable(
+          body.table
+        );
+
+        return response(
+          req,
+          {
+            success: true,
+          }
+        );
+      }
+    }
+
+    return response(
+      req,
+      {
+        error:
+          "Ruta o acción no válida",
+      },
+      404
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error interno:",
+      error
+    );
+
+    return response(
+      req,
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Error interno del servidor",
+      },
+      500
+    );
   }
-);
+});
