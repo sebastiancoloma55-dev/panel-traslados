@@ -632,22 +632,43 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 </style>
 
 
-<style id="modal-center-top-final">
-/* Modales: centrados horizontalmente y ubicados en la parte superior visible */
+<style id="forms-top-center-final">
+/* Formularios/modales de Usuarios, Colaboradores, Sucursales y Traslados:
+   centrados horizontalmente y comenzando desde arriba. */
 .modal-overlay{
   position:fixed !important;
   inset:0 !important;
   display:flex !important;
   align-items:flex-start !important;
   justify-content:center !important;
-  padding:70px 20px 20px !important;
+  padding:55px 20px 25px !important;
   box-sizing:border-box !important;
+  overflow-y:auto !important;
   z-index:10000 !important;
 }
 .modal{
-  margin:0 auto !important;
   width:min(600px,100%) !important;
-  max-height:calc(100vh - 90px) !important;
+  max-width:600px !important;
+  margin:0 auto !important;
+  max-height:calc(100vh - 80px) !important;
+}
+.modal-wide{
+  width:min(700px,100%) !important;
+  max-width:700px !important;
+}
+.modal-body{
+  max-height:calc(100vh - 190px) !important;
+  overflow-y:auto !important;
+}
+.modal-footer{
+  justify-content:center !important;
+}
+.form-row,
+.mapping-grid,
+.profile-grid{
+  width:100% !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
 }
 </style>
 
