@@ -544,17 +544,70 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 </style>
 
 
-<style id="login-top-center-final">
+<style id="panel-final-layout">
+/* Login: centrado horizontal y arriba */
 .login-screen{
+  position:fixed !important;
+  inset:0 !important;
   display:flex !important;
   align-items:flex-start !important;
   justify-content:center !important;
   padding:28px 20px 40px !important;
   box-sizing:border-box !important;
-  min-height:100vh !important;
+  overflow:auto !important;
 }
-.login-card{
+.login-card{margin:0 auto !important;}
+
+/* Formularios/modales: centrados horizontalmente y arriba */
+.modal-overlay{
+  position:fixed !important;
+  inset:0 !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding:55px 20px 25px !important;
+  box-sizing:border-box !important;
+  overflow-y:auto !important;
+  z-index:10000 !important;
+}
+.modal{
+  width:min(600px,100%) !important;
+  max-width:600px !important;
   margin:0 auto !important;
+  max-height:calc(100vh - 80px) !important;
+}
+.modal-wide{width:min(700px,100%) !important;max-width:700px !important;}
+.modal-body{max-height:calc(100vh - 190px) !important;overflow-y:auto !important;}
+.modal-footer{justify-content:center !important;}
+
+/* Layout: todo el ancho disponible, sin bloques gigantes */
+html,body{
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow-x:hidden !important;
+}
+.app-shell{width:100% !important;min-height:100vh !important;}
+.sidebar{width:256px !important;}
+.main{
+  width:calc(100% - 256px) !important;
+  margin-left:256px !important;
+  padding:18px 20px 32px !important;
+  box-sizing:border-box !important;
+  min-width:0 !important;
+}
+.main > .topbar,.main > .tab-panel{
+  width:100% !important;
+  max-width:none !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+.tab-panel{min-height:auto !important;}
+.table-wrap,.toolbar,.filter-row,.section-hero,.section-metrics,
+.dashboard-grid,.kpi-board,.premium-summary-grid,.tickets-grid,
+.quick-card-grid,.grid-2{
+  width:100% !important;
+  max-width:none !important;
 }
 </style>
 
@@ -2387,7 +2440,549 @@ function compareDates(){var a=document.getElementById('cmpFrom').value,b=documen
 function renderReplacements(){var S=currentState(),hoy=hoyISO(),abs=S.colaboradores.filter(function(c){return statusFor(c,hoy).key==='vacaciones'||statusFor(c,hoy).key==='licencia';}),available=S.colaboradores.filter(function(c){return String(c.estado||'Activo').toLowerCase()!=='inactivo'&&statusFor(c,hoy).key==='trabajando';});var html=abs.length?'<table class="adv-table"><thead><tr><th>Ausente</th><th>Sucursal</th><th>Motivo</th><th>Disponibles</th></tr></thead><tbody>'+abs.map(function(c){var av=available.filter(function(x){return normalizeSearch(x.sucursalActual)!==normalizeSearch(c.sucursalActual);}).slice(0,5);return '<tr><td><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+'</div></td><td>'+h(c.sucursalActual||'—')+'</td><td><span class="badge-warn">'+h(statusFor(c).label)+'</span></td><td>'+ (av.length?av.map(function(x){return '<span class="badge-good" style="margin:2px">'+h(x.nombre)+'</span>';}).join(''):'<span class="badge-bad">Sin sugerencias</span>')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty-adv">No hay ausencias vigentes. No se requieren reemplazos.</div>';document.getElementById('advReplacements').innerHTML=html;}
 function csv(name,headers,rows){var all=[headers].concat(rows),txt=all.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\n');var blob=new Blob(['\\ufeff'+txt],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},500);}
 function renderReportes(){var m=document.getElementById('closeMonth');if(!m.value)m.value=hoyISO().slice(0,7);renderCloseHistory();}
-function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table>\n</body></html>');w.document.close();w.print();};}
+function doReports(){var S=currentState();document.getElementById('repColab').onclick=function(){csv('colaboradores.csv',['RUT','Nombre','Cargo','Sucursal','Situación','Estado'],S.colaboradores.map(function(c){var z=statusFor(c);return[c.rut,c.nombre,c.cargo,c.sucursalActual,z.label,c.estado||'Activo'];}));};document.getElementById('repSuc').onclick=function(){csv('sucursales.csv',['Código','Nombre','Región','Comuna','Encargado','Personal'],S.sucursales.map(function(s){return[s.codigo,s.nombre,s.region,s.comuna,s.encargado,S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);}).length];}));};document.getElementById('repAus').onclick=function(){csv('ausencias.csv',['Tipo','RUT','Nombre','Inicio','Termino'],S.vacaciones.map(function(x){return['Vacaciones',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];}).concat(S.licencias.map(function(x){return['Licencia',x.rut,x.nombre,x.fechaInicio,x.fechaTermino];})));};document.getElementById('repTra').onclick=function(){csv('traslados.csv',['RUT','Nombre','Origen','Destino','Inicio','Termino','Indefinido','Estado'],S.traslados.map(function(x){return[x.rut,x.nombre,x.origen,x.destino,x.fechaInicio,x.fechaTermino,x.indefinido?'Sí':'No',x.estado];}));};document.getElementById('repAudit').onclick=function(){csv('auditoria.csv',['Fecha','Usuario','Acción','Tipo','Detalle'],(S.auditoria||[]).map(function(x){return[x.createdAt,x.user,x.action,x.type,JSON.stringify(x.detail||{})];}));};document.getElementById('repPrint').onclick=function(){var w=window.open('','_blank');w.document.write('<html><head><title>Resumen</title><style>body{font-family:Arial;padding:30px}h1{color:#142036}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:7px;text-align:left}</style></head><body><h1>Resumen de personal</h1><p>Fecha: '+fmtDate(hoyISO())+'</p><p>Colaboradores: '+S.colaboradores.length+' · Sucursales: '+S.sucursales.length+'</p><table><tr><th>Sucursal</th><th>Personal</th><th>Ausentes</th></tr>'+S.sucursales.map(function(s){var cs=S.colaboradores.filter(function(c){return normalizeSearch(c.sucursalActual)===normalizeSearch(s.nombre);});var au=cs.filter(function(c){return statusFor(c).key!=='trabajando';}).length;return '<tr><td>'+h(s.nombre)+'</td><td>'+cs.length+'</td><td>'+au+'</td></tr>';}).join('')+'</table>\n
+<script id="panel-central-integration">
+
+
+/* ====== SINCRONIZACION CENTRAL PANEL-TRASLADOS ====== */
+var CENTRAL_API = 'https://yloqgvpgtbbjzogkxfic.supabase.co/functions/v1/panel-api';
+var CENTRAL_TOKEN = null;
+var CENTRAL_USER_KEY = 'panelCentralUser';
+var CENTRAL_TOKEN_KEY = 'panelCentralToken';
+
+function centralStorageGet(key){
+  try { return localStorage.getItem(key) || sessionStorage.getItem(key) || ''; } catch(e){ return ''; }
+}
+function centralStorageSet(key, value, remember){
+  try {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+    (remember ? localStorage : sessionStorage).setItem(key, value);
+  } catch(e) {}
+}
+function centralStorageClear(){
+  try { localStorage.removeItem(CENTRAL_TOKEN_KEY); localStorage.removeItem(CENTRAL_USER_KEY); sessionStorage.removeItem(CENTRAL_TOKEN_KEY); sessionStorage.removeItem(CENTRAL_USER_KEY); } catch(e) {}
+}
+function centralTokenPayload(token){
+  try {
+    var p = token.split('.')[1];
+    var b = p.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(p.length/4)*4,'=');
+    return JSON.parse(atob(b));
+  } catch(e){ return null; }
+}
+function centralTokenValid(token){
+  var p = centralTokenPayload(token);
+  return !!(p && p.exp && p.exp > Date.now());
+}
+function centralHeaders(extra){
+  var h = { 'Content-Type':'application/json' };
+  if(CENTRAL_TOKEN) h.Authorization = 'Bearer ' + CENTRAL_TOKEN;
+  if(extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
+  return h;
+}
+function centralRequest(path, options){
+  options = options || {};
+  var target = CENTRAL_API + (path || '');
+  var requestOptions = {
+    method: options.method || 'GET',
+    headers: centralHeaders(options.headers),
+    body: options.body === undefined ? undefined : JSON.stringify(options.body)
+  };
+
+  function parseResponse(r){
+    return r.text().then(function(raw){
+      var data = {};
+      try { data = raw ? JSON.parse(raw) : {}; }
+      catch(e) { data = { error: raw || ('HTTP ' + r.status) }; }
+
+      if(!r.ok){
+        var err = new Error(
+          data.error ||
+          data.message ||
+          ('HTTP ' + r.status + ' al conectar con el servidor')
+        );
+        err.status = r.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    });
+  }
+
+  return fetch(target, requestOptions).then(parseResponse);
+}
+function centralStoreName(storeName){ return storeName; }
+
+var _localDbGetAll = dbGetAll;
+var _localDbPut = dbPut;
+var _localDbBulkPut = dbBulkPut;
+var _localDbClear = dbClear;
+
+function centralLoadState(){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return Promise.reject(new Error('NO_CENTRAL_SESSION'));
+  return centralRequest('/state').then(function(result){
+    var s = result.state || {};
+    state.colaboradores = s.colaboradores || [];
+    state.sucursales = s.sucursales || [];
+    state.traslados = s.traslados || [];
+    state.licencias = s.licencias || [];
+    state.vacaciones = s.vacaciones || [];
+    state.usuarios = s.usuarios || [];
+    state.auditoria = s.auditoria || [];
+    if(result.user && currentUser) currentUser = Object.assign({}, currentUser, result.user);
+    return sincronizarTrasladosConColaboradores();
+  });
+}
+
+/* Desde que existe sesión central, las lecturas salen de PostgreSQL. */
+dbGetAll = function(storeName){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbGetAll(storeName);
+  return centralRequest('/state').then(function(result){
+    var rows = (result.state || {})[centralStoreName(storeName)] || [];
+    return rows;
+  });
+};
+
+dbPut = function(storeName, obj){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbPut(storeName, obj);
+  return centralRequest('', { method:'POST', body:{ action:'upsert', table:centralStoreName(storeName), record:obj } }).then(function(){ return obj; });
+};
+
+dbBulkPut = function(storeName, arr){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbBulkPut(storeName, arr);
+  if(!arr || !arr.length) return Promise.resolve();
+  return centralRequest('', { method:'POST', body:{ action:'bulkUpsert', table:centralStoreName(storeName), records:arr } }).then(function(){ return arr; });
+};
+
+dbClear = function(storeName){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) return _localDbClear(storeName);
+  return centralRequest('', { method:'POST', body:{ action:'clear', table:centralStoreName(storeName) } }).then(function(){ return true; });
+};
+
+/* Recarga central: reemplaza por completo el estado que usa la interfaz. */
+reloadStateFromDB = function(){
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
+    return _localDbGetAll(STORES.COLAB).then(function(colab){
+      return Promise.all([
+        Promise.resolve(colab), _localDbGetAll(STORES.SUC), _localDbGetAll(STORES.TRAS), _localDbGetAll(STORES.LIC), _localDbGetAll(STORES.VAC), _localDbGetAll(STORES.USERS), _localDbGetAll(STORES.AUDIT)
+      ]).then(function(results){
+        state.colaboradores=results[0]; state.sucursales=results[1]; state.traslados=results[2]; state.licencias=results[3]; state.vacaciones=results[4]; state.usuarios=results[5]; state.auditoria=results[6]||[];
+        return sincronizarTrasladosConColaboradores();
+      });
+    });
+  }
+  return centralLoadState().catch(function(err){
+    if(err && err.status === 401){
+      CENTRAL_TOKEN = null;
+      centralStorageClear();
+      currentUser = null;
+      showLogin('La sesión expiró. Inicie sesión nuevamente.');
+    }
+    throw err;
+  });
+};
+
+/* Login centralizado contra PostgreSQL/Supabase. */
+loginUser = function(){
+  var usernameEl = document.getElementById('loginUsername');
+  var passwordEl = document.getElementById('loginPassword');
+  var rememberEl = document.getElementById('loginRemember');
+  var btn = document.getElementById('btnLogin');
+
+  var username = usernameEl ? usernameEl.value.trim() : '';
+  var password = passwordEl ? passwordEl.value : '';
+  var remember = !!(rememberEl && rememberEl.checked);
+
+  if(!username || !password){
+    showLogin('Ingrese usuario y contraseña.');
+    return false;
+  }
+
+  if(btn) btn.disabled = true;
+
+  var body = { username: username, password: password };
+
+  function doLogin(){
+    return centralRequest('/login', {
+      method:'POST',
+      body:body
+    }).catch(function(err){
+      /*
+       * Compatibilidad definitiva: si una versión antigua de la Edge Function
+       * no reconoce /login, prueba la raíz una sola vez.
+       */
+      if(err && (err.status === 404 || err.status === 405)){
+        return centralRequest('', {
+          method:'POST',
+          body:body
+        });
+      }
+      throw err;
+    });
+  }
+
+  doLogin().then(function(result){
+    if(!result || !result.token || !result.user){
+      throw new Error('El servidor respondió sin una sesión válida.');
+    }
+
+    CENTRAL_TOKEN = result.token;
+    currentUser = result.user;
+
+    centralStorageSet(
+      CENTRAL_TOKEN_KEY,
+      CENTRAL_TOKEN,
+      remember
+    );
+    centralStorageSet(
+      CENTRAL_USER_KEY,
+      JSON.stringify(currentUser),
+      remember
+    );
+
+    return centralLoadState();
+  }).then(function(){
+    hideLogin();
+    updateSessionUI();
+    rerenderAll();
+
+    if(typeof bootAdv === 'function'){
+      try { bootAdv(); } catch(e) { console.warn('bootAdv:', e); }
+    }
+
+    switchTab('resumen');
+
+    showToast(
+      'Bienvenido, ' +
+      (currentUser.nombre || currentUser.username) +
+      '.',
+      'success'
+    );
+  }).catch(function(err){
+    console.error('LOGIN CENTRAL DEFINITIVO:', err);
+
+    CENTRAL_TOKEN = null;
+    currentUser = null;
+    centralStorageClear();
+
+    var msg = 'No fue posible iniciar sesión.';
+    if(err && err.message){
+      msg = err.message;
+    }
+
+    showLogin(msg);
+  }).finally(function(){
+    if(btn) btn.disabled = false;
+  });
+
+  return false;
+};
+
+restoreSession = function(){
+  var token = centralStorageGet(CENTRAL_TOKEN_KEY);
+  var rawUser = centralStorageGet(CENTRAL_USER_KEY);
+  if(!token || !centralTokenValid(token) || !rawUser){
+    CENTRAL_TOKEN = null;
+    return false;
+  }
+  try {
+    CENTRAL_TOKEN = token;
+    currentUser = JSON.parse(rawUser);
+    if(!currentUser || !currentUser.username){ throw new Error('bad session'); }
+    hideLogin();
+    updateSessionUI();
+    return true;
+  } catch(e){
+    CENTRAL_TOKEN = null;
+    centralStorageClear();
+    currentUser = null;
+    return false;
+  }
+};
+
+logout = function(){
+  currentUser = null;
+  CENTRAL_TOKEN = null;
+  centralStorageClear();
+  updateSessionUI();
+  var u=document.getElementById('loginUsername'); var p=document.getElementById('loginPassword');
+  if(u) u.value=''; if(p) p.value='';
+  showLogin();
+};
+
+/* Eliminaciones directas para no borrar y reconstruir tablas completas. */
+deleteColaborador = function(rut){
+  if(!confirm('¿Eliminar este colaborador?')) return;
+  centralRequest('', {method:'POST', body:{action:'delete', table:'colaboradores', id:rut}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Colaborador eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el colaborador.','error');});
+};
+deleteSucursal = function(codigo){
+  if(!confirm('¿Eliminar esta sucursal?')) return;
+  centralRequest('', {method:'POST', body:{action:'delete', table:'sucursales', id:codigo}}).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Sucursal eliminada.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar la sucursal.','error');});
+};
+eliminarTraslado = function(id){
+  if(!confirm('¿Eliminar este traslado?')) return;
+  centralRequest('', {method:'POST', body:{action:'delete', table:'traslados', id:id}}).then(reloadStateFromDB).then(function(){return sincronizarTrasladosConColaboradores();}).then(function(){rerenderAll();showToast('Traslado eliminado.','success');}).catch(function(err){console.error(err);showToast('No fue posible eliminar el traslado.','error');});
+};
+
+/* El respaldo conserva su exportación local, pero la restauración queda centralizada. */
+var _localImportBackup = importBackup;
+importBackup = function(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    try {
+      var d = JSON.parse(reader.result);
+      if(!d || !Array.isArray(d.colaboradores) || !Array.isArray(d.sucursales)) throw new Error('Formato inválido');
+      if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)) throw new Error('Debe iniciar sesión nuevamente.');
+      Promise.all([
+        centralRequest('',{method:'POST',body:{action:'clear',table:'colaboradores'}}),
+        centralRequest('',{method:'POST',body:{action:'clear',table:'sucursales'}}),
+        centralRequest('',{method:'POST',body:{action:'clear',table:'traslados'}}),
+        centralRequest('',{method:'POST',body:{action:'clear',table:'vacaciones'}}),
+        centralRequest('',{method:'POST',body:{action:'clear',table:'licencias'}}),
+        centralRequest('',{method:'POST',body:{action:'clear',table:'auditoria'}})
+      ]).then(function(){
+        return Promise.all([
+          dbBulkPut(STORES.COLAB,d.colaboradores), dbBulkPut(STORES.SUC,d.sucursales), dbBulkPut(STORES.TRAS,d.traslados||[]), dbBulkPut(STORES.VAC,d.vacaciones||[]), dbBulkPut(STORES.LIC,d.licencias||[]), dbBulkPut(STORES.AUDIT,d.auditoria||[])
+        ]);
+      }).then(reloadStateFromDB).then(function(){rerenderAll();showToast('Respaldo restaurado correctamente.','success');}).catch(function(err){console.error(err);showToast(err.message||'No fue posible restaurar el respaldo.','error');});
+    } catch(e){ showToast(e.message||'El archivo no tiene un respaldo válido.','error'); }
+  };
+  reader.readAsText(file);
+};
+
+
+/* ====== TEMA VERDE PASTEL + EXPERIENCIA INTERACTIVA ====== */
+(function(){
+  var style=document.createElement('style');
+  style.id='panelPastelGreenTheme';
+  style.textContent=`
+    :root{
+      --ink:#164437 !important;
+      --ink-2:#205B48 !important;
+      --ink-3:#2D705A !important;
+      --paper:#F2F8F4 !important;
+      --surface:#FFFFFF !important;
+      --amber:#D6A23A !important;
+      --amber-dark:#9A6B12 !important;
+      --amber-soft:#FFF1CC !important;
+      --teal:#58A982 !important;
+      --teal-dark:#277454 !important;
+      --teal-soft:#DDF3E7 !important;
+      --terracotta:#D7655B !important;
+      --terracotta-dark:#A83D35 !important;
+      --terracotta-soft:#FBE2DF !important;
+      --gold:#D6A23A !important;
+      --gold-soft:#FFF1CC !important;
+      --purple:#7893B5 !important;
+      --purple-dark:#526E91 !important;
+      --purple-soft:#E8EEF7 !important;
+      --slate:#596D66 !important;
+      --slate-light:#8A9C95 !important;
+      --border:#DDEBE3 !important;
+      --border-strong:#C7DDD1 !important;
+      --shadow-sm:0 2px 8px rgba(31,84,63,.07) !important;
+      --shadow-md:0 10px 28px rgba(31,84,63,.10) !important;
+    }
+
+    /* ===== LOGIN VERDE PASTEL ===== */
+    .login-screen{
+      position:fixed !important; inset:0 !important;
+      background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
+      display:flex !important; align-items:center !important; justify-content:center !important;
+      padding:20px !important; z-index:1000 !important;
+    }
+    .login-card{
+      width:100% !important; max-width:430px !important;
+      background:#fff !important; border-radius:20px !important;
+      box-shadow:0 24px 80px rgba(18,67,51,.28) !important;
+      overflow:hidden !important; border:1px solid #DDEBE3 !important;
+    }
+    .login-head{
+      padding:28px 30px 20px !important;
+      background:linear-gradient(180deg,#F8FCF9,#fff) !important;
+      border-bottom:1px solid #DDEBE3 !important;
+    }
+    .login-mark{
+      background:#D6A23A !important; color:#164437 !important;
+      box-shadow:0 5px 14px rgba(214,162,58,.20) !important;
+    }
+    .login-title,.login-card h1,.login-card h2,.login-card h3{
+      color:#164437 !important;
+    }
+    .login-sub,.login-help{
+      color:#71857D !important;
+    }
+    .login-body{padding:26px 30px 30px !important;}
+    .login-card label{color:#596D66 !important;font-weight:700 !important;}
+    .login-card input{
+      border:1px solid #C7DDD1 !important;
+      background:#fff !important;
+      color:#164437 !important;
+      border-radius:9px !important;
+    }
+    .login-card input:focus{
+      border-color:#58A982 !important;
+      box-shadow:0 0 0 3px rgba(88,169,130,.15) !important;
+      outline:none !important;
+    }
+    .login-card input::placeholder{color:#9AA9A3 !important;}
+    .login-error{
+      background:#FBE2DF !important;
+      color:#A83D35 !important;
+      border-color:#E8B8AF !important;
+    }
+    .login-card .btn-primary,
+    #btnLogin{
+      background:#277454 !important;
+      border-color:#277454 !important;
+      color:#fff !important;
+      border-radius:9px !important;
+      transition:transform .18s ease,box-shadow .18s ease,background .18s ease !important;
+    }
+    .login-card .btn-primary:hover,
+    #btnLogin:hover{
+      background:#1F6247 !important;
+      transform:translateY(-1px) !important;
+      box-shadow:0 8px 18px rgba(39,116,84,.18) !important;
+    }
+    .login-card .btn-primary:disabled,
+    #btnLogin:disabled{opacity:.65 !important;cursor:wait !important;}
+    .login-card a{color:#277454 !important;}
+
+    body{background:linear-gradient(135deg,#F3F9F5 0%,#EDF7F1 100%) !important;}
+    .sidebar{background:linear-gradient(180deg,#174A3B 0%,#1F604B 100%) !important;}
+    .nav-item.active{background:#DDF3E7 !important;color:#164437 !important;box-shadow:0 5px 18px rgba(50,120,88,.16) !important;}
+    .nav-badge{background:rgba(255,255,255,.15) !important;}
+    .btn-primary{background:#277454 !important;border-color:#277454 !important;}
+    .btn-primary:hover{background:#1F6247 !important;transform:translateY(-1px);}
+    .card,.table-wrap,.ticket{border-color:#DDEBE3 !important;box-shadow:0 4px 16px rgba(31,84,63,.07) !important;}
+    .kpi-board{background:linear-gradient(135deg,#174A3B,#2D705A) !important;}
+    .kpi-value.teal{color:#B9F0D0 !important;}
+    .toolbar .input,.toolbar select,.input,select,textarea{border-color:#C7DDD1 !important;}
+    .toolbar .input:focus,.input:focus,select:focus,textarea:focus{border-color:#58A982 !important;box-shadow:0 0 0 3px rgba(88,169,130,.14) !important;}
+    .tickets-grid{grid-template-columns:repeat(auto-fill,minmax(360px,1fr)) !important;gap:16px !important;}
+    .ticket{border-top-width:5px !important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important;}
+    .ticket:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(31,84,63,.12) !important;}
+    .ticket-aprobado{border-top-color:#58A982 !important;background:linear-gradient(180deg,#FFFFFF,#F7FCF9) !important;}
+    .ticket-espera{border-top-color:#D6A23A !important;background:linear-gradient(180deg,#FFFFFF,#FFFDF7) !important;}
+    .ticket-rechazado{border-top-color:#D7655B !important;background:linear-gradient(180deg,#FFFFFF,#FFF9F8) !important;}
+    .ticket-pendiente{border-top-color:#7893B5 !important;background:linear-gradient(180deg,#FFFFFF,#F9FBFD) !important;}
+    .ticket-aprobado .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
+    .ticket-espera .pill-amber{background:#FFF1CC !important;color:#9A6B12 !important;}
+    .ticket-rechazado .pill-terracotta{background:#FBE2DF !important;color:#A83D35 !important;}
+    .ticket-pendiente .pill-slate{background:#E8EEF7 !important;color:#526E91 !important;}
+    .route-arrow{color:#58A982 !important;}
+    .icon-btn{border-color:#DDEBE3 !important;background:#F4F9F6 !important;}
+    .icon-btn:hover{background:#DDF3E7 !important;color:#277454 !important;}
+    .row-vacacion{background:#F0FAF4 !important;}
+    .row-ausente{background:#F0F5FB !important;}
+    .status-stack .pill-teal{background:#DDF3E7 !important;color:#277454 !important;}
+    .tras-interactive-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px;}
+    .tras-summary-card{background:#fff;border:1px solid #DDEBE3;border-radius:14px;padding:14px 16px;box-shadow:0 4px 14px rgba(31,84,63,.06);cursor:pointer;transition:.18s ease;position:relative;overflow:hidden;}
+    .tras-summary-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(31,84,63,.10);}
+    .tras-summary-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#71857D;font-weight:700;}
+    .tras-summary-card .num{font-size:28px;font-weight:800;line-height:1.1;margin-top:5px;color:#164437;}
+    .tras-summary-card.aprobado{border-left:5px solid #58A982;}
+    .tras-summary-card.espera{border-left:5px solid #D6A23A;}
+    .tras-summary-card.rechazado{border-left:5px solid #D7655B;}
+    .tras-summary-card.pendiente{border-left:5px solid #7893B5;}
+    .tras-interactive-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 16px;background:rgba(255,255,255,.78);padding:10px;border:1px solid #DDEBE3;border-radius:13px;backdrop-filter:blur(8px);}
+    .tras-interactive-toolbar input,.tras-interactive-toolbar select{height:40px;border:1px solid #C7DDD1;border-radius:9px;background:#fff;padding:0 12px;color:#164437;}
+    .tras-interactive-toolbar input{flex:1;min-width:240px;}
+    .tras-interactive-toolbar select{min-width:190px;}
+    .tras-filter-count{font-size:12px;color:#71857D;font-weight:600;margin-left:auto;}
+    @media(max-width:850px){.tras-interactive-summary{grid-template-columns:repeat(2,1fr)}.tras-filter-count{width:100%;margin-left:0}.tickets-grid{grid-template-columns:1fr !important;}}
+  `;
+  document.head.appendChild(style);
+})();
+
+(function(){
+  /* Usuarios nuevos recuperan inmediatamente TODA la base central al entrar. */
+  var _centralRestoreSession = restoreSession;
+  restoreSession = function(){
+    var ok=_centralRestoreSession();
+    if(ok && CENTRAL_TOKEN && centralTokenValid(CENTRAL_TOKEN)){
+      centralLoadState().then(function(){
+        updateSessionUI();
+        rerenderAll();
+        if(typeof bootAdv==='function')bootAdv();
+      }).catch(function(err){console.error('Carga central inicial:',err);});
+    }
+    return ok;
+  };
+
+  /* Vista interactiva de traslados: filtros + resumen por estado. */
+  var _renderTrasladosBase=renderTraslados;
+  renderTraslados=function(){
+    _renderTrasladosBase();
+    var tab=document.getElementById('tab-traslados');
+    var grid=document.getElementById('trasladosGrid');
+    if(!tab || !grid) return;
+
+    var list=state.traslados||[];
+    var counts={total:list.length,pendiente:0,espera:0,aprobado:0,rechazado:0};
+    list.forEach(function(t){if(counts[t.estado]!==undefined)counts[t.estado]++;});
+
+    var summary=tab.querySelector('.tras-interactive-summary');
+    if(!summary){
+      summary=document.createElement('div');
+      summary.className='tras-interactive-summary';
+      grid.parentNode.insertBefore(summary,grid);
+    }
+    summary.innerHTML='';
+    [
+      ['total','Total','tras-summary-card'],
+      ['aprobado','Aprobados','tras-summary-card aprobado'],
+      ['espera','En observación','tras-summary-card espera'],
+      ['rechazado','Rechazados','tras-summary-card rechazado']
+    ].forEach(function(item){
+      var c=document.createElement('div');c.className=item[2];c.setAttribute('data-status-filter',item[0]);
+      c.innerHTML='<div class="label">'+item[1]+'</div><div class="num">'+counts[item[0]]+'</div>';
+      c.addEventListener('click',function(){
+        var sel=document.getElementById('trasStatusFilter');
+        if(sel){sel.value=item[0]==='total'?'':item[0];sel.dispatchEvent(new Event('change'));}
+      });
+      summary.appendChild(c);
+    });
+
+    var bar=tab.querySelector('.tras-interactive-toolbar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.className='tras-interactive-toolbar';
+      var input=document.createElement('input');
+      input.id='trasSearch';input.placeholder='Buscar colaborador, RUT, origen o destino...';
+      var select=document.createElement('select');select.id='trasStatusFilter';
+      select.innerHTML='<option value="">Todos los estados</option><option value="pendiente">Pendientes</option><option value="espera">En observación</option><option value="aprobado">Aprobados</option><option value="rechazado">Rechazados</option>';
+      var count=document.createElement('span');count.className='tras-filter-count';count.id='trasFilterCount';
+      bar.appendChild(input);bar.appendChild(select);bar.appendChild(count);
+      grid.parentNode.insertBefore(bar,grid);
+      function apply(){
+        var q=(input.value||'').toLowerCase().trim(), st=select.value||'';
+        var cards=grid.children, visible=0;
+        for(var i=0;i<cards.length;i++){
+          var card=cards[i], okText=!q || (card.textContent||'').toLowerCase().indexOf(q)!==-1;
+          var okStatus=!st || card.classList.contains('ticket-'+st);
+          card.style.display=(okText&&okStatus)?'':'none';
+          if(okText&&okStatus)visible++;
+        }
+        count.textContent='Mostrando '+visible+' de '+list.length+' traslados';
+      }
+      input.addEventListener('input',apply);select.addEventListener('change',apply);
+      bar.__apply=apply;
+    }
+    var badge=document.getElementById('navBadgeTras');
+    if(badge)badge.textContent=String(list.length);
+    if(bar.__apply)bar.__apply();
+  };
+})();
+
+
+
+
+
+</script>
+
+</body></html>');w.document.close();w.print();};}
 function renderCloseHistory(){var out=document.getElementById('closeHistory');var arr=Object.keys(adv.closures).sort().reverse();out.innerHTML=arr.length?'<div class="adv-list">'+arr.map(function(k){var c=adv.closures[k];return '<div class="adv-item"><div class="adv-item-title">'+h(k)+'</div><div class="adv-item-sub">'+c.colaboradores+' colaboradores · '+c.sucursales+' sucursales · '+c.vacaciones+' vacaciones · '+c.licencias+' licencias · '+c.traslados+' traslados</div></div>';}).join('')+'</div>':'<div class="empty-adv">Todavía no hay cierres mensuales guardados.</div>';}
 function renderConfiguracion(){document.getElementById('cfgEmpresa').value=adv.settings.empresa||'';document.getElementById('cfgAlertDays').value=adv.settings.alertDays||7;var S=currentState(),out=document.getElementById('cfgBranches');out.innerHTML=S.sucursales.map(function(s){return '<div class="coverage-row"><div><strong>'+h(s.nombre)+'</strong><div class="muted">'+h(s.codigo||'')+'</div></div><div>Objetivo</div><input type="number" min="0" data-obj-suc="'+h(s.nombre)+'" value="'+h(adv.settings.objetivos[s.nombre]||'')+'" placeholder="0"><div></div><button class="btn btn-sm btn-primary" data-save-obj="'+h(s.nombre)+'">Guardar</button></div>';}).join('')||'<div class="empty-adv">No hay sucursales.</div>';out.querySelectorAll('[data-save-obj]').forEach(function(b){b.onclick=function(){var n=b.getAttribute('data-save-obj'),inp=out.querySelector('[data-obj-suc="'+CSS.escape(n)+'"]');adv.settings.objetivos[n]=Number(inp.value||0);saveAdv();renderConfiguracion();renderControl();showToast('Dotación objetivo actualizada.','success');};});}
 function openNotes(rut){var S=currentState(),c=S.colaboradores.find(function(x){return cleanRut(x.rut)===cleanRut(rut);});if(!c){showToast('No se encontró el colaborador.','error');return;}var key=cleanRut(rut),notes=adv.notes[key]||[],files=adv.files[key]||[];var html='<div class="adv-section"><div class="adv-section-body"><strong>'+h(c.nombre)+'</strong><div class="muted">'+h(c.rut)+' · '+h(c.cargo||'')+' · '+h(c.sucursalActual||'Sin sucursal')+'</div></div></div><label class="field-label">Nueva nota</label><textarea id="advNewNote" class="textarea" placeholder="Escribe una nota interna..."></textarea><div style="margin-top:15px"><strong>Notas</strong><div id="advNotesList" style="margin-top:8px">'+(notes.length?notes.slice().reverse().map(function(n){return '<div class="note-box"><div>'+h(n.text)+'</div><small>'+h(n.by||'sistema')+' · '+h(fmtDate(n.date.slice(0,10)))+'</small></div>';}).join(''):'<div class="muted">Sin notas.</div>')+'</div></div><div style="margin-top:18px"><strong>Adjuntos</strong><input id="advFileInput" type="file" multiple style="display:block;margin:8px 0"><div>'+(files.length?files.map(function(f,i){return '<div class="file-chip"><a href="'+f.data+'" download="'+h(f.name)+'">'+h(f.name)+'</a><button class="btn btn-sm btn-danger" data-del-file="'+i+'">Eliminar</button></div>';}).join(''):'<div class="muted">Sin archivos adjuntos.</div>')+'</div></div>';openAdvModal('Ficha documental — '+c.nombre,html,function(){var t=document.getElementById('advNewNote').value.trim();if(t){adv.notes[key]=adv.notes[key]||[];adv.notes[key].push({text:t,by:(window.currentUser&&currentUser.nombre)||'sistema',date:new Date().toISOString()});}var inp=document.getElementById('advFileInput'),fs=inp.files;var pending=[];for(var i=0;i<fs.length;i++){if(fs[i].size>1024*1024){showToast('Archivo '+fs[i].name+' supera 1 MB.','error');continue;} (function(f){pending.push(new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve({name:f.name,type:f.type,data:r.result,date:new Date().toISOString()});};r.onerror=reject;r.readAsDataURL(f);}));})(fs[i]);}if(pending.length){Promise.all(pending).then(function(a){adv.files[key]=(adv.files[key]||[]).concat(a);saveAdv();});}else saveAdv();return true;});var mr=document.getElementById('modalRoot');mr.querySelectorAll('[data-del-file]').forEach(function(b){b.onclick=function(){var idx=Number(b.getAttribute('data-del-file'));if(adv.files[key]){adv.files[key].splice(idx,1);saveAdv();openNotes(key);}};});}
