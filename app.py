@@ -446,6 +446,247 @@ importBackup = function(file){
   };
 })();
 
+
+/* ====== SESIONES CENTRALES REALES ====== */
+
+renderSessionsTable = function(){
+  var tbody=document.getElementById('sessionsTableBody');
+  if(!tbody) return;
+
+  tbody.innerHTML='';
+
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
+    tbody.appendChild(el('tr',{
+      children:[
+        el('td',{
+          attrs:{colspan:'7'},
+          class:'empty-cell',
+          text:'No hay una sesión central activa.'
+        })
+      ]
+    }));
+    return;
+  }
+
+  centralRequest('/sessions').then(function(result){
+    var list=result.sessions||[];
+
+    if(!list.length){
+      tbody.appendChild(el('tr',{
+        children:[
+          el('td',{
+            attrs:{colspan:'7'},
+            class:'empty-cell',
+            text:'No hay sesiones activas en este momento.'
+          })
+        ]
+      }));
+      return;
+    }
+
+    list.forEach(function(s){
+      var tr=document.createElement('tr');
+
+      tr.appendChild(el('td',{
+        children:[
+          el('strong',{text:s.username||'—'})
+        ]
+      }));
+
+      var nombre='—';
+      if(currentUser && s.username===currentUser.username){
+        nombre=currentUser.nombre||currentUser.username;
+      }
+
+      tr.appendChild(el('td',{text:nombre}));
+
+      tr.appendChild(el('td',{
+        children:[
+          el('span',{
+            class:
+              'pill '+
+              (s.role==='superadmin'
+                ? 'pill-amber'
+                : s.role==='admin'
+                  ? 'pill-teal'
+                  : 'pill-slate'),
+            text:roleLabel(s.role)
+          })
+        ]
+      }));
+
+      tr.appendChild(el('td',{
+        class:'mono',
+        text:formatLastLogin(s.created_at)
+      }));
+
+      tr.appendChild(el('td',{
+        class:'mono',
+        text:formatLastLogin(s.last_activity_at)
+      }));
+
+      tr.appendChild(el('td',{
+        children:[
+          el('span',{
+            class:'session-online',
+            children:[
+              el('span',{class:'session-online-dot'}),
+              document.createTextNode('Conectado')
+            ]
+          })
+        ]
+      }));
+
+      var actions=el('td',{class:'row-actions'});
+      var own=centralTokenPayload(CENTRAL_TOKEN);
+
+      if(own && s.session_id===own.sessionId){
+        actions.appendChild(
+          el('span',{
+            class:'session-offline',
+            text:'Sesión actual'
+          })
+        );
+      }else{
+        actions.appendChild(
+          el('button',{
+            class:'icon-btn icon-btn-danger',
+            attrs:{title:'Cerrar sesión'},
+            text:'⏻',
+            on:{
+              click:function(){
+                forceLogoutUser(s);
+              }
+            }
+          })
+        );
+      }
+
+      tr.appendChild(actions);
+      tbody.appendChild(tr);
+    });
+
+  }).catch(function(err){
+    console.error('Sesiones:',err);
+
+    if(err && err.status===403){
+      tbody.appendChild(el('tr',{
+        children:[
+          el('td',{
+            attrs:{colspan:'7'},
+            class:'empty-cell',
+            text:'Solo un Super Admin puede administrar sesiones.'
+          })
+        ]
+      }));
+    }
+  });
+};
+
+
+forceLogoutUser = function(session){
+
+  if(!currentUser || currentUser.role!=='superadmin'){
+    showToast('Se requiere Super Admin.','error');
+    return;
+  }
+
+  if(!session || !session.session_id){
+    return;
+  }
+
+  var own=centralTokenPayload(CENTRAL_TOKEN);
+
+  if(own && session.session_id===own.sessionId){
+    showToast(
+      'No puedes cerrar tu propia sesión desde este listado.',
+      'error'
+    );
+    return;
+  }
+
+  centralRequest('',{
+    method:'POST',
+    body:{
+      action:'revokeSession',
+      sessionId:session.session_id
+    }
+  }).then(function(){
+
+    renderSessionsTable();
+
+    showToast(
+      'Sesión de '+(session.username||'usuario')+' cerrada.',
+      'success'
+    );
+
+  }).catch(function(err){
+
+    console.error('Revocar sesión:',err);
+
+    showToast(
+      err.message||'No fue posible cerrar la sesión.',
+      'error'
+    );
+
+  });
+};
+
+
+enforceCurrentSession = function(){
+
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
+    return Promise.resolve(false);
+  }
+
+  return centralRequest('/state').then(function(){
+    return true;
+  }).catch(function(err){
+
+    if(err && err.status===401){
+
+      CENTRAL_TOKEN=null;
+      centralStorageClear();
+      currentUser=null;
+
+      updateSessionUI();
+
+      showLogin(
+        'Tu sesión fue cerrada por un Super Admin.'
+      );
+    }
+
+    return false;
+  });
+};
+
+
+heartbeatSession = function(){
+
+  if(!CENTRAL_TOKEN || !centralTokenValid(CENTRAL_TOKEN)){
+    return;
+  }
+
+  centralRequest('/state').then(function(){
+
+    if(
+      document.getElementById('tab-usuarios') &&
+      document.getElementById('tab-usuarios').classList.contains('active')
+    ){
+      renderSessionsTable();
+    }
+
+  }).catch(function(err){
+
+    if(err && err.status===401){
+      enforceCurrentSession();
+    }
+
+  });
+};
+
+/* ====== FIN SESIONES CENTRALES REALES ====== */
+
 /* ====== FIN SINCRONIZACION CENTRAL ====== */
 
 """
