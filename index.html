@@ -544,131 +544,30 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
 </style>
 
 
-<style id="login-top-center-final">
-.login-screen{
-  display:flex !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding:28px 20px 40px !important;
-  box-sizing:border-box !important;
-  min-height:100vh !important;
-}
-.login-card{
-  margin:0 auto !important;
-}
-</style>
-
-
-<style id="global-content-center-final">
-/* Centrado general del contenido en TODOS los módulos */
+<style id="recovery-layout-css">
+/* El contenido se mantiene limpio y centrado dentro del área de trabajo. */
 .main{
-  margin-left:252px !important;
-  padding:30px 24px 70px !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  min-width:0 !important;
+  width:calc(100% - 256px) !important;
+  margin-left:256px !important;
+  padding:18px 24px 35px !important;
+  box-sizing:border-box !important;
 }
 .main > .topbar,
-.main > .tab-panel,
-.main > .creator-footer{
+.main > .tab-panel{
   width:100% !important;
   max-width:1450px !important;
   margin-left:auto !important;
   margin-right:auto !important;
 }
-.main > .tab-panel{
-  box-sizing:border-box !important;
-}
-.topbar{
-  justify-content:space-between !important;
-}
-.toolbar,
-.filter-row{
-  justify-content:center !important;
-}
-.filter-row{
-  width:100% !important;
-}
-.table-wrap,
-.dashboard-grid,
-.kpi-board,
-.premium-summary-grid,
-.grid-2,
-.section-hero,
-.section-metrics,
-.quick-card-grid,
-.tickets-grid{
-  width:100% !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-.section-hero,
-.section-metrics{
-  box-sizing:border-box !important;
-}
-.table-wrap{
-  overflow-x:auto !important;
-}
-@media(max-width:1100px){
-  .main{
-    margin-left:252px !important;
-    padding-left:18px !important;
-    padding-right:18px !important;
-  }
-}
+.tab-panel{min-height:auto !important;}
 @media(max-width:720px){
-  .sidebar{width:220px !important;}
   .main{
+    width:calc(100% - 220px) !important;
     margin-left:220px !important;
-    padding:20px 14px 50px !important;
+    padding:14px !important;
   }
   .main > .topbar,
-  .main > .tab-panel,
-  .main > .creator-footer{
-    max-width:none !important;
-  }
-}
-</style>
-
-
-<style id="forms-top-center-final">
-/* Formularios/modales de Usuarios, Colaboradores, Sucursales y Traslados:
-   centrados horizontalmente y comenzando desde arriba. */
-.modal-overlay{
-  position:fixed !important;
-  inset:0 !important;
-  display:flex !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding:55px 20px 25px !important;
-  box-sizing:border-box !important;
-  overflow-y:auto !important;
-  z-index:10000 !important;
-}
-.modal{
-  width:min(600px,100%) !important;
-  max-width:600px !important;
-  margin:0 auto !important;
-  max-height:calc(100vh - 80px) !important;
-}
-.modal-wide{
-  width:min(700px,100%) !important;
-  max-width:700px !important;
-}
-.modal-body{
-  max-height:calc(100vh - 190px) !important;
-  overflow-y:auto !important;
-}
-.modal-footer{
-  justify-content:center !important;
-}
-.form-row,
-.mapping-grid,
-.profile-grid{
-  width:100% !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
+  .main > .tab-panel{max-width:none !important;}
 }
 </style>
 
