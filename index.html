@@ -1058,10 +1058,30 @@ function dbGetAll(storeName){
 }
 function dbPut(storeName, obj){
   return new Promise(function(resolve, reject){
-    var tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).put(obj);
-    tx.oncomplete = function(){ resolve(); };
-    tx.onerror = function(){ reject(tx.error); };
+    try{
+      if(!db) return reject(new Error('La base de datos no está disponible.'));
+      var tx = db.transaction(storeName, 'readwrite');
+      var req = tx.objectStore(storeName).put(obj);
+
+      var settled = false;
+      function ok(){
+        if(!settled){ settled=true; resolve(); }
+      }
+      function fail(err){
+        if(!settled){
+          settled=true;
+          reject(err || tx.error || new Error('No fue posible guardar.'));
+        }
+      }
+
+      req.onsuccess = function(){ /* el commit real se confirma en tx.oncomplete */ };
+      req.onerror = function(){ fail(req.error); };
+      tx.oncomplete = ok;
+      tx.onerror = function(){ fail(tx.error); };
+      tx.onabort = function(){ fail(tx.error || new Error('La transacción fue cancelada.')); };
+    }catch(err){
+      reject(err);
+    }
   });
 }
 function dbBulkPut(storeName, arr){
@@ -1282,23 +1302,67 @@ function openUserModal(user){
 }
 function saveUser(existing){
   if(!requireSuperAdmin()) return;
+
   var username=document.getElementById('userFormUsername').value.trim().toLowerCase();
   var nombre=document.getElementById('userFormName').value.trim();
   var role=document.getElementById('userFormRole').value;
-  var sucursal=document.getElementById('userFormSucursal').value;
+  var sucursal=document.getElementById('userFormSucursal').value || 'Todas';
   var password=document.getElementById('userFormPassword').value;
   var activo=document.getElementById('userFormActive').checked;
-  if(!username || !nombre || (!existing && !password)){showToast('Complete los campos obligatorios.','error');return;}
-  if(!existing && getUserByUsername(username)){showToast('Ese usuario ya existe.','error');return;}
-  if(existing && existing.username==='admin' && role!=='superadmin'){showToast('El usuario admin debe mantenerse como Super Admin.','error');return;}
-  var rec=existing?Object.assign({},existing):{username:username,createdAt:new Date().toISOString(),lastLogin:''};
-  rec.nombre=nombre; rec.role=role; rec.sucursal=sucursal||'Todas'; rec.activo=activo;
-  var job=password?hashPassword(password).then(function(hash){rec.passwordHash=hash;}):Promise.resolve();
-  job.then(function(){return dbPut(STORES.USERS,rec);}).then(function(){
-    if(existing){state.usuarios=state.usuarios.map(function(u){return u.username===existing.username?rec:u;}); if(currentUser&&currentUser.username===existing.username){currentUser=rec;updateSessionUI();}}
-    else state.usuarios.push(rec);
-    closeModal();renderUsersTable();showToast('Usuario guardado correctamente.','success');
-  }).catch(function(){showToast('No fue posible guardar el usuario.','error');});
+
+  if(!username || !nombre || (!existing && !password)){
+    showToast('Complete los campos obligatorios.','error');
+    return;
+  }
+
+  if(!existing && getUserByUsername(username)){
+    showToast('Ese usuario ya existe.','error');
+    return;
+  }
+
+  if(existing && existing.username==='admin' && role!=='superadmin'){
+    showToast('El usuario admin debe mantenerse como Super Admin.','error');
+    return;
+  }
+
+  var rec=existing
+    ? Object.assign({},existing)
+    : {username:username,createdAt:new Date().toISOString(),lastLogin:''};
+
+  rec.username = username;
+  rec.nombre = nombre;
+  rec.role = role;
+  rec.sucursal = sucursal;
+  rec.activo = activo;
+
+  var job = password
+    ? hashPassword(password).then(function(hash){ rec.passwordHash=hash; })
+    : Promise.resolve();
+
+  job
+    .then(function(){
+      return dbPut(STORES.USERS,rec);
+    })
+    .then(function(){
+      return dbGetAll(STORES.USERS);
+    })
+    .then(function(users){
+      state.usuarios = users || [];
+
+      if(currentUser && currentUser.username===rec.username){
+        currentUser = rec;
+        updateSessionUI();
+      }
+
+      closeModal();
+      renderUsersTable();
+      showToast('Usuario guardado correctamente.','success');
+    })
+    .catch(function(err){
+      console.error('Error guardando usuario:', err);
+      var msg = (err && err.message) ? err.message : 'Error de almacenamiento.';
+      showToast('No fue posible guardar el usuario: ' + msg,'error');
+    });
 }
 function toggleUser(user){
   if(!requireSuperAdmin()) return;
