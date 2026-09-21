@@ -2478,6 +2478,104 @@ function doReports(){var S=currentState();document.getElementById('repColab').on
 })();
 </script>
 
+
+<script id="metricas-forzadas-tiempo-real">
+(function(){
+  'use strict';
+
+  function cleanRut(v){ return String(v==null?'':v).toUpperCase().replace(/[^0-9K]/g,''); }
+  function pad(n){return String(n).padStart(2,'0');}
+  function today(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function date(v){
+    if(!v)return null;
+    var s=String(v).trim(),m=/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.exec(s);
+    if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+    m=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/.exec(s);
+    if(m)return new Date(+m[3],+m[2]-1,+m[1]);
+    return null;
+  }
+  function ini(x){return x.fechaInicio||x.inicio||x.fecha_inicio||'';}
+  function fin(x){return x.fechaTermino||x.termino||x.fecha_termino||'';}
+  function vigente(x){
+    var h=date(today()),i=date(ini(x)),f=date(fin(x));
+    return !!i && i<=h && (!f||f>=h);
+  }
+  function uniqVig(arr){
+    var seen={},n=0;
+    (arr||[]).forEach(function(x){
+      var r=cleanRut(x.rut||x.RUT);
+      if(r&&vigente(x)&&!seen[r]){seen[r]=1;n++;}
+    });
+    return n;
+  }
+  function uniqAll(arr){
+    var seen={},n=0;
+    (arr||[]).forEach(function(x){
+      var r=cleanRut(x.rut||x.RUT);
+      if(r&&!seen[r]){seen[r]=1;n++;}
+    });
+    return n;
+  }
+  function allState(){
+    return window.state || window.__panelState || {};
+  }
+  function put(tab, index, value){
+    var panel=document.getElementById(tab);
+    if(!panel)return;
+    var vals=panel.querySelectorAll('.section-metrics .sm-value');
+    if(vals[index]) vals[index].textContent=String(value);
+  }
+  function update(){
+    var s=allState();
+    var c=s.colaboradores||[], suc=s.sucursales||[], v=s.vacaciones||[], l=s.licencias||[];
+    if(!c.length && !suc.length && !v.length && !l.length)return;
+
+    var activos=c.filter(function(x){return String(x.estado||'Activo').toLowerCase()!=='inactivo';}).length;
+    var vv=uniqVig(v), lv=uniqVig(l);
+
+    /* Colaboradores */
+    put('tab-colaboradores',0,c.length);
+    put('tab-colaboradores',1,activos);
+    put('tab-colaboradores',2,vv);
+    put('tab-colaboradores',3,lv);
+
+    /* Sucursales */
+    put('tab-sucursales',0,suc.length);
+    put('tab-sucursales',1,c.length);
+    put('tab-sucursales',2,lv);
+    put('tab-sucursales',3,vv);
+
+    /* Vacaciones */
+    var h=date(today()),h7=new Date(h.getTime()+7*86400000);
+    var prox=v.filter(function(x){var d=date(ini(x));return d&&d>=h&&d<=h7;}).length;
+    put('tab-vacaciones',0,v.length);
+    put('tab-vacaciones',1,v.filter(vigente).length);
+    put('tab-vacaciones',2,prox);
+    put('tab-vacaciones',3,v.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||x.numero_dias||0);},0));
+
+    /* Licencias */
+    put('tab-licencias',0,l.length);
+    put('tab-licencias',1,l.filter(vigente).length);
+    put('tab-licencias',2,l.reduce(function(a,x){return a+Number(x.numeroDias||x.dias||x.numero_dias||0);},0));
+    put('tab-licencias',3,uniqAll(l));
+  }
+
+  function start(){
+    update();
+    var root=document.body;
+    if(root && !root.__metricObserver){
+      var obs=new MutationObserver(function(){update();});
+      obs.observe(root,{subtree:true,childList:true});
+      root.__metricObserver=obs;
+    }
+    setInterval(update,500);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+</script>
+
 </body></html>');w.document.close();w.print();};}
 function renderCloseHistory(){var out=document.getElementById('closeHistory');var arr=Object.keys(adv.closures).sort().reverse();out.innerHTML=arr.length?'<div class="adv-list">'+arr.map(function(k){var c=adv.closures[k];return '<div class="adv-item"><div class="adv-item-title">'+h(k)+'</div><div class="adv-item-sub">'+c.colaboradores+' colaboradores · '+c.sucursales+' sucursales · '+c.vacaciones+' vacaciones · '+c.licencias+' licencias · '+c.traslados+' traslados</div></div>';}).join('')+'</div>':'<div class="empty-adv">Todavía no hay cierres mensuales guardados.</div>';}
 function renderConfiguracion(){document.getElementById('cfgEmpresa').value=adv.settings.empresa||'';document.getElementById('cfgAlertDays').value=adv.settings.alertDays||7;var S=currentState(),out=document.getElementById('cfgBranches');out.innerHTML=S.sucursales.map(function(s){return '<div class="coverage-row"><div><strong>'+h(s.nombre)+'</strong><div class="muted">'+h(s.codigo||'')+'</div></div><div>Objetivo</div><input type="number" min="0" data-obj-suc="'+h(s.nombre)+'" value="'+h(adv.settings.objetivos[s.nombre]||'')+'" placeholder="0"><div></div><button class="btn btn-sm btn-primary" data-save-obj="'+h(s.nombre)+'">Guardar</button></div>';}).join('')||'<div class="empty-adv">No hay sucursales.</div>';out.querySelectorAll('[data-save-obj]').forEach(function(b){b.onclick=function(){var n=b.getAttribute('data-save-obj'),inp=out.querySelector('[data-obj-suc="'+CSS.escape(n)+'"]');adv.settings.objetivos[n]=Number(inp.value||0);saveAdv();renderConfiguracion();renderControl();showToast('Dotación objetivo actualizada.','success');};});}
