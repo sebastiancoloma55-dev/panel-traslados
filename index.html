@@ -54,6 +54,15 @@ a{color:inherit;}
 .user-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
 .role-badge{font-size:10.5px;padding:2px 7px;border-radius:20px;background:var(--amber-soft);color:var(--amber-dark);font-weight:700;}
 .user-toolbar-note{font-size:12.5px;color:var(--slate);}
+.session-panel{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);overflow:hidden;}
+.session-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.session-title{font-family:var(--font-display);font-weight:700;font-size:18px;}
+.session-sub{font-size:12px;color:var(--slate);margin-top:2px;}
+.session-table-wrap{overflow:auto;}
+.session-online{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--teal-dark);}
+.session-online-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);}
+.session-offline{color:var(--slate);font-size:12px;}
+
 .muted{color:var(--slate);font-size:13.5px;}
 .mono{font-family:var(--font-mono);}
 h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;margin:0;letter-spacing:.01em;}
@@ -786,7 +795,19 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
         <span class="user-toolbar-note">Solo el Super Admin puede administrar usuarios.</span>
         <button class="btn btn-primary" id="btnAddUser">+ Nuevo usuario</button>
       </div>
-      <div class="table-wrap">
+      <div class="session-panel">
+        <div class="session-head">
+          <div><div class="session-title">Sesiones activas</div><div class="session-sub">El Super Admin puede cerrar la sesión de cualquier Admin, Usuario o Super Admin conectado.</div></div>
+          <button class="btn btn-ghost" id="btnRefreshSessions">↻ Actualizar</button>
+        </div>
+        <div class="session-table-wrap">
+          <table>
+            <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Inicio</th><th>Última actividad</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="sessionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
         <table>
           <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Sucursal asignada</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
           <tbody id="usersTableBody"></tbody>
@@ -1193,6 +1214,75 @@ function updateSessionUI(){
 function escapeHtml(value){
   return String(value === null || value === undefined ? '' : value).replace(/[&<>'"]/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]; });
 }
+function createSessionId(){
+  return 'sess_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);
+}
+function sessionIsActive(user){
+  if(!user || !user.sessionActive || !user.sessionId) return false;
+  var t=user.lastActivityAt||user.lastLogin||'';
+  var ms=t?new Date(t).getTime():0;
+  return !!ms && (Date.now()-ms) < 90000;
+}
+function renderSessionsTable(){
+  var tbody=document.getElementById('sessionsTableBody'); if(!tbody) return;
+  tbody.innerHTML='';
+  var list=state.usuarios.filter(function(u){return sessionIsActive(u);}).sort(function(a,b){return String(b.lastActivityAt||'').localeCompare(String(a.lastActivityAt||''));});
+  if(!list.length){tbody.appendChild(el('tr',{children:[el('td',{attrs:{colspan:'7'},class:'empty-cell',text:'No hay sesiones activas en este momento.'})]}));return;}
+  list.forEach(function(u){
+    var tr=document.createElement('tr');
+    tr.appendChild(el('td',{children:[el('strong',{text:u.username})]}));
+    tr.appendChild(el('td',{text:u.nombre||'—'}));
+    tr.appendChild(el('td',{children:[el('span',{class:'pill '+(u.role==='superadmin'?'pill-amber':u.role==='admin'?'pill-teal':'pill-slate'),text:roleLabel(u.role)})]}));
+    tr.appendChild(el('td',{class:'mono',text:formatLastLogin(u.sessionStartedAt)}));
+    tr.appendChild(el('td',{class:'mono',text:formatLastLogin(u.lastActivityAt)}));
+    tr.appendChild(el('td',{children:[el('span',{class:'session-online',children:[el('span',{class:'session-online-dot'}),document.createTextNode('Conectado')]} )]}));
+    var actions=el('td',{class:'row-actions'});
+    if(currentUser && u.username===currentUser.username && u.sessionId===currentUser.sessionId){
+      actions.appendChild(el('span',{class:'session-offline',text:'Sesión actual'}));
+    }else{
+      actions.appendChild(el('button',{class:'icon-btn icon-btn-danger',attrs:{title:'Cerrar sesión'},text:'⏻',on:{click:function(){forceLogoutUser(u);}}}));
+    }
+    tr.appendChild(actions); tbody.appendChild(tr);
+  });
+}
+function forceLogoutUser(user){
+  if(!requireSuperAdmin()) return;
+  if(!user || !user.username) return;
+  if(currentUser && user.username===currentUser.username && user.sessionId===currentUser.sessionId){showToast('No puedes cerrar tu propia sesión desde este listado.','error');return;}
+  if(!sessionIsActive(user)){showToast('La sesión ya no está activa.','error');renderSessionsTable();return;}
+  var copy=Object.assign({},user,{sessionActive:false,forceLogoutAt:new Date().toISOString(),lastActivityAt:new Date().toISOString()});
+  dbPut(STORES.USERS,copy).then(function(){
+    state.usuarios=state.usuarios.map(function(u){return u.username===copy.username?copy:u;});
+    renderUsersTable(); renderSessionsTable();
+    showToast('Sesión de '+(copy.nombre||copy.username)+' cerrada.','success');
+  }).catch(function(e){console.error(e);showToast('No fue posible cerrar la sesión.','error');});
+}
+function enforceCurrentSession(){
+  if(!currentUser || !currentUser.sessionId) return;
+  var fresh=getUserByUsername(currentUser.username);
+  if(!fresh || !fresh.activo || !fresh.sessionActive || fresh.sessionId!==currentUser.sessionId || fresh.forceLogoutAt){
+    currentUser=null;
+    try{localStorage.removeItem('panelCurrentUser');sessionStorage.removeItem('panelCurrentUser');}catch(e){}
+    updateSessionUI();
+    document.getElementById('loginUsername').value='';
+    document.getElementById('loginPassword').value='';
+    showLogin('Tu sesión fue cerrada por un Super Admin.');
+    return false;
+  }
+  return true;
+}
+function heartbeatSession(){
+  if(!currentUser || !currentUser.sessionId) return;
+  var fresh=getUserByUsername(currentUser.username);
+  if(!fresh || fresh.sessionId!==currentUser.sessionId || !fresh.sessionActive){enforceCurrentSession();return;}
+  var now=new Date().toISOString();
+  var copy=Object.assign({},fresh,{lastActivityAt:now});
+  currentUser=copy;
+  dbPut(STORES.USERS,copy).then(function(){
+    state.usuarios=state.usuarios.map(function(u){return u.username===copy.username?copy:u;});
+    if(document.getElementById('tab-usuarios') && document.getElementById('tab-usuarios').classList.contains('active')) renderSessionsTable();
+  }).catch(function(e){console.error(e);});
+}
 function loginUser(){
   var username = document.getElementById('loginUsername').value.trim();
   var password = document.getElementById('loginPassword').value;
@@ -1203,6 +1293,11 @@ function loginUser(){
     if(hash !== user.passwordHash){ showLogin('Usuario o contraseña incorrectos.'); return; }
     currentUser = user;
     user.lastLogin = new Date().toISOString();
+    user.sessionId = createSessionId();
+    user.sessionStartedAt = new Date().toISOString();
+    user.lastActivityAt = user.sessionStartedAt;
+    user.sessionActive = true;
+    user.forceLogoutAt = null;
     return dbPut(STORES.USERS, user).then(function(){
       state.usuarios = state.usuarios.map(function(u){ return u.username === user.username ? user : u; });
       var remember = document.getElementById('loginRemember').checked;
@@ -1221,12 +1316,21 @@ function restoreSession(){
   if(!username) return false;
   var user = getUserByUsername(username);
   if(!user || !user.activo) return false;
+  if(!user.sessionId || !user.sessionActive){ return false; }
+  if(user.forceLogoutAt) return false;
   currentUser = user; hideLogin(); updateSessionUI(); return true;
 }
 function logout(){
+  var oldUser=currentUser;
   currentUser = null;
   try{ localStorage.removeItem('panelCurrentUser'); sessionStorage.removeItem('panelCurrentUser'); }catch(e){}
+  if(oldUser && oldUser.username){
+    var copy=Object.assign({},oldUser,{sessionActive:false,lastActivityAt:new Date().toISOString()});
+    dbPut(STORES.USERS,copy).catch(function(e){console.error(e);});
+    state.usuarios=state.usuarios.map(function(u){return u.username===copy.username?copy:u;});
+  }
   updateSessionUI();
+  if(typeof renderSessionsTable==='function') renderSessionsTable();
   document.getElementById('loginUsername').value='';
   document.getElementById('loginPassword').value='';
   showLogin();
@@ -1267,6 +1371,7 @@ function renderUsersTable(){
     tr.appendChild(actions); tbody.appendChild(tr);
   });
   document.getElementById('usersTotalCount').textContent=list.length+' usuarios';
+  renderSessionsTable();
 }
 function openUserModal(user){
   if(!requireSuperAdmin()) return;
@@ -2378,6 +2483,7 @@ function init(){
     document.getElementById('btnLogout').addEventListener('click', logout);
     document.getElementById('btnAddUser').addEventListener('click', function(){ openUserModal(null); });
     document.getElementById('searchUsers').addEventListener('input', renderUsersTable);
+    document.getElementById('btnRefreshSessions').addEventListener('click', function(){reloadStateFromDB().then(function(){renderSessionsTable();showToast('Sesiones actualizadas.','success');});});
 
     document.getElementById('btnAddColab').addEventListener('click', function(){ openColaboradorModal(null); });
     document.getElementById('btnAddSuc').addEventListener('click', function(){ openSucursalModal(null); });
@@ -2401,8 +2507,12 @@ function init(){
     else { updateSessionUI(); showLogin(); }
     setInterval(function(){
       if(!currentUser)return;
-      reloadStateFromDB().then(function(){rerenderAll();});
-    },60000);
+      reloadStateFromDB().then(function(){
+        if(!enforceCurrentSession()) return;
+        heartbeatSession();
+        rerenderAll();
+      });
+    },20000);
   });
 }
 
