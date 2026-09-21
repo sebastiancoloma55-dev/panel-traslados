@@ -977,6 +977,14 @@ function calcularDiasEntreFechas(inicio, termino){
   var diff = Math.round((b - a) / 86400000) + 1;
   return diff > 0 ? diff : 0;
 }
+function normalizarDiasAusencia(rec){
+  if(!rec || typeof rec !== 'object') return rec;
+  var dias = Number(rec.numeroDias);
+  if(!dias || dias < 0) dias = Number(rec.dias);
+  if(!dias || dias < 0) dias = calcularDiasEntreFechas(rec.fechaInicio, rec.fechaTermino);
+  rec.numeroDias = dias > 0 ? dias : 0;
+  return rec;
+}
 function hoyISO(){
   var d = new Date();
   return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
@@ -1537,6 +1545,7 @@ function buildRecordsFromMapping(type, headers, dataRows, mapping){
       rec.fechaTermino = mapping.fechaTermino >= 0 ? parseFlexibleDate(r[mapping.fechaTermino]) : '';
       var diasRaw = mapping.numeroDias >= 0 ? String(r[mapping.numeroDias] || '').replace(/[^0-9]/g,'') : '';
       rec.numeroDias = diasRaw ? parseInt(diasRaw, 10) : calcularDiasEntreFechas(rec.fechaInicio, rec.fechaTermino);
+      rec = normalizarDiasAusencia(rec);
       if(!rec.rut || !rec.nombreColaborador || !rec.fechaInicio) return;
       rec = enriquecerAusencia(rec);
     }
@@ -1579,6 +1588,8 @@ function openImportModeModal(type, records){
   }
 
   function saveBuckets(replaceAll){
+    vacaciones = vacaciones.map(function(v){ return normalizarDiasAusencia(v); });
+    licencias = licencias.map(function(v){ return normalizarDiasAusencia(v); });
     var jobs = [];
 
     if(type === 'vacaciones'){
@@ -1608,10 +1619,16 @@ function openImportModeModal(type, records){
 
     return Promise.all(jobs).then(reloadStateFromDB).then(function(){
       closeModal();
-      rerenderAll();
       var msg = type === 'vacaciones'
         ? ('Importado: ' + vacaciones.length + ' vacaciones' + (licencias.length ? ' y ' + licencias.length + ' licencias.' : '.'))
         : (type === 'licencias' ? ('Importado: ' + records.length + ' licencias.') : 'Importado con éxito.');
+
+      try {
+        rerenderAll();
+      } catch (renderError) {
+        console.error('Importación guardada; error al actualizar la interfaz:', renderError);
+      }
+
       showToast(msg, 'success');
     }).catch(function(err){
       console.error(err);
@@ -2081,7 +2098,7 @@ function renderVacacionesTable(){
     tr.appendChild(el('td', { text: (c && c.cargo) || v.cargo || '—' }));
     tr.appendChild(el('td', { text: (c && c.sucursalActual) || v.sucursal || '—' }));
     tr.appendChild(el('td', { text: v.tipoAusencia }));
-    tr.appendChild(el('td', { class: 'mono', text: String(v.numeroDias || 0) }));
+    tr.appendChild(el('td', { class: 'mono', text: String(normalizarDiasAusencia(v).numeroDias || 0) }));
     tr.appendChild(el('td', { class: 'mono', text: formatDateDisplay(v.fechaInicio) }));
     tr.appendChild(el('td', { class: 'mono', text: formatDateDisplay(v.fechaTermino) || '—' }));
     tr.appendChild(el('td', { children: [el('span', { class: 'pill ' + (vigente ? 'pill-teal' : 'pill-slate'), text: vigente ? 'Vigente' : 'Finalizada' })] }));
@@ -2110,7 +2127,7 @@ function renderLicenciasTable(){
     tr.appendChild(el('td', { text: (c && c.cargo) || l.cargo || '—' }));
     tr.appendChild(el('td', { text: (c && c.sucursalActual) || l.sucursal || '—' }));
     tr.appendChild(el('td', { text: l.tipoAusencia }));
-    tr.appendChild(el('td', { class: 'mono', text: String(l.numeroDias || 0) }));
+    tr.appendChild(el('td', { class: 'mono', text: String(normalizarDiasAusencia(l).numeroDias || 0) }));
     tr.appendChild(el('td', { class: 'mono', text: formatDateDisplay(l.fechaInicio) }));
     tr.appendChild(el('td', { class: 'mono', text: formatDateDisplay(l.fechaTermino) || '—' }));
     tr.appendChild(el('td', { children: [el('span', { class: 'pill ' + (vigente ? 'pill-purple' : 'pill-slate'), text: vigente ? 'Vigente' : 'Finalizada' })] }));
@@ -2146,7 +2163,10 @@ function renderDashboardDetails(){
 
   var donut=document.getElementById('dashboardDonut');
   var totalTras=state.traslados.length;
-  var cA=aprob,cE=espera,cR=rech,cP=state.traslados.filter(function(t){return t.estado==='pendiente';}).length;
+  var cA=state.traslados.filter(function(t){return t.estado==='aprobado';}).length;
+  var cE=state.traslados.filter(function(t){return t.estado==='espera';}).length;
+  var cR=state.traslados.filter(function(t){return t.estado==='rechazado';}).length;
+  var cP=state.traslados.filter(function(t){return t.estado==='pendiente';}).length;
   if(donut){
     var totalDeg=totalTras?360:1, aDeg=(cA/Math.max(totalTras,1))*360, eDeg=(cE/Math.max(totalTras,1))*360, rDeg=(cR/Math.max(totalTras,1))*360;
     donut.style.background='conic-gradient(#58A982 0deg '+aDeg+'deg,#D6A23A '+aDeg+'deg '+(aDeg+eDeg)+'deg,#D7655B '+(aDeg+eDeg)+'deg '+(aDeg+eDeg+rDeg)+'deg,#7893B5 '+(aDeg+eDeg+rDeg)+'deg 360deg)';
