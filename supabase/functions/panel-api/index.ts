@@ -317,26 +317,83 @@ async function login(
   };
 }
 
+
+const API_PAGE_SIZE = 1000;
+
+async function getAllRows(table: string) {
+  const all: any[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .range(from, from + API_PAGE_SIZE - 1);
+
+    if (error) {
+      console.error(`Error leyendo ${table} desde ${from}:`, error);
+      throw error;
+    }
+
+    const rows = data || [];
+    all.push(...rows);
+
+    if (rows.length < API_PAGE_SIZE) {
+      break;
+    }
+
+    from += API_PAGE_SIZE;
+  }
+
+  return all;
+}
+
+async function deleteAllRows(table: string) {
+  let deletedTotal = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("id")
+      .range(0, API_PAGE_SIZE - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    const ids = (data || [])
+      .map((row: any) => row.id)
+      .filter((id: any) => id !== null && id !== undefined);
+
+    if (ids.length === 0) {
+      break;
+    }
+
+    const { error: deleteError } = await supabase
+      .from(table)
+      .delete()
+      .in("id", ids);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    deletedTotal += ids.length;
+
+    if (ids.length < API_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return deletedTotal;
+}
+
 async function getState() {
   const state: any = {};
 
   for (const table of ALLOWED_TABLES) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*");
-
-    if (error) {
-      console.error(
-        `Error leyendo ${table}:`,
-        error
-      );
-
-      throw error;
-    }
-
-    state[table] = convertFromDb(
-      data || []
-    );
+    const data = await getAllRows(table);
+    state[table] = convertFromDb(data || []);
   }
 
   state.usuarios = state.usuarios.map(
@@ -685,40 +742,7 @@ async function clearTable(
     );
   }
 
-  const { data, error } = await supabase
-    .from(table)
-    .select("id");
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data || data.length === 0) {
-    return true;
-  }
-
-  const ids = data
-    .map((row: any) => row.id)
-    .filter(
-      (id: any) =>
-        id !== null &&
-        id !== undefined
-    );
-
-  if (ids.length === 0) {
-    return true;
-  }
-
-  const { error: deleteError } =
-    await supabase
-      .from(table)
-      .delete()
-      .in("id", ids);
-
-  if (deleteError) {
-    throw deleteError;
-  }
-
+  await deleteAllRows(table);
   return true;
 }
 
@@ -809,54 +833,6 @@ Deno.serve(async (req: Request) => {
           },
           401
         );
-      }
-    }
-
-    // =========================
-    // LOGIN COMPATIBLE EN RAÍZ
-    // =========================
-    // La versión actualmente publicada del panel puede enviar el login
-    // directamente a /panel-api en vez de /panel-api/login. Aceptamos ambos
-    // formatos para evitar el 401 "Sesión no válida o expirada".
-    if (
-      req.method === "POST" &&
-      path.endsWith("/panel-api")
-    ) {
-      try {
-        const peek = await req.clone().json();
-
-        if (peek?.username && peek?.password) {
-          try {
-            const result = await login(
-              String(peek.username),
-              String(peek.password)
-            );
-
-            return response(
-              req,
-              result,
-              200
-            );
-          } catch (error) {
-            console.error(
-              "Error login raíz:",
-              error
-            );
-
-            return response(
-              req,
-              {
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "Error de autenticación",
-              },
-              401
-            );
-          }
-        }
-      } catch {
-        // No era un JSON de login; continúa al flujo normal.
       }
     }
 
