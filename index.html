@@ -798,7 +798,7 @@ table tbody td{border-bottom:1px solid #edf2ef!important;}
       <div class="session-panel">
         <div class="session-head">
           <div><div class="session-title">Sesiones activas</div><div class="session-sub">El Super Admin puede cerrar la sesión de cualquier Admin, Usuario o Super Admin conectado.</div></div>
-          <button class="btn btn-ghost" id="btnRefreshSessions">↻ Actualizar</button>
+          <button class="btn btn-ghost" id="btnRefreshSessions">↻ Actualizar</button><button class="btn btn-danger" id="btnCloseAllSessions" type="button">⏻ Cerrar demás sesiones</button>
         </div>
         <div class="session-table-wrap">
           <table>
@@ -1226,6 +1226,45 @@ function sessionIsActive(user){
 function renderSessionsTable(){
   var tbody=document.getElementById('sessionsTableBody'); if(!tbody) return;
   tbody.innerHTML='';
+  if(!currentUser || currentUser.role!=='superadmin') return;
+
+  /* Las sesiones reales vienen de Supabase. El filtro local queda solo como respaldo. */
+  if(typeof centralRequest==='function' && typeof CENTRAL_TOKEN!=='undefined' && CENTRAL_TOKEN){
+    tbody.innerHTML='<tr><td colspan="7" class="empty-cell">Cargando sesiones...</td></tr>';
+    centralRequest('/sessions').then(function(result){
+      var list=(result && result.sessions) ? result.sessions : [];
+      if(!list.length){
+        tbody.innerHTML='';
+        tbody.appendChild(el('tr',{children:[el('td',{attrs:{colspan:'7'},class:'empty-cell',text:'No hay sesiones activas en este momento.'})]}));
+        return;
+      }
+      tbody.innerHTML='';
+      list.forEach(function(u){
+        var role=u.role||'';
+        var isCurrent=currentUser && String(u.session_id)===String(currentUser.sessionId);
+        var tr=document.createElement('tr');
+        tr.appendChild(el('td',{children:[el('strong',{text:u.username||'—'})]}));
+        tr.appendChild(el('td',{text:(u.nombre||u.username||'—')}));
+        tr.appendChild(el('td',{children:[el('span',{class:'pill '+(role==='superadmin'?'pill-amber':role==='admin'?'pill-teal':'pill-slate'),text:roleLabel(role)})]}));
+        tr.appendChild(el('td',{class:'mono',text:formatLastLogin(u.created_at)}));
+        tr.appendChild(el('td',{class:'mono',text:formatLastLogin(u.last_activity_at)}));
+        tr.appendChild(el('td',{children:[el('span',{class:'session-online',children:[el('span',{class:'session-online-dot'}),document.createTextNode('Conectado')]} )]}));
+        var actions=el('td',{class:'row-actions'});
+        if(isCurrent){
+          actions.appendChild(el('span',{class:'session-offline',text:'Sesión actual'}));
+        }else{
+          actions.appendChild(el('button',{class:'icon-btn icon-btn-danger',attrs:{title:'Cerrar sesión'},text:'⏻',on:{click:function(){forceLogoutUser(u);}}}));
+        }
+        tr.appendChild(actions); tbody.appendChild(tr);
+      });
+    }).catch(function(e){
+      console.error('Sesiones centralizadas:',e);
+      tbody.innerHTML='';
+      tbody.appendChild(el('tr',{children:[el('td',{attrs:{colspan:'7'},class:'empty-cell',text:'No fue posible cargar las sesiones.'})]}));
+    });
+    return;
+  }
+
   var list=state.usuarios.filter(function(u){return sessionIsActive(u);}).sort(function(a,b){return String(b.lastActivityAt||'').localeCompare(String(a.lastActivityAt||''));});
   if(!list.length){tbody.appendChild(el('tr',{children:[el('td',{attrs:{colspan:'7'},class:'empty-cell',text:'No hay sesiones activas en este momento.'})]}));return;}
   list.forEach(function(u){
@@ -1247,8 +1286,24 @@ function renderSessionsTable(){
 }
 function forceLogoutUser(user){
   if(!requireSuperAdmin()) return;
+  var sessionId=user && (user.session_id || user.sessionId);
+  if(!sessionId){showToast('No se encontró la sesión seleccionada.','error');return;}
+  if(currentUser && String(sessionId)===String(currentUser.sessionId)){
+    showToast('No puedes cerrar tu propia sesión desde este listado.','error');return;
+  }
+
+  if(typeof centralRequest==='function' && typeof CENTRAL_TOKEN!=='undefined' && CENTRAL_TOKEN){
+    centralRequest('',{method:'POST',body:{action:'revokeSession',sessionId:String(sessionId)}}).then(function(){
+      renderSessionsTable();
+      showToast('Sesión de '+(user.nombre||user.username||'usuario')+' cerrada correctamente.','success');
+    }).catch(function(e){
+      console.error('Revocar sesión:',e);
+      showToast((e && e.message) ? e.message : 'No fue posible cerrar la sesión.','error');
+    });
+    return;
+  }
+
   if(!user || !user.username) return;
-  if(currentUser && user.username===currentUser.username && user.sessionId===currentUser.sessionId){showToast('No puedes cerrar tu propia sesión desde este listado.','error');return;}
   if(!sessionIsActive(user)){showToast('La sesión ya no está activa.','error');renderSessionsTable();return;}
   var copy=Object.assign({},user,{sessionActive:false,forceLogoutAt:new Date().toISOString(),lastActivityAt:new Date().toISOString()});
   dbPut(STORES.USERS,copy).then(function(){
@@ -2484,6 +2539,13 @@ function init(){
     document.getElementById('btnAddUser').addEventListener('click', function(){ openUserModal(null); });
     document.getElementById('searchUsers').addEventListener('input', renderUsersTable);
     document.getElementById('btnRefreshSessions').addEventListener('click', function(){reloadStateFromDB().then(function(){renderSessionsTable();showToast('Sesiones actualizadas.','success');});});
+  document.getElementById('btnCloseAllSessions').addEventListener('click', function(){
+    if(!requireSuperAdmin() || !currentUser || !currentUser.sessionId) return;
+    if(!confirm('¿Cerrar todas las demás sesiones conectadas? Tu sesión actual permanecerá abierta.')) return;
+    if(typeof centralRequest==='function' && typeof CENTRAL_TOKEN!=='undefined' && CENTRAL_TOKEN){
+      centralRequest('',{method:'POST',body:{action:'revokeAllSessions'}}).then(function(){ renderSessionsTable(); showToast('Se cerraron todas las demás sesiones.','success'); }).catch(function(e){ console.error(e); showToast((e&&e.message)||'No fue posible cerrar las sesiones.','error'); });
+    }
+  });
 
     document.getElementById('btnAddColab').addEventListener('click', function(){ openColaboradorModal(null); });
     document.getElementById('btnAddSuc').addEventListener('click', function(){ openSucursalModal(null); });
