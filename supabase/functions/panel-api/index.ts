@@ -317,25 +317,50 @@ async function login(
   };
 }
 
+async function getAllRows(table: string) {
+  const PAGE_SIZE = 1000;
+  const rows: any[] = [];
+  let from = 0;
+
+  while (true) {
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .range(from, to);
+
+    if (error) {
+      console.error(
+        `Error leyendo ${table} desde ${from} hasta ${to}:`,
+        error
+      );
+      throw error;
+    }
+
+    const page = data || [];
+    rows.push(...page);
+
+    // Si llegaron menos registros que el tamaño de página,
+    // ya no quedan más registros. No existe un límite total.
+    if (page.length < PAGE_SIZE) {
+      break;
+    }
+
+    from += PAGE_SIZE;
+  }
+
+  return rows;
+}
+
 async function getState() {
   const state: any = {};
 
   for (const table of ALLOWED_TABLES) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*");
-
-    if (error) {
-      console.error(
-        `Error leyendo ${table}:`,
-        error
-      );
-
-      throw error;
-    }
+    const data = await getAllRows(table);
 
     state[table] = convertFromDb(
-      data || []
+      data
     );
   }
 
