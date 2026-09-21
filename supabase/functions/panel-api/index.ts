@@ -22,18 +22,13 @@ function corsHeaders() {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, accept, origin",
-    "Access-Control-Allow-Methods":
-      "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Max-Age": "86400",
     "Content-Type": "application/json",
   };
 }
 
-function response(
-  req: Request,
-  data: unknown,
-  status = 200,
-) {
+function response(req: Request, data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: corsHeaders(),
@@ -41,62 +36,40 @@ function response(
 }
 
 function camelToSnake(key: string): string {
-  return key.replace(
-    /[A-Z]/g,
-    letter => `_${letter.toLowerCase()}`
-  );
+  return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
 function snakeToCamel(key: string): string {
-  return key.replace(
-    /_([a-z])/g,
-    (_, letter) => letter.toUpperCase()
-  );
+  return key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
 function convertToDb(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(convertToDb);
-  }
-
+  if (Array.isArray(obj)) return obj.map(convertToDb);
   if (obj && typeof obj === "object") {
     const result: any = {};
-
     for (const [key, value] of Object.entries(obj)) {
       result[camelToSnake(key)] = convertToDb(value);
     }
-
     return result;
   }
-
   return obj;
 }
 
 function convertFromDb(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(convertFromDb);
-  }
-
+  if (Array.isArray(obj)) return obj.map(convertFromDb);
   if (obj && typeof obj === "object") {
     const result: any = {};
-
     for (const [key, value] of Object.entries(obj)) {
       result[snakeToCamel(key)] = convertFromDb(value);
     }
-
     return result;
   }
-
   return obj;
 }
 
 function base64url(data: Uint8Array): string {
   let binary = "";
-
-  for (const byte of data) {
-    binary += String.fromCharCode(byte);
-  }
-
+  for (const byte of data) binary += String.fromCharCode(byte);
   return btoa(binary)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
@@ -104,60 +77,38 @@ function base64url(data: Uint8Array): string {
 }
 
 function encodeJson(obj: any): string {
-  return base64url(
-    new TextEncoder().encode(JSON.stringify(obj))
-  );
+  return base64url(new TextEncoder().encode(JSON.stringify(obj)));
 }
 
 async function signToken(payload: any): Promise<string> {
-  const header = encodeJson({
-    alg: "HS256",
-    typ: "JWT",
-  });
-
+  const header = encodeJson({ alg: "HS256", typ: "JWT" });
   const body = encodeJson(payload);
-
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(JWT_SECRET),
-    {
-      name: "HMAC",
-      hash: "SHA-256",
-    },
+    { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
   );
-
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
     new TextEncoder().encode(`${header}.${body}`),
   );
-
-  return `${header}.${body}.${base64url(
-    new Uint8Array(signature)
-  )}`;
+  return `${header}.${body}.${base64url(new Uint8Array(signature))}`;
 }
 
-async function verifyToken(
-  token: string
-): Promise<any | null> {
+async function verifyToken(token: string): Promise<any | null> {
   try {
     const parts = token.split(".");
-
-    if (parts.length !== 3) {
-      return null;
-    }
+    if (parts.length !== 3) return null;
 
     const [header, body, signature] = parts;
 
     const key = await crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(JWT_SECRET),
-      {
-        name: "HMAC",
-        hash: "SHA-256",
-      },
+      { name: "HMAC", hash: "SHA-256" },
       false,
       ["verify"],
     );
@@ -167,12 +118,9 @@ async function verifyToken(
         signature
           .replace(/-/g, "+")
           .replace(/_/g, "/")
-          .padEnd(
-            Math.ceil(signature.length / 4) * 4,
-            "="
-          )
+          .padEnd(Math.ceil(signature.length / 4) * 4, "="),
       ),
-      c => c.charCodeAt(0)
+      c => c.charCodeAt(0),
     );
 
     const valid = await crypto.subtle.verify(
@@ -182,9 +130,7 @@ async function verifyToken(
       new TextEncoder().encode(`${header}.${body}`),
     );
 
-    if (!valid) {
-      return null;
-    }
+    if (!valid) return null;
 
     const payload = JSON.parse(
       new TextDecoder().decode(
@@ -193,24 +139,14 @@ async function verifyToken(
             body
               .replace(/-/g, "+")
               .replace(/_/g, "/")
-              .padEnd(
-                Math.ceil(body.length / 4) * 4,
-                "="
-              )
+              .padEnd(Math.ceil(body.length / 4) * 4, "="),
           ),
-          c => c.charCodeAt(0)
-        )
-      )
+          c => c.charCodeAt(0),
+        ),
+      ),
     );
 
-    if (!payload.exp) {
-      return null;
-    }
-
-    if (payload.exp < Date.now()) {
-      return null;
-    }
-
+    if (!payload.exp || payload.exp < Date.now()) return null;
     return payload;
   } catch {
     return null;
@@ -219,30 +155,16 @@ async function verifyToken(
 
 function getToken(req: Request): string | null {
   const auth = req.headers.get("Authorization");
-
-  if (!auth) {
-    return null;
-  }
-
-  if (!auth.startsWith("Bearer ")) {
-    return null;
-  }
-
+  if (!auth || !auth.startsWith("Bearer ")) return null;
   return auth.substring(7);
 }
 
 async function requireAuth(req: Request) {
   const token = getToken(req);
-
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
   const payload = await verifyToken(token);
-
-  if (!payload || !payload.sessionId) {
-    return null;
-  }
+  if (!payload || !payload.sessionId) return null;
 
   const { data: session, error } = await supabase
     .from("sesiones")
@@ -251,30 +173,19 @@ async function requireAuth(req: Request) {
     .is("revoked_at", null)
     .maybeSingle();
 
-  if (error || !session) {
-    return null;
-  }
+  if (error || !session) return null;
 
   await supabase
     .from("sesiones")
-    .update({
-      last_activity_at: new Date().toISOString(),
-    })
+    .update({ last_activity_at: new Date().toISOString() })
     .eq("session_id", payload.sessionId);
 
   return payload;
 }
 
-async function hashPassword(
-  password: string
-): Promise<string> {
+async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);
-
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    data
-  );
-
+  const hash = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
@@ -284,43 +195,26 @@ function generateSessionId(): string {
   return crypto.randomUUID();
 }
 
-async function login(
-  username: string,
-  password: string
-) {
+async function login(username: string, password: string) {
   const { data: users, error } = await supabase
     .from("usuarios")
     .select("*")
     .eq("username", username.toLowerCase())
     .limit(1);
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   if (!users || users.length === 0) {
-    throw new Error(
-      "Usuario o contraseña incorrectos"
-    );
+    throw new Error("Usuario o contraseña incorrectos");
   }
 
   const user = users[0];
+  const passwordHash = user.password_hash ?? user.passwordHash ?? "";
 
-  const passwordHash =
-    user.password_hash ??
-    user.passwordHash ??
-    "";
-
-  if (!user.activo) {
-    throw new Error("Usuario inactivo");
-  }
+  if (!user.activo) throw new Error("Usuario inactivo");
 
   const hash = await hashPassword(password);
-
   if (hash !== passwordHash) {
-    throw new Error(
-      "Usuario o contraseña incorrectos"
-    );
+    throw new Error("Usuario o contraseña incorrectos");
   }
 
   const sessionId = generateSessionId();
@@ -350,7 +244,6 @@ async function login(
   }
 
   const safeUser = { ...user };
-
   delete safeUser.password_hash;
   delete safeUser.passwordHash;
 
@@ -367,29 +260,17 @@ async function getAllRows(table: string) {
 
   while (true) {
     const to = from + PAGE_SIZE - 1;
-
     const { data, error } = await supabase
       .from(table)
       .select("*")
       .range(from, to);
 
-    if (error) {
-      console.error(
-        `Error leyendo ${table} desde ${from} hasta ${to}:`,
-        error
-      );
-      throw error;
-    }
+    if (error) throw error;
 
     const page = data || [];
     rows.push(...page);
 
-    // Si llegaron menos registros que el tamaño de página,
-    // ya no quedan más registros. No existe un límite total.
-    if (page.length < PAGE_SIZE) {
-      break;
-    }
-
+    if (page.length < PAGE_SIZE) break;
     from += PAGE_SIZE;
   }
 
@@ -400,31 +281,70 @@ async function getState() {
   const state: any = {};
 
   for (const table of ALLOWED_TABLES) {
-    const data = await getAllRows(table);
-
-    state[table] = convertFromDb(
-      data
-    );
+    state[table] = convertFromDb(await getAllRows(table));
   }
 
-  state.usuarios = state.usuarios.map(
-    (u: any) => {
-      const safe = { ...u };
-
-      delete safe.passwordHash;
-      delete safe.password_hash;
-
-      return safe;
-    }
-  );
+  state.usuarios = state.usuarios.map((u: any) => {
+    const safe = { ...u };
+    delete safe.passwordHash;
+    delete safe.password_hash;
+    return safe;
+  });
 
   return state;
 }
 
-async function upsertRecord(
-  table: string,
-  record: any
-) {
+function schemaColumnFromError(error: any): string | null {
+  const message = String(error?.message || "");
+  const match = message.match(/Could not find the '([^']+)' column/i);
+  return match ? match[1] : null;
+}
+
+/*
+ * Guarda un registro intentando adaptarse al esquema real.
+ * Esto es especialmente importante para TRASLADOS porque el
+ * frontend puede enviar campos que no existan en una versión
+ * anterior de la tabla.
+ */
+async function upsertWithSchemaFallback(table: string, record: any) {
+  let working = { ...record };
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const { data, error } = await supabase
+      .from(table)
+      .upsert(working)
+      .select();
+
+    if (!error) return data || [];
+
+    const badColumn = schemaColumnFromError(error);
+
+    if (!badColumn) {
+      console.error(`Error guardando ${table}:`, error);
+      throw new Error(
+        `Error guardando ${table}: ${error.message || "Error desconocido"}`
+      );
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(working, badColumn)) {
+      throw new Error(
+        `La columna ${badColumn} no existe en ${table} y no fue posible adaptar el registro.`
+      );
+    }
+
+    delete working[badColumn];
+
+    console.warn(
+      `Se omitirá la columna inexistente ${badColumn} de ${table} y se reintentará.`,
+    );
+  }
+
+  throw new Error(
+    `No fue posible guardar ${table}: demasiadas diferencias de esquema.`,
+  );
+}
+
+async function upsertRecord(table: string, record: any) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
@@ -434,14 +354,11 @@ async function upsertRecord(
   }
 
   /*
-   * USUARIOS:
-   * Esta instalación no tiene una columna usuarios.id.
-   * Por eso username es la clave lógica para crear y editar usuarios.
+   * USUARIOS
    */
   if (table === "usuarios") {
     const dbRecord = convertToDb(record);
 
-    // La interfaz puede enviar id, pero la tabla no lo utiliza.
     delete dbRecord.id;
 
     if (dbRecord.username !== undefined && dbRecord.username !== null) {
@@ -456,7 +373,6 @@ async function upsertRecord(
       throw new Error("La contraseña es obligatoria");
     }
 
-    // PostgreSQL timestamp no acepta una cadena vacía.
     if (dbRecord.last_login === "" || dbRecord.last_login === undefined) {
       dbRecord.last_login = null;
     }
@@ -465,84 +381,126 @@ async function upsertRecord(
       dbRecord.created_at = null;
     }
 
-    try {
-      // Buscar por username, nunca por usuarios.id.
-      const { data: existing, error: findError } = await supabase
-        .from("usuarios")
-        .select("*")
-        .eq("username", dbRecord.username)
-        .limit(1);
+    const { data: existing, error: findError } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("username", dbRecord.username)
+      .limit(1);
 
-      if (findError) {
-        throw new Error(
-          `Error buscando usuario: ${findError.message || "Error desconocido"}`
-        );
-      }
+    if (findError) {
+      throw new Error(
+        `Error buscando usuario: ${findError.message || "Error desconocido"}`
+      );
+    }
 
-      if (existing && existing.length > 0) {
-        // Al editar no modificar la fecha original de creación.
-        delete dbRecord.created_at;
-
-        const { data, error } = await supabase
-          .from("usuarios")
-          .update(dbRecord)
-          .eq("username", dbRecord.username)
-          .select();
-
-        if (error) {
-          throw new Error(
-            `Error actualizando usuario: ${error.message || "Error desconocido"}`
-          );
-        }
-
-        return convertFromDb(data || []);
-      }
-
-      // Usuario nuevo.
-      if (dbRecord.created_at === null || dbRecord.created_at === undefined) {
-        dbRecord.created_at = new Date().toISOString();
-      }
+    if (existing && existing.length > 0) {
+      delete dbRecord.created_at;
 
       const { data, error } = await supabase
         .from("usuarios")
-        .insert(dbRecord)
+        .update(dbRecord)
+        .eq("username", dbRecord.username)
         .select();
 
       if (error) {
         throw new Error(
-          `Error creando usuario: ${error.message || "Error desconocido"}`
+          `Error actualizando usuario: ${error.message || "Error desconocido"}`
         );
       }
 
       return convertFromDb(data || []);
-    } catch (error) {
-      console.error("Error usuarios/upsert:", error);
-      throw error instanceof Error
-        ? error
-        : new Error(String(error));
     }
+
+    if (dbRecord.created_at === null || dbRecord.created_at === undefined) {
+      dbRecord.created_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .insert(dbRecord)
+      .select();
+
+    if (error) {
+      throw new Error(
+        `Error creando usuario: ${error.message || "Error desconocido"}`
+      );
+    }
+
+    return convertFromDb(data || []);
   }
 
-  // Resto de las tablas: conservar comportamiento original.
+  /*
+   * TRASLADOS
+   *
+   * El frontend actual genera:
+   * id, rut, colaboradorNombre, origen, destino,
+   * fechaSolicitud, fechaInicio, fechaTermino,
+   * indefinido, fechaEfectiva, motivo,
+   * solicitadoPor, estado, createdAt.
+   */
+  if (table === "traslados") {
+    const allowedFields = [
+      "id",
+      "rut",
+      "nombre",
+      "colaboradorNombre",
+      "origen",
+      "destino",
+      "fechaSolicitud",
+      "fechaInicio",
+      "fechaTermino",
+      "fechaEfectiva",
+      "indefinido",
+      "estado",
+      "motivo",
+      "observaciones",
+      "solicitadoPor",
+      "createdAt",
+      "updatedAt",
+    ];
+
+    const clean: any = {};
+
+    for (const field of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(record, field)) {
+        if (record[field] !== undefined) {
+          clean[field] = record[field];
+        }
+      }
+    }
+
+    if (!clean.colaboradorNombre && clean.nombre) {
+      clean.colaboradorNombre = clean.nombre;
+    }
+
+    if (!clean.nombre && clean.colaboradorNombre) {
+      clean.nombre = clean.colaboradorNombre;
+    }
+
+    if (clean.fechaTermino === "") {
+      clean.fechaTermino = null;
+    }
+
+    if (clean.indefinido === true) {
+      clean.fechaTermino = null;
+    }
+
+    const dbRecord = convertToDb(clean);
+    const data = await upsertWithSchemaFallback("traslados", dbRecord);
+
+    return convertFromDb(data);
+  }
+
+  /*
+   * RESTO DE TABLAS
+   */
   const dbRecord = convertToDb(record);
+  const data = await upsertWithSchemaFallback(table, dbRecord);
 
-  const { data, error } = await supabase
-    .from(table)
-    .upsert(dbRecord)
-    .select();
-
-  if (error) {
-    throw error;
-  }
-
-  return convertFromDb(data || []);
+  return convertFromDb(data);
 }
 
-
-async function bulkUpsert(
-  table: string,
-  records: any[]
-) {
+async function bulkUpsert(table: string, records: any[]) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
@@ -551,112 +509,45 @@ async function bulkUpsert(
     throw new Error("Los registros deben ser un arreglo");
   }
 
-  if (records.length === 0) {
-    return [];
-  }
+  if (records.length === 0) return [];
 
-  /*
-   * Campos permitidos por tabla.
-   * Esto evita que un Excel de una tabla termine enviando
-   * columnas pertenecientes a otra tabla.
-   */
   const TABLE_FIELDS: Record<string, string[]> = {
     colaboradores: [
-      "id",
-      "rut",
-      "nombre",
-      "cargo",
-      "sucursalActual",
-      "area",
-      "fechaIngreso",
-      "email",
-      "telefono",
-      "estado",
+      "id", "rut", "nombre", "cargo", "sucursalActual", "area",
+      "fechaIngreso", "email", "telefono", "estado",
     ],
 
     sucursales: [
-      "id",
-      "codigo",
-      "nombre",
-      "region",
-      "comuna",
-      "direccion",
-      "encargado",
+      "id", "codigo", "nombre", "region", "comuna", "direccion", "encargado",
     ],
 
     traslados: [
-      "id",
-      "rut",
-      "nombre",
-      "colaboradorNombre",
-      "origen",
-      "destino",
-      "fechaInicio",
-      "fechaTermino",
-      "indefinido",
-      "estado",
-      "motivo",
-      "observaciones",
-      "createdAt",
-      "updatedAt",
+      "id", "rut", "nombre", "colaboradorNombre",
+      "origen", "destino", "fechaSolicitud",
+      "fechaInicio", "fechaTermino", "fechaEfectiva",
+      "indefinido", "estado", "motivo", "observaciones",
+      "solicitadoPor", "createdAt", "updatedAt",
     ],
 
     vacaciones: [
-      "id",
-      "rut",
-      "nombreColaborador",
-      "nombre",
-      "cargo",
-      "sucursal",
-      "tipoAusencia",
-      "tipo",
-      "numeroDias",
-      "dias",
-      "fechaInicio",
-      "inicio",
-      "fechaTermino",
-      "termino",
-      "estado",
+      "id", "rut", "nombreColaborador", "nombre", "cargo", "sucursal",
+      "tipoAusencia", "tipo", "numeroDias", "dias",
+      "fechaInicio", "inicio", "fechaTermino", "termino", "estado",
     ],
 
     licencias: [
-      "id",
-      "rut",
-      "nombreColaborador",
-      "nombre",
-      "cargo",
-      "sucursal",
-      "tipoAusencia",
-      "tipo",
-      "numeroDias",
-      "dias",
-      "fechaInicio",
-      "inicio",
-      "fechaTermino",
-      "termino",
-      "estado",
+      "id", "rut", "nombreColaborador", "nombre", "cargo", "sucursal",
+      "tipoAusencia", "tipo", "numeroDias", "dias",
+      "fechaInicio", "inicio", "fechaTermino", "termino", "estado",
     ],
 
     usuarios: [
-      "id",
-      "username",
-      "nombre",
-      "passwordHash",
-      "role",
-      "sucursal",
-      "activo",
-      "createdAt",
-      "lastLogin",
+      "id", "username", "nombre", "passwordHash", "role",
+      "sucursal", "activo", "createdAt", "lastLogin",
     ],
 
     auditoria: [
-      "id",
-      "fecha",
-      "usuario",
-      "tipo",
-      "accion",
-      "elemento",
-      "detalle",
+      "id", "fecha", "usuario", "tipo", "accion", "elemento", "detalle",
     ],
   };
 
@@ -664,7 +555,7 @@ async function bulkUpsert(
 
   if (!allowedFields) {
     throw new Error(
-      `No existe configuración de campos para la tabla ${table}`
+      `No existe configuración de campos para la tabla ${table}`,
     );
   }
 
@@ -677,17 +568,27 @@ async function bulkUpsert(
 
     for (const field of allowedFields) {
       if (Object.prototype.hasOwnProperty.call(record, field)) {
-        const value = record[field];
-
-        if (value !== undefined) {
-          clean[field] = value;
+        if (record[field] !== undefined) {
+          clean[field] = record[field];
         }
       }
     }
 
-    // Vacaciones/licencias pueden venir con nombres equivalentes según el Excel.
-    // Enviamos las variantes y el backend elimina automáticamente las columnas
-    // que no existan en la tabla real, sin perder la importación.
+    if (table === "traslados") {
+      if (!clean.colaboradorNombre && clean.nombre) {
+        clean.colaboradorNombre = clean.nombre;
+      }
+      if (!clean.nombre && clean.colaboradorNombre) {
+        clean.nombre = clean.colaboradorNombre;
+      }
+      if (clean.fechaTermino === "") {
+        clean.fechaTermino = null;
+      }
+      if (clean.indefinido === true) {
+        clean.fechaTermino = null;
+      }
+    }
+
     if (table === "vacaciones" || table === "licencias") {
       if (!clean.nombre && clean.nombreColaborador) {
         clean.nombre = clean.nombreColaborador;
@@ -719,8 +620,6 @@ async function bulkUpsert(
       if (clean.fechaTermino === undefined && clean.termino !== undefined) {
         clean.fechaTermino = clean.termino;
       }
-
-      // Una fecha de término vacía debe ser NULL, no una cadena vacía.
       if (clean.fechaTermino === "") clean.fechaTermino = null;
       if (clean.termino === "") clean.termino = null;
     }
@@ -728,41 +627,36 @@ async function bulkUpsert(
     return convertToDb(clean);
   });
 
-  function schemaColumnFromError(error: any): string | null {
-    const message = String(error?.message || "");
-    const match = message.match(/Could not find the '([^']+)' column/i);
-    return match ? match[1] : null;
-  }
+  const CHUNK_SIZE = 100;
+  const saved: any[] = [];
 
-  async function upsertChunkWithSchemaFallback(chunk: any[]) {
-    let working = chunk.map((row) => ({ ...row }));
+  for (let i = 0; i < cleanRecords.length; i += CHUNK_SIZE) {
+    const chunk = cleanRecords.slice(i, i + CHUNK_SIZE);
 
-    // PostgREST informa la columna desconocida una por una.
-    // La eliminamos y repetimos, permitiendo trabajar con el esquema real
-    // aunque existan diferencias de nombres entre versiones de la tabla.
-    for (let attempt = 0; attempt < 25; attempt++) {
+    let working = chunk.map(row => ({ ...row }));
+
+    for (let attempt = 0; attempt < 30; attempt++) {
       const { data, error } = await supabase
         .from(table)
         .upsert(working)
         .select();
 
       if (!error) {
-        return data || [];
+        saved.push(...(data || []));
+        break;
       }
 
       const badColumn = schemaColumnFromError(error);
+
       if (!badColumn) {
-        console.error(
-          `Error guardando masivamente ${table}:`,
-          error
-        );
         throw new Error(
           `Error guardando ${table}: ${error.message || "Error desconocido"}`
         );
       }
 
       let removed = false;
-      working = working.map((row) => {
+
+      working = working.map(row => {
         if (Object.prototype.hasOwnProperty.call(row, badColumn)) {
           const copy = { ...row };
           delete copy[badColumn];
@@ -773,125 +667,90 @@ async function bulkUpsert(
       });
 
       if (!removed) {
-        console.error(
-          `PostgREST rechazó una columna que no estaba en el payload de ${table}:`,
-          badColumn,
-          error
-        );
         throw new Error(
           `Error guardando ${table}: ${error.message || "Esquema incompatible"}`
         );
       }
-
-      console.warn(
-        `Se omitirá la columna inexistente ${badColumn} de ${table} y se reintentará la importación.`
-      );
     }
-
-    throw new Error(`No fue posible guardar ${table}: demasiadas diferencias de esquema.`);
-  }
-
-  /* Archivos grandes se guardan en bloques. */
-  const CHUNK_SIZE = 100;
-  const saved: any[] = [];
-
-  for (let i = 0; i < cleanRecords.length; i += CHUNK_SIZE) {
-    const chunk = cleanRecords.slice(i, i + CHUNK_SIZE);
-    const data = await upsertChunkWithSchemaFallback(chunk);
-    saved.push(...data);
   }
 
   return convertFromDb(saved);
 }
 
-async function deleteRecord(
-  table: string,
-  id: any
-) {
+async function deleteRecord(table: string, id: any, record: any = null) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
 
   if (table === "usuarios") {
-    throw new Error(
-      "No se permite eliminar usuarios desde esta función"
-    );
+    throw new Error("No se permite eliminar usuarios desde esta función");
   }
 
-  if (id === undefined || id === null) {
-    throw new Error(
-      "ID requerido para eliminar"
-    );
+  /*
+   * Acepta tanto {id} como {record:{id}} y, para las funciones
+   * antiguas del frontend, también criterios como rut/codigo.
+   */
+  const criteria: any = record && typeof record === "object"
+    ? record
+    : (id && typeof id === "object" ? id : { id });
+
+  const clean: any = {};
+  for (const [key, value] of Object.entries(criteria)) {
+    if (value !== undefined && value !== null && value !== "") {
+      clean[key] = value;
+    }
   }
 
-  const { error } = await supabase
-    .from(table)
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    throw error;
+  if (!Object.keys(clean).length) {
+    throw new Error("Criterio requerido para eliminar");
   }
+
+  let query = supabase.from(table).delete();
+
+  for (const [key, value] of Object.entries(clean)) {
+    query = query.eq(camelToSnake(key), value);
+  }
+
+  const { error } = await query;
+
+  if (error) throw error;
 
   return true;
 }
 
-async function clearTable(
-  table: string
-) {
+async function clearTable(table: string) {
   if (!ALLOWED_TABLES.includes(table)) {
     throw new Error("Tabla no permitida");
   }
 
   if (table === "usuarios") {
-    throw new Error(
-      "No se permite limpiar la tabla usuarios"
-    );
+    throw new Error("No se permite limpiar la tabla usuarios");
   }
 
   const { data, error } = await supabase
     .from(table)
     .select("id");
 
-  if (error) {
-    throw error;
-  }
-
-  if (!data || data.length === 0) {
-    return true;
-  }
+  if (error) throw error;
+  if (!data || data.length === 0) return true;
 
   const ids = data
     .map((row: any) => row.id)
-    .filter(
-      (id: any) =>
-        id !== null &&
-        id !== undefined
-    );
+    .filter((id: any) => id !== null && id !== undefined);
 
-  if (ids.length === 0) {
-    return true;
-  }
+  if (ids.length === 0) return true;
 
-  const { error: deleteError } =
-    await supabase
-      .from(table)
-      .delete()
-      .in("id", ids);
+  const { error: deleteError } = await supabase
+    .from(table)
+    .delete()
+    .in("id", ids);
 
-  if (deleteError) {
-    throw deleteError;
-  }
+  if (deleteError) throw deleteError;
 
   return true;
 }
 
 Deno.serve(async (req: Request) => {
-
-  // =========================
-  // CORS / PREFLIGHT
-  // =========================
-
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -899,33 +758,23 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  if (req.method === "GET" && new URL(req.url).pathname.endsWith("/health")) {
+  if (
+    req.method === "GET" &&
+    new URL(req.url).pathname.endsWith("/health")
+  ) {
     return response(req, {
       ok: true,
       service: "panel-api",
-      version: "2026-09-21-session-management-v1",
+      version: "2026-09-21-session-management-v2",
     });
   }
 
   try {
     const url = new URL(req.url);
-
-    const path = url.pathname.replace(
-      /\/+$/,
-      ""
-    );
-
-    // =========================
-    // LOGIN
-    // =========================
+    const path = url.pathname.replace(/\/+$/, "");
 
     /*
-     * Login tolerante a versiones del frontend:
-     * - POST /functions/v1/panel-api/login
-     * - POST /functions/v1/panel-api
-     *
-     * Se identifica por username + password y ausencia de action.
-     * Así, aunque el frontend antiguo siga llamando a la raíz, el acceso funciona.
+     * LOGIN
      */
     if (req.method === "POST") {
       const probe = req.clone();
@@ -945,20 +794,18 @@ Deno.serve(async (req: Request) => {
         !probeBody.action;
 
       if (isLoginRequest) {
-        const body = probeBody;
-
-        if (!body.username || !body.password) {
+        if (!probeBody.username || !probeBody.password) {
           return response(
             req,
             { error: "Usuario y contraseña son obligatorios" },
-            400
+            400,
           );
         }
 
         try {
           const result = await login(
-            String(body.username).trim(),
-            String(body.password)
+            String(probeBody.username).trim(),
+            String(probeBody.password),
           );
 
           return response(req, result, 200);
@@ -973,61 +820,46 @@ Deno.serve(async (req: Request) => {
                   ? error.message
                   : "Error de autenticación",
             },
-            401
+            401,
           );
         }
       }
     }
 
-    // =========================
-    // AUTENTICACIÓN
-    // =========================
-
-    const auth =
-      await requireAuth(req);
+    /*
+     * AUTENTICACIÓN
+     */
+    const auth = await requireAuth(req);
 
     if (!auth) {
       return response(
         req,
-        {
-          error:
-            "Sesión no válida o expirada",
-        },
-        401
+        { error: "Sesión no válida o expirada" },
+        401,
       );
     }
 
-    // =========================
-    // SESIONES ACTIVAS
-    // =========================
-
-    if (
-      req.method === "GET" &&
-      path.endsWith("/sessions")
-    ) {
+    /*
+     * SESIONES ACTIVAS
+     */
+    if (req.method === "GET" && path.endsWith("/sessions")) {
       if (auth.role !== "superadmin") {
         return response(
           req,
-          {
-            error: "Se requiere Super Admin",
-          },
-          403
+          { error: "Se requiere Super Admin" },
+          403,
         );
       }
 
       const { data, error } = await supabase
         .from("sesiones")
         .select(
-          "id, session_id, username, role, sucursal, created_at, last_activity_at, revoked_at"
+          "id, session_id, username, role, sucursal, created_at, last_activity_at, revoked_at",
         )
         .is("revoked_at", null)
-        .order("last_activity_at", {
-          ascending: false,
-        });
+        .order("last_activity_at", { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       return response(req, {
         success: true,
@@ -1035,16 +867,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // =========================
-    // STATE
-    // =========================
-
-    if (
-      req.method === "GET" &&
-      path.endsWith("/state")
-    ) {
-      const state =
-        await getState();
+    /*
+     * STATE
+     */
+    if (req.method === "GET" && path.endsWith("/state")) {
+      const state = await getState();
 
       return response(
         req,
@@ -1052,31 +879,25 @@ Deno.serve(async (req: Request) => {
           state,
           user: auth,
         },
-        200
+        200,
       );
     }
 
-    // =========================
-    // POST
-    // =========================
-
+    /*
+     * POST ACTIONS
+     */
     if (req.method === "POST") {
+      const body = await req.json();
 
-      const body =
-        await req.json();
-
-      // =========================
-      // REVOCAR SESIÓN
-      // =========================
-
+      /*
+       * REVOCAR SESIÓN
+       */
       if (body.action === "revokeSession") {
         if (auth.role !== "superadmin") {
           return response(
             req,
-            {
-              error: "Se requiere Super Admin",
-            },
-            403
+            { error: "Se requiere Super Admin" },
+            403,
           );
         }
 
@@ -1085,31 +906,35 @@ Deno.serve(async (req: Request) => {
         if (!sessionId) {
           return response(
             req,
-            {
-              error: "sessionId requerido",
-            },
-            400
+            { error: "sessionId requerido" },
+            400,
           );
         }
 
-        const { data: targetSession, error: findError } =
-          await supabase
-            .from("sesiones")
-            .select("*")
-            .eq("session_id", sessionId)
-            .maybeSingle();
-
-        if (findError) {
-          throw findError;
+        if (sessionId === auth.sessionId) {
+          return response(
+            req,
+            { error: "No puedes cerrar tu propia sesión" },
+            400,
+          );
         }
+
+        const {
+          data: targetSession,
+          error: findError,
+        } = await supabase
+          .from("sesiones")
+          .select("*")
+          .eq("session_id", sessionId)
+          .maybeSingle();
+
+        if (findError) throw findError;
 
         if (!targetSession) {
           return response(
             req,
-            {
-              error: "Sesión no encontrada",
-            },
-            404
+            { error: "Sesión no encontrada" },
+            404,
           );
         }
 
@@ -1120,9 +945,7 @@ Deno.serve(async (req: Request) => {
           })
           .eq("session_id", sessionId);
 
-        if (revokeError) {
-          throw revokeError;
-        }
+        if (revokeError) throw revokeError;
 
         return response(req, {
           success: true,
@@ -1130,22 +953,19 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // =========================
-      // CERRAR TODAS LAS SESIONES
-      // =========================
-
+      /*
+       * CERRAR TODAS LAS DEMÁS SESIONES
+       */
       if (body.action === "revokeAllSessions") {
         if (auth.role !== "superadmin") {
           return response(
             req,
-            {
-              error: "Se requiere Super Admin",
-            },
-            403
+            { error: "Se requiere Super Admin" },
+            403,
           );
         }
 
-        const { error: revokeAllError } = await supabase
+        const { error } = await supabase
           .from("sesiones")
           .update({
             revoked_at: new Date().toISOString(),
@@ -1153,9 +973,7 @@ Deno.serve(async (req: Request) => {
           .is("revoked_at", null)
           .neq("session_id", auth.sessionId);
 
-        if (revokeAllError) {
-          throw revokeAllError;
-        }
+        if (error) throw error;
 
         return response(req, {
           success: true,
@@ -1163,111 +981,78 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // ---------- UPSERT ----------
-
-      if (
-        body.action === "upsert"
-      ) {
-        const result =
-          await upsertRecord(
-            body.table,
-            body.record
-          );
-
-        return response(
-          req,
-          {
-            success: true,
-            data: result,
-          }
+      /*
+       * UPSERT
+       */
+      if (body.action === "upsert") {
+        const result = await upsertRecord(
+          body.table,
+          body.record,
         );
+
+        return response(req, {
+          success: true,
+          data: result,
+        });
       }
 
-      // ---------- BULK UPSERT ----------
-
-      if (
-        body.action === "bulkUpsert"
-      ) {
-        const result =
-          await bulkUpsert(
-            body.table,
-            body.records || []
-          );
-
-        return response(
-          req,
-          {
-            success: true,
-            data: result,
-          }
+      /*
+       * BULK UPSERT
+       */
+      if (body.action === "bulkUpsert") {
+        const result = await bulkUpsert(
+          body.table,
+          body.records || [],
         );
+
+        return response(req, {
+          success: true,
+          data: result,
+        });
       }
 
-      // ---------- DELETE ----------
-
-      if (
-        body.action === "delete"
-      ) {
-        const result =
-          await deleteRecord(
-            body.table,
-            body.id
-          );
-
-        return response(
-          req,
-          {
-            success: result,
-          }
+      /*
+       * DELETE
+       */
+      if (body.action === "delete") {
+        const result = await deleteRecord(
+          body.table,
+          body.id,
+          body.record,
         );
+
+        return response(req, {
+          success: result,
+        });
       }
 
-      // ---------- CLEAR ----------
-
-      if (
-        body.action === "clear"
-      ) {
-        if (
-          auth.role !== "superadmin"
-        ) {
+      /*
+       * CLEAR
+       */
+      if (body.action === "clear") {
+        if (auth.role !== "superadmin") {
           return response(
             req,
-            {
-              error:
-                "Se requiere Super Admin",
-            },
-            403
+            { error: "Se requiere Super Admin" },
+            403,
           );
         }
 
-        await clearTable(
-          body.table
-        );
+        await clearTable(body.table);
 
-        return response(
-          req,
-          {
-            success: true,
-          }
-        );
+        return response(req, {
+          success: true,
+        });
       }
     }
 
     return response(
       req,
-      {
-        error:
-          "Ruta o acción no válida",
-      },
-      404
+      { error: "Ruta o acción no válida" },
+      404,
     );
-
   } catch (error) {
-
-    console.error(
-      "Error interno:",
-      error
-    );
+    console.error("Error interno:", error);
 
     return response(
       req,
@@ -1277,7 +1062,7 @@ Deno.serve(async (req: Request) => {
             ? error.message
             : "Error interno del servidor",
       },
-      500
+      500,
     );
   }
 });
