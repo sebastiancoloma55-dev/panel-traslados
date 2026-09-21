@@ -397,11 +397,9 @@ importBackup = function(file){
     .login-screen{
       position:fixed !important; inset:0 !important;
       background:linear-gradient(135deg,#174A3B 0%,#1F604B 58%,#2D705A 100%) !important;
-      display:flex !important; align-items:flex-start !important; justify-content:center !important;
-      padding:28px 20px 40px !important; box-sizing:border-box !important;
-      z-index:1000 !important;
+      display:flex !important; align-items:center !important; justify-content:center !important;
+      padding:20px !important; z-index:1000 !important;
     }
-    .login-card{margin:0 auto !important;}
     .login-card{
       width:100% !important; max-width:430px !important;
       background:#fff !important; border-radius:20px !important;
@@ -642,6 +640,8 @@ html_content = html_content.replace(
 
 # Un solo desplazamiento: el documento de Streamlit se encarga del scroll; el iframe no crea otro.
 html_content = html_content.replace("</head>", "<style>html,body{overflow:visible!important;overflow-x:hidden!important;} .app-shell{min-height:auto!important;} </style></head>", 1)
+html_content = html_content.replace("</head>", '<style id="forms-position-python-final">\n/* Formularios y ventanas de Usuarios, Colaboradores, Sucursales y Traslados */\n.modal-overlay{\n  position:fixed !important;\n  inset:0 !important;\n  display:flex !important;\n  align-items:flex-start !important;\n  justify-content:center !important;\n  padding:55px 20px 25px !important;\n  box-sizing:border-box !important;\n  overflow-y:auto !important;\n  z-index:10000 !important;\n}\n.modal{\n  width:min(600px,100%) !important;\n  max-width:600px !important;\n  margin:0 auto !important;\n  max-height:calc(100vh - 80px) !important;\n}\n.modal-wide{\n  width:min(700px,100%) !important;\n  max-width:700px !important;\n}\n.modal-body{\n  max-height:calc(100vh - 190px) !important;\n  overflow-y:auto !important;\n}\n.modal-footer{\n  justify-content:center !important;\n}\n.form-row,\n.mapping-grid,\n.profile-grid{\n  width:100% !important;\n  margin-left:auto !important;\n  margin-right:auto !important;\n}\n</style>', 1)
+html_content = html_content.replace("</head>", '<style id="login-position-python-final">\n.login-screen{\n  position:fixed !important;\n  inset:0 !important;\n  display:flex !important;\n  align-items:flex-start !important;\n  justify-content:center !important;\n  padding:28px 20px 40px !important;\n  box-sizing:border-box !important;\n  min-height:100vh !important;\n  overflow:auto !important;\n}\n.login-card{\n  margin:0 auto !important;\n}\n</style></head>', 1)
 
 st.components.v1.html(
     html_content,
