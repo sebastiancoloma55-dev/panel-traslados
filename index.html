@@ -1354,8 +1354,14 @@ function saveUser(existing){
         updateSessionUI();
       }
 
+      // El guardado ya está confirmado. Si la tabla falla al repintarse,
+      // no debemos convertir un guardado exitoso en un mensaje de error.
       closeModal();
-      renderUsersTable();
+      try{
+        renderUsersTable();
+      }catch(renderError){
+        console.error('Usuario guardado; error actualizando tabla:', renderError);
+      }
       showToast('Usuario guardado correctamente.','success');
     })
     .catch(function(err){
