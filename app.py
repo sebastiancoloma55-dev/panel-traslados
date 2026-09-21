@@ -173,7 +173,7 @@ reloadStateFromDB = function(){
       CENTRAL_TOKEN = null;
       centralStorageClear();
       currentUser = null;
-      showLogin('La sesión expiró. Inicie sesión nuevamente.');
+      showLogin();
     }
     throw err;
   });
@@ -202,7 +202,11 @@ loginUser = function(){
     showToast('Bienvenido, ' + (currentUser.nombre || currentUser.username) + '.', 'success');
   }).catch(function(err){
     console.error('Login central:', err);
-    showLogin(err && err.message ? err.message : 'No fue posible iniciar sesión.');
+    var msg = (err && err.message) ? String(err.message) : '';
+    if(/sesión no válida|sesion no valida|sesión expiró|sesion expiro|expirada|expired/i.test(msg)){
+      msg = 'No fue posible validar el acceso. Intente nuevamente.';
+    }
+    showLogin(msg || 'No fue posible iniciar sesión.');
   }).finally(function(){ if(btn) btn.disabled = false; });
 };
 
@@ -211,6 +215,7 @@ restoreSession = function(){
   var rawUser = centralStorageGet(CENTRAL_USER_KEY);
   if(!token || !centralTokenValid(token) || !rawUser){
     CENTRAL_TOKEN = null;
+    centralStorageClear();
     return false;
   }
   try {
